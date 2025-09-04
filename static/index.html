@@ -1062,30 +1062,36 @@ if ('serviceWorker' in navigator) {
                         class="mini-vendor-logo"
                       />
                       <div class="card-actions">
-                        <el-button
-                          @click="goToURL(provider)"
-                          type="info"
-                          circle
-                          size="small"
-                        >
-                        <i class="fa-solid fa-key"></i>
-                        </el-button>
-                        <el-button
-                          @click="fetchModelsForProvider(provider)"
-                          type="primary"
-                          circle
-                          size="small"
-                        >
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        </el-button>
-                        <el-button
-                          @click="removeProvider(index)"
-                          type="danger"
-                          circle
-                          size="small"
-                        >
-                          <i class="fa-solid fa-trash"></i>
-                        </el-button>
+                        <el-tooltip :content="t('getAPIkey')" placement="top">
+                          <el-button
+                            @click="goToURL(provider)"
+                            type="info"
+                            circle
+                            size="small"
+                          >
+                          <i class="fa-solid fa-key"></i>
+                          </el-button>
+                        </el-tooltip>
+                        <el-tooltip :content="t('getModelsList')" placement="top">
+                          <el-button
+                            @click="fetchModelsForProvider(provider)"
+                            type="primary"
+                            circle
+                            size="small"
+                          >
+                          <i class="fa-solid fa-magnifying-glass"></i>
+                          </el-button>
+                        </el-tooltip>
+                        <el-tooltip :content="t('delete')" placement="top">
+                          <el-button
+                            @click="removeProvider(index)"
+                            type="danger"
+                            circle
+                            size="small"
+                          >
+                            <i class="fa-solid fa-trash"></i>
+                          </el-button>
+                        </el-tooltip>
                       </div>
                     </div>
 

@@ -741,6 +741,8 @@ key3`,
         "parseFileContent": "解析文件内容",
         "clearText": "清空文本",
         'ttsNotEnabled': '语音合成未启用',
+        'getAPIkey': '获取API密钥或者说明文档',
+        'getModelsList': '获取模型列表',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1481,5 +1483,7 @@ Key3`,
         "parseFileContent": "Parse File Content",
         "clearText": "Clear Text",
         'ttsNotEnabled': 'TTS is not enabled',
+        'getAPIkey': 'Get the API key or documentation',
+        'getModelsList': 'Get models list',
     }
   };
