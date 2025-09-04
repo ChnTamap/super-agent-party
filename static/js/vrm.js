@@ -20,7 +20,7 @@ document.body.classList.add(isElectron ? 'electron' : 'web');
 const renderer = new THREE.WebGLRenderer();
 // 添加性能优化设置
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比例
+renderer.setPixelRatio(Math.max(1, window.devicePixelRatio));
 renderer.setClearColor(0x00000000, 0);
 
 // 用fetch查询/cur_language的值
