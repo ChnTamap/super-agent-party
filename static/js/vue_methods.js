@@ -3268,6 +3268,9 @@ let vue_methods = {
       const memory = this.memories.find(m => m.id === id);
       if (memory) {
         this.newMemory = { ...memory };
+        if (this.newMemory.characterBook.length === 0){
+          this.newMemory.characterBook = [{ keysRaw: '', content: '' }];
+        }
         this.showAddMemoryDialog = true;
       }
     },
