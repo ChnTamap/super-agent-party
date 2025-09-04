@@ -142,7 +142,7 @@ scene.add( light );
 
 // 隐形阴影接收平面
 const groundGeo = new THREE.PlaneGeometry(20, 20);
-const shadowMat = new THREE.ShadowMaterial({ opacity: 0.5 }); // 透明度可调
+const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 }); // 透明度可调
 const ground = new THREE.Mesh(groundGeo, shadowMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -1547,7 +1547,13 @@ loader.load(
         currentVrm = vrm;
         console.log( vrm );
         scene.add( vrm.scene );
-
+        // 让模型投射阴影
+        vrm.scene.traverse((obj) => {
+            if (obj.isMesh) {
+                obj.castShadow = true;
+                obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+            }
+        });
         // 设置自然姿势
         setNaturalPose(vrm);
 
@@ -2521,7 +2527,13 @@ async function switchToModel(index) {
                 currentVrm = vrm;
                 console.log('New VRM loaded:', vrm);
                 scene.add(vrm.scene);
-                
+                // 让模型投射阴影
+                vrm.scene.traverse((obj) => {
+                    if (obj.isMesh) {
+                        obj.castShadow = true;
+                        obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+                    }
+                });
                 // 设置自然姿势
                 setNaturalPose(vrm);
 
