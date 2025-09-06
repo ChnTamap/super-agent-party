@@ -439,7 +439,9 @@ let vue_data = {
       customTTSserver: "http://127.0.0.1:9880",
       customTTSspeaker: "",
       customTTSspeed: 1.0,
+      newtts:{}
     },
+    cur_voice :'default',
     openaiVoices:['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
     showVrmModelDialog: false,
     newVrmModel: {

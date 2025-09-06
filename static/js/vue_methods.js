@@ -1383,6 +1383,7 @@ let vue_methods = {
           pure_content: '',
           currentChunk: 0,
           ttsChunks: [],
+          chunks_voice:[],
           audioChunks: [],
           isPlaying:false,
         });
@@ -1395,6 +1396,7 @@ let vue_methods = {
         const decoder = new TextDecoder();
         let buffer = '';
         let tts_buffer = '';
+        this.cur_voice = 'default';   // 全局变量
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -1426,13 +1428,20 @@ let vue_methods = {
                   tts_buffer += parsed.choices[0].delta.content;
                   // 处理 TTS 分割
                   if (this.ttsSettings.enabled) {
-                    const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
+                    const {
+                      chunks,
+                      chunks_voice,
+                      remaining,
+                      remaining_voice
+                    } = this.splitTTSBuffer(tts_buffer);
                     // 将完整的句子添加到 ttsChunks
                     if (chunks.length > 0) {
                       lastMessage.ttsChunks.push(...chunks);
+                      lastMessage.chunks_voice.push(...chunks_voice);
                     }
                     // 更新 tts_buffer 为剩余部分
                     tts_buffer = remaining;
+                    this.cur_voice = remaining_voice;
                   }
                 }
                 // 处理 reasoning_content 逻辑
@@ -1493,12 +1502,19 @@ let vue_methods = {
         // 循环结束后，处理 tts_buffer 中的剩余内容
         if (tts_buffer.trim() && this.ttsSettings.enabled) {
           const lastMessage = this.messages[this.messages.length - 1];
-          const { chunks, remaining } = this.splitTTSBuffer(tts_buffer);
+          const {
+            chunks,
+            chunks_voice,
+            remaining,
+            remaining_voice
+          } = this.splitTTSBuffer(tts_buffer);
           if (chunks.length > 0) {
             lastMessage.ttsChunks.push(...chunks);
+            lastMessage.chunks_voice.push(...chunks_voice);
           }
           if (remaining) {
             lastMessage.ttsChunks.push(remaining);
+            lastMessage.chunks_voice.push(remaining_voice);
           }
           console.log(lastMessage.ttsChunks)
         }
@@ -4817,69 +4833,117 @@ let vue_methods = {
       }
       await this.autoSaveSettings();
     },
+    /**
+     * 按分隔符 + <voice> 标签 拆分 buffer
+     * @returns {
+     *   chunks: string[]        // 纯文本块（已去标签、已清理）
+     *   chunks_voice: string[]  // 与 chunks 一一对应的声音 key
+     *   remaining: string       // 未完结文本
+     *   remaining_voice: string // remaining 对应的 voice key
+     * }
+     */
     splitTTSBuffer(buffer) {
-      // 1. 一次性清理：emoji + markdown/HTML（只扫一次）
+      // 0. 清理 emoji / markdown / html 等，保持原来逻辑
       buffer = buffer
-        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')  // emoji
-        .replace(/[*_~`]/g, '')                          // 行内 markdown
-        .replace(/^\s*-\s/gm, '')                       // 列表
-        .replace(/!\[.*?\]\(.*?\)/g, '')                // 图片
-        .replace(/\[.*?\]\(.*?\)/g, '')                 // 链接
+        .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+        .replace(/[*_~`]/g, '')
+        .replace(/^\s*-\s/gm, '')
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\[.*?\]\(.*?\)/g, '');
 
       if (!buffer || buffer.trim() === '') {
-        return { chunks: [], remaining: buffer };
+        return {
+          chunks: [],
+          chunks_voice: [],
+          remaining: '',
+          remaining_voice: this.cur_voice || 'default'
+        };
       }
 
-      const chunks = [];
-      let remaining = buffer;
-      
-      // 处理转义字符，将字符串形式的转义字符转换为实际字符
-      const processedSeparators = this.ttsSettings.separators.map(sep => {
-        // 处理常见的转义字符
-        return sep.replace(/\\n/g, '\n')
-                .replace(/\\t/g, '\t')
-                .replace(/\\r/g, '\r');
-      });
+      // 1. 将分隔符里的转义字符还原
+      const separators = this.ttsSettings.separators.map(s =>
+        s.replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\r/g, '\r')
+      );
 
-      // 找到所有分隔符的位置
-      const separatorPositions = [];
-      
-      for (let i = 0; i < remaining.length; i++) {
-        for (const separator of processedSeparators) {
-          if (remaining.substring(i, i + separator.length) === separator) {
-            separatorPositions.push({
-              index: i,
-              separator: separator,
-              endIndex: i + separator.length
-            });
-          }
-        }
-      }
-      
-      // 按位置排序
-      separatorPositions.sort((a, b) => a.index - b.index);
-      
+      // 2. 正则：一次匹配三种东西 —— 开标签 / 闭标签 / 任意分隔符
+      // 开标签：<voiceName> 且 voiceName 必须在 this.ttsSettings.newtts 里
+      const openTagRe = new RegExp(
+        `<(${Object.keys(this.ttsSettings.newtts || {}).join('|')})>`,
+      );
+      const closeTagRe = /<\/\w+>/gi;          // </任意标签>
+      const sepRe = new RegExp(separators.map(this.escapeRegExp).join('|'), 'g');
+
+      const tokens = [];
       let lastIndex = 0;
-      
-      // 处理每个分隔符位置
-      for (const pos of separatorPositions) {
-        if (pos.index >= lastIndex) {
-          // 提取从上一个位置到当前分隔符（包含分隔符）的文本
-          const chunk = remaining.substring(lastIndex, pos.endIndex);
-          
-          // 检查chunk是否只包含标点符号和空白符
-          if (!this.isOnlyPunctuationAndWhitespace(chunk)) {
-            chunks.push(chunk);
+
+      // 构造 token 列表（标签 / 分隔符 / 普通文本）
+      function pushToken(type, value, index) {
+        tokens.push({ type, value, index });
+      }
+
+      // 扫描所有标签
+      let m;
+      while ((m = openTagRe.exec(buffer)) !== null) pushToken('open', m[1], m.index);
+      openTagRe.lastIndex = 0;
+      while ((m = closeTagRe.exec(buffer)) !== null) pushToken('close', m[0], m.index);
+      closeTagRe.lastIndex = 0;
+      while ((m = sepRe.exec(buffer)) !== null) pushToken('sep', m[0], m.index);
+      sepRe.lastIndex = 0;
+
+      // 按出现顺序排序
+      tokens.sort((a, b) => a.index - b.index);
+
+      // 3. 逐段切分
+      const chunks = [];
+      const chunks_voice = [];
+      let currentVoice = this.cur_voice || 'default';
+      let segmentStart = 0;   // 普通文本起始
+
+      function emitText(upTo, voice) {
+        const text = buffer.slice(segmentStart, upTo);
+        if (text.trim()) {
+          const cleaned = text.replace(/\s+/g, ' ').trim();
+          if (!this.isOnlyPunctuationAndWhitespace(cleaned)) {
+            chunks.push(cleaned);
+            chunks_voice.push(voice);
           }
-          
-          lastIndex = pos.endIndex;
         }
       }
-      
-      // 剩余的文本
-      remaining = remaining.substring(lastIndex);
-      
-      return { chunks, remaining };
+
+      for (const tok of tokens) {
+        switch (tok.type) {
+          case 'open': {
+            emitText.call(this, tok.index, currentVoice);
+            segmentStart = tok.index + tok.value.length + 2; // 跳过 <voice1>
+            currentVoice = tok.value.toLowerCase();
+            break;
+          }
+          case 'close': {
+            emitText.call(this, tok.index, currentVoice);
+            segmentStart = tok.index + tok.value.length;
+            currentVoice = 'default'; // 回到默认
+            break;
+          }
+          case 'sep': {
+            emitText.call(this, tok.index + tok.value.length, currentVoice);
+            segmentStart = tok.index + tok.value.length;
+            break;
+          }
+        }
+      }
+
+      // 4. 剩余
+      const remaining = buffer.slice(segmentStart);
+      const remaining_voice = currentVoice;
+
+      return { chunks, chunks_voice, remaining, remaining_voice };
+    },
+
+    // util
+    escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     },
 
     // 辅助函数：检查字符串是否只包含标点符号和空白符以及表情
@@ -4973,6 +5037,7 @@ let vue_methods = {
     },
     async processTTSChunk(message, index) {
       const chunk = message.ttsChunks[index];
+      const voice = message.chunks_voice[index];
       const exps = [];
       let remainingText = chunk;
       let chunk_text = remainingText;
@@ -4990,13 +5055,13 @@ let vue_methods = {
         chunk_text = remainingText;
         chunk_expressions = exps;
       }
-      console.log(`Processing TTS chunk ${index}:`, chunk_text);
+      console.log(`Processing TTS chunk ${index}:`, chunk_text ,"\nvoice:" ,voice);
       
       try {
         const response = await fetch(`/tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ttsSettings: this.ttsSettings,text: chunk_text, index })
+          body: JSON.stringify({ ttsSettings: this.ttsSettings,text: chunk_text, index, voice})
         });
 
         if (response.ok) {
@@ -6370,12 +6435,19 @@ let vue_methods = {
     this.readState.audioChunks = [];
     this.readState.currentChunk = 0;
     this.readState.isPlaying = false;
-
+    this.readState.chunks_voice = [];
+    this.cur_voice = 'default';   // 全局变量
     /* 2. 分段 */
-    const { chunks ,remaining } = this.splitTTSBuffer(this.readConfig.longText);
+    const {
+      chunks,
+      chunks_voice,
+      remaining,
+      remaining_voice
+    } = this.splitTTSBuffer(this.readConfig.longText);
     // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
     if (remaining) {
       chunks.push(remaining);
+      chunks_voice.push(remaining_voice);
     }
     if (!chunks.length) {
       this.isReadRunning  = false;
@@ -6383,6 +6455,7 @@ let vue_methods = {
       return;
     }
     this.readState.ttsChunks = chunks;
+    this.readState.chunks_voice = chunks_voice;
 
     /* 3. 通知 VRM 开始朗读 */
     this.sendTTSStatusToVRM('ttsStarted', {
@@ -6439,7 +6512,7 @@ let vue_methods = {
 
   async processReadTTSChunk(index) {
     const chunk = this.readState.ttsChunks[index];
-
+    const voice = this.readState.chunks_voice[index];
     /* —— 与对话版完全一致的文本清洗 —— */
     let chunk_text = chunk;
     const exps = [];
@@ -6460,7 +6533,8 @@ let vue_methods = {
         body: JSON.stringify({
           ttsSettings: this.ttsSettings,
           text: chunk_text,
-          index
+          index,
+          voice
         })
       });
 
