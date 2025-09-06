@@ -191,6 +191,10 @@ let vue_methods = {
       this.activeMenu = 'toolkit';
       this.subMenu = 'sticker';
     },
+    switchToComfyui(){
+      this.activeMenu = 'toolkit';
+      this.subMenu = 'comfyui';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()

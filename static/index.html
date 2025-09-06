@@ -1654,6 +1654,28 @@ if ('serviceWorker' in navigator) {
                           <el-option :label="t('openaiLike')" value="openai" ></el-option>
                         </el-select>
                       </el-form-item>
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            1. {{ t('text2imgNotice') }}<br>
+                            2. {{ t('gotoComfyui') }}
+                            <el-link
+                              type="primary"
+                              :underline="false"
+                              class="font-medium"
+                              @click="switchToComfyui"
+                            >
+                              <el-icon class="mr-1">
+                                <i class="fa-solid fa-key"></i>
+                              </el-icon>{{ t('ComfyuiInterface') }}
+                            </el-link>
+                          </div>
+                        </template>
+                      </el-alert>
                     </div>
                   </div>
                   <div class="tool-item" v-show="text2imgSettings.engine === 'pollinations'">
@@ -5602,9 +5624,9 @@ if ('serviceWorker' in navigator) {
                     <el-checkbox
                       v-model="selectedFiles"
                       :label="file.unique_filename"
+                      style="margin-right: 10px;"
                       class="checkbox-no-label">  
                     </el-checkbox>
-                    <el-icon class="file-icon"><i class="fa-solid fa-file-lines"></i></el-icon>
                     <div class="file-info">
                       <span class="file-name">{{ file.original_filename }}</span>
                     </div>
