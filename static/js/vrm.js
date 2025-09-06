@@ -2332,7 +2332,8 @@ if (isElectron) {
             closeButton.title = await t('closeWindow');
         }
         initbutton();
-
+        // 保存所有需要隐藏的按钮引用
+        const controlButtons = [];
         // 鼠标穿透锁定按钮
         const lockButton = document.createElement('div');
         lockButton.id = 'lock-handle';
@@ -2379,23 +2380,59 @@ if (isElectron) {
             }
         }
 
+        // 隐藏所有其他按钮（除了锁定按钮）
+        function hideOtherButtons() {
+            controlButtons.forEach(button => {
+                if (button !== lockButton) {
+                    button.style.opacity = '0';
+                    button.style.visibility = 'hidden';
+                    button.style.pointerEvents = 'none';
+                    button.style.transform = 'scale(0.8)';
+                }
+            });
+            
+            // 调整锁定按钮位置到中心
+            lockButton.style.marginBottom = '0';
+            lockButton.style.marginTop = 'auto';
+        }
+
+        // 显示所有按钮
+        function showAllButtons() {
+            controlButtons.forEach(button => {
+                button.style.opacity = '1';
+                button.style.visibility = 'visible';
+                button.style.pointerEvents = 'auto';
+                button.style.transform = 'scale(1)';
+            });
+            
+            // 恢复锁定按钮位置
+            lockButton.style.marginBottom = '8px';
+            lockButton.style.marginTop = '0';
+        }
+
         // 切换锁定状态
         async function toggleMouseLock() {
             isMouseLocked = !isMouseLocked;
             
             if (isMouseLocked) {
-                // 锁定模式：窗口穿透，只有控制面板可交互
+                // 锁定模式：窗口穿透，隐藏其他按钮
                 window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+                hideOtherButtons();
             } else {
-                // 解锁模式：窗口正常交互
+                // 解锁模式：窗口正常交互，显示所有按钮
                 window.electronAPI.setIgnoreMouseEvents(false);
+                showAllButtons();
             }
             
             updateLockButtonState();
             
             // 发送状态更新到主窗口
             sendToMain('mouseLockStatus', { locked: isMouseLocked });
+            
+            // 更新工具提示
+            updateButtonTooltips();
         }
+
 
         // 添加事件监听
         lockButton.addEventListener('mouseenter', () => {
@@ -2445,6 +2482,18 @@ if (isElectron) {
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
+        // 收集所有需要隐藏的按钮（除了锁定按钮）
+        controlButtons.push(
+            dragButton, 
+            wsStatusButton, 
+            subtitleButton, 
+            idleAnimationButton, 
+            prevModelButton, 
+            nextModelButton, 
+            refreshButton, 
+            closeButton
+        );
+
         // 添加到页面
         document.body.appendChild(controlPanel);
 
