@@ -432,6 +432,8 @@ app.whenReady().then(async () => {
 
       // 加载页面
       await vrmWindow.loadURL(`http://${HOST}:${PORT}/vrm.html`);
+      // 默认设置（不穿透，可以交互）
+      vrmWindow.setIgnoreMouseEvents(false);
 
       // 保存窗口引用
       vrmWindows.push(vrmWindow);
@@ -443,7 +445,17 @@ app.whenReady().then(async () => {
 
       return vrmWindow.id;  // 可选：返回窗口 ID 用于后续操作
     });
+    // 添加IPC处理器
+    ipcMain.handle('set-ignore-mouse-events', (event, ignore, options) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        win.setIgnoreMouseEvents(ignore, options);
+    });
 
+    // 添加新的IPC处理器
+    ipcMain.handle('get-ignore-mouse-status', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        return win.isIgnoreMouseEvents();
+    });
     ipcMain.handle('stop-vrm-window', (_, windowId) => {
       if (windowId !== undefined) {
         const win = vrmWindows.find(w => w.id === windowId);

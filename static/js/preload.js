@@ -65,4 +65,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startVRMWindow: (windowConfig) => ipcRenderer.invoke('start-vrm-window', windowConfig),
   stopVRMWindow: () => ipcRenderer.invoke('stop-vrm-window'),
   getServerInfo: () => ipcRenderer.invoke('get-server-info'),
+  setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
+  getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
 });
