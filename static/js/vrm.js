@@ -20,7 +20,7 @@ document.body.classList.add(isElectron ? 'electron' : 'web');
 const renderer = new THREE.WebGLRenderer();
 // 添加性能优化设置
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比例
+renderer.setPixelRatio(Math.max(1, window.devicePixelRatio));
 renderer.setClearColor(0x00000000, 0);
 
 // 用fetch查询/cur_language的值
@@ -142,7 +142,7 @@ scene.add( light );
 
 // 隐形阴影接收平面
 const groundGeo = new THREE.PlaneGeometry(20, 20);
-const shadowMat = new THREE.ShadowMaterial({ opacity: 0.5 }); // 透明度可调
+const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 }); // 透明度可调
 const ground = new THREE.Mesh(groundGeo, shadowMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
@@ -1547,7 +1547,13 @@ loader.load(
         currentVrm = vrm;
         console.log( vrm );
         scene.add( vrm.scene );
-
+        // 让模型投射阴影
+        vrm.scene.traverse((obj) => {
+            if (obj.isMesh) {
+                obj.castShadow = true;
+                obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+            }
+        });
         // 设置自然姿势
         setNaturalPose(vrm);
 
@@ -1772,153 +1778,9 @@ function animate() {
     }
 }
      
-
-// 在控制面板中添加字幕开关按钮
-if (isElectron) {
-    setTimeout(async () => {
-        const controlPanel = document.getElementById('control-panel');
-        if (controlPanel) {
-            // 字幕开关按钮
-            const subtitleButton = document.createElement('div');
-            subtitleButton.id = 'subtitle-handle';
-            subtitleButton.innerHTML = '<i class="fas fa-closed-captioning"></i>';
-            subtitleButton.style.cssText = `
-                width: 36px;
-                height: 36px;
-                background: rgba(255,255,255,0.95);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: 50%;
-                color: #333;
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: all 0.2s ease;
-                user-select: none;
-                pointer-events: auto;
-                backdrop-filter: blur(10px);
-                color: ${isSubtitleEnabled ? '#28a745' : '#dc3545'};
-            `;
-
-            // 添加悬停效果
-            subtitleButton.addEventListener('mouseenter', () => {
-                subtitleButton.style.background = 'rgba(255,255,255,1)';
-                subtitleButton.style.transform = 'scale(1.1)';
-                subtitleButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-            });
-
-            subtitleButton.addEventListener('mouseleave', () => {
-                subtitleButton.style.background = 'rgba(255,255,255,0.95)';
-                subtitleButton.style.transform = 'scale(1)';
-                subtitleButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            });
-
-            // 点击事件
-            subtitleButton.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                isSubtitleEnabled = !isSubtitleEnabled;
-                toggleSubtitle(isSubtitleEnabled);
-                subtitleButton.style.color = isSubtitleEnabled ? '#28a745' : '#dc3545';
-                subtitleButton.title = isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled');
-            });
-
-            // 初始状态
-            subtitleButton.title = isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled');
-
-            // 添加到控制面板
-            const prevModelButton = controlPanel.querySelector('#prev-model-handle');
-            if (prevModelButton) {
-                controlPanel.insertBefore(subtitleButton, prevModelButton);
-            } else {
-                controlPanel.appendChild(subtitleButton);
-            }
-        }
-    }, 1400);
-}
-
-if (isElectron) {
-    setTimeout(async () => {
-        const controlPanel = document.getElementById('control-panel');
-        if (controlPanel) {
-            // 闲置动画模式切换按钮
-            const idleAnimationButton = document.createElement('div');
-            idleAnimationButton.id = 'idle-animation-handle';
-            idleAnimationButton.innerHTML = useVRMAIdleAnimations ? 
-                '<i class="fas fa-stop"></i>' : 
-                '<i class="fas fa-play"></i>';
-            idleAnimationButton.style.cssText = `
-                width: 36px;
-                height: 36px;
-                background: rgba(255,255,255,0.95);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: 50%;
-                color: ${useVRMAIdleAnimations ? '#ff6b35' : '#28a745'};
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: all 0.2s ease;
-                user-select: none;
-                pointer-events: auto;
-                backdrop-filter: blur(10px);
-            `;
-
-            // 添加悬停效果
-            idleAnimationButton.addEventListener('mouseenter', () => {
-                idleAnimationButton.style.background = 'rgba(255,255,255,1)';
-                idleAnimationButton.style.transform = 'scale(1.1)';
-                idleAnimationButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-            });
-
-            idleAnimationButton.addEventListener('mouseleave', () => {
-                idleAnimationButton.style.background = 'rgba(255,255,255,0.95)';
-                idleAnimationButton.style.transform = 'scale(1)';
-                idleAnimationButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            });
-
-            // 点击事件
-            idleAnimationButton.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // 防止重复点击
-                if (isIdleAnimationModeChanging) return;
-                
-                await toggleIdleAnimationMode();
-            });
-
-            // 初始状态
-            idleAnimationButton.title = useVRMAIdleAnimations ? 
-                await t('UsingVRMAAnimations') || 'Using VRMA Animations' : 
-                await t('UsingProceduralAnimations') || 'Using Procedural Animations';
-
-            // 添加到控制面板（在字幕按钮之后）
-            const subtitleButton = controlPanel.querySelector('#subtitle-handle');
-            if (subtitleButton) {
-                controlPanel.insertBefore(idleAnimationButton, subtitleButton.nextSibling);
-            } else {
-                // 如果没有字幕按钮，添加到模型切换按钮前面
-                const prevModelButton = controlPanel.querySelector('#prev-model-handle');
-                if (prevModelButton) {
-                    controlPanel.insertBefore(idleAnimationButton, prevModelButton);
-                } else {
-                    controlPanel.appendChild(idleAnimationButton);
-                }
-            }
-        }
-    }, 1500); // 稍微延后一点，确保其他按钮都已创建
-}
-
 if (isElectron) {
     // 等待一小段时间确保页面完全加载
-    setTimeout(() => {
+    setTimeout(async () => {
         // 创建控制面板容器
         const controlPanel = document.createElement('div');
         controlPanel.id = 'control-panel';
@@ -2003,7 +1865,177 @@ if (isElectron) {
         dragButton.innerHTML = '';
         dragButton.appendChild(dragArea);
         dragButton.appendChild(iconContainer);
+        // WebSocket 状态按钮
+        const wsStatusButton = document.createElement('div');
+        wsStatusButton.id = 'ws-status-handle';
+        wsStatusButton.innerHTML = '<i class="fas fa-wifi"></i>';
+        wsStatusButton.style.cssText = `
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            color: #333;
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            user-select: none;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            color: ${wsConnected ? '#28a745' : '#dc3545'};
+        `;
+        // WebSocket 状态按钮事件
+        wsStatusButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (wsConnected) {
+                // 断开连接
+                if (ttsWebSocket) {
+                    ttsWebSocket.close();
+                }
+            } else {
+                // 重新连接
+                initTTSWebSocket();
+            }
+        });
+        // 添加悬停效果
+        wsStatusButton.addEventListener('mouseenter', () => {
+            wsStatusButton.style.background = 'rgba(255,255,255,1)';
+            wsStatusButton.style.transform = 'scale(1.1)';
+            wsStatusButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+        });
         
+        wsStatusButton.addEventListener('mouseleave', () => {
+            wsStatusButton.style.background = 'rgba(255,255,255,0.95)';
+            wsStatusButton.style.transform = 'scale(1)';
+            wsStatusButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+        // 更新 WebSocket 状态显示
+        async function updateWSStatus() {
+            wsStatusButton.style.color = wsConnected ? '#28a745' : '#dc3545';
+            wsStatusButton.title = wsConnected ? await t('WebSocketConnected') :await t('WebSocketDisconnected');
+        }
+
+        // 定期更新状态
+        setInterval(updateWSStatus, 1000);
+        
+        
+
+            // 字幕开关按钮
+            const subtitleButton = document.createElement('div');
+            subtitleButton.id = 'subtitle-handle';
+            subtitleButton.innerHTML = '<i class="fas fa-closed-captioning"></i>';
+            subtitleButton.style.cssText = `
+                width: 36px;
+                height: 36px;
+                background: rgba(255,255,255,0.95);
+                border: 2px solid rgba(0,0,0,0.1);
+                border-radius: 50%;
+                color: #333;
+                cursor: pointer;
+                -webkit-app-region: no-drag;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: all 0.2s ease;
+                user-select: none;
+                pointer-events: auto;
+                backdrop-filter: blur(10px);
+                color: ${isSubtitleEnabled ? '#28a745' : '#dc3545'};
+            `;
+
+            // 添加悬停效果
+            subtitleButton.addEventListener('mouseenter', () => {
+                subtitleButton.style.background = 'rgba(255,255,255,1)';
+                subtitleButton.style.transform = 'scale(1.1)';
+                subtitleButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+            });
+
+            subtitleButton.addEventListener('mouseleave', () => {
+                subtitleButton.style.background = 'rgba(255,255,255,0.95)';
+                subtitleButton.style.transform = 'scale(1)';
+                subtitleButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            });
+
+            // 点击事件
+            subtitleButton.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                isSubtitleEnabled = !isSubtitleEnabled;
+                toggleSubtitle(isSubtitleEnabled);
+                subtitleButton.style.color = isSubtitleEnabled ? '#28a745' : '#dc3545';
+                subtitleButton.title = isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled');
+            });
+
+            // 初始状态
+            subtitleButton.title = isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled');
+
+            // 添加到控制面板
+
+        // 闲置动画模式切换按钮
+        const idleAnimationButton = document.createElement('div');
+        idleAnimationButton.id = 'idle-animation-handle';
+        idleAnimationButton.innerHTML = useVRMAIdleAnimations ? 
+            '<i class="fas fa-stop"></i>' : 
+            '<i class="fas fa-play"></i>';
+        idleAnimationButton.style.cssText = `
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            color: ${useVRMAIdleAnimations ? '#ff6b35' : '#28a745'};
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            user-select: none;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        `;
+
+        // 添加悬停效果
+        idleAnimationButton.addEventListener('mouseenter', () => {
+            idleAnimationButton.style.background = 'rgba(255,255,255,1)';
+            idleAnimationButton.style.transform = 'scale(1.1)';
+            idleAnimationButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+        });
+
+        idleAnimationButton.addEventListener('mouseleave', () => {
+            idleAnimationButton.style.background = 'rgba(255,255,255,0.95)';
+            idleAnimationButton.style.transform = 'scale(1)';
+            idleAnimationButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+
+        // 点击事件
+        idleAnimationButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 防止重复点击
+            if (isIdleAnimationModeChanging) return;
+            
+            await toggleIdleAnimationMode();
+        });
+
+        // 初始状态
+        idleAnimationButton.title = useVRMAIdleAnimations ? 
+            await t('UsingVRMAAnimations') || 'Using VRMA Animations' : 
+            await t('UsingProceduralAnimations') || 'Using Procedural Animations';
+
+        // 添加到控制面板（在字幕按钮之后）
+
         // 刷新按钮
         const refreshButton = document.createElement('div');
         refreshButton.id = 'refresh-handle';
@@ -2027,6 +2059,141 @@ if (isElectron) {
                 pointer-events: auto;
                 backdrop-filter: blur(10px);
         `;
+        // 获取所有模型（只执行一次）
+        await getAllModels();
+        
+        // 向上箭头按钮（切换到上一个模型）
+        const prevModelButton = document.createElement('div');
+        prevModelButton.id = 'prev-model-handle';
+        prevModelButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        prevModelButton.style.cssText = `
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            color: #333;
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            user-select: none;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        `;
+        
+        // 向下箭头按钮（切换到下一个模型）
+        const nextModelButton = document.createElement('div');
+        nextModelButton.id = 'next-model-handle';
+        nextModelButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        nextModelButton.style.cssText = `
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            color: #333;
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            user-select: none;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        `;
+        
+        // 添加悬停效果和工具提示 - 上一个模型按钮
+        prevModelButton.addEventListener('mouseenter', async () => {
+            prevModelButton.style.background = 'rgba(255,255,255,1)';
+            prevModelButton.style.transform = 'scale(1.1)';
+            prevModelButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+            
+            // 显示下一个模型的名称
+            const prevModel = getPrevModelInfo();
+            if (prevModel) {
+                prevModelButton.title = `${await t('Previous')}: ${prevModel.name}`;
+            }
+        });
+        
+        prevModelButton.addEventListener('mouseleave', () => {
+            prevModelButton.style.background = 'rgba(255,255,255,0.95)';
+            prevModelButton.style.transform = 'scale(1)';
+            prevModelButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+        
+        // 添加悬停效果和工具提示 - 下一个模型按钮
+        nextModelButton.addEventListener('mouseenter', async () => {
+            nextModelButton.style.background = 'rgba(255,255,255,1)';
+            nextModelButton.style.transform = 'scale(1.1)';
+            nextModelButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+            
+            // 显示下一个模型的名称
+            const nextModel = getNextModelInfo();
+            if (nextModel) {
+                nextModelButton.title = `${await t('Next')}: ${nextModel.name}`;
+            }
+        });
+        
+        nextModelButton.addEventListener('mouseleave', () => {
+            nextModelButton.style.background = 'rgba(255,255,255,0.95)';
+            nextModelButton.style.transform = 'scale(1)';
+            nextModelButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+        
+        // 上一个模型按钮点击事件
+        prevModelButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (allModels.length > 1) {
+                switchToModel(currentModelIndex - 1);
+            }
+        });
+        
+        // 下一个模型按钮点击事件
+        nextModelButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (allModels.length > 1) {
+                switchToModel(currentModelIndex + 1);
+            }
+        });
+        
+        // 设置按钮初始状态
+        async function initModelButtons() {
+            if (allModels.length <= 1) {
+                // 如果只有一个或没有模型，禁用按钮
+                prevModelButton.style.opacity = '0.5';
+                prevModelButton.style.cursor = 'not-allowed';
+                prevModelButton.title = 'No other models available';
+                
+                nextModelButton.style.opacity = '0.5';
+                nextModelButton.style.cursor = 'not-allowed';
+                nextModelButton.title = 'No other models available';
+            } else {
+                // 设置初始工具提示
+                const prevModel = getPrevModelInfo();
+                const nextModel = getNextModelInfo();
+                
+                prevModelButton.title = prevModel ? `Previous: ${prevModel.name}` : 'Previous Model';
+                nextModelButton.title = nextModel ? `Next: ${nextModel.name}` : 'Next Model';
+            }
+            
+            console.log(`Model buttons initialized. Current: ${getCurrentModelInfo()?.name || 'Unknown'} (${currentModelIndex + 1}/${allModels.length})`);
+        }
+        
+        initModelButtons();
+        
+
+        
+        console.log(`Model switching buttons added. Available models: ${allModels.length}`);
         
         // 关闭按钮
         const closeButton = document.createElement('div');
@@ -2090,12 +2257,7 @@ if (isElectron) {
         closeButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (window.electronAPI && window.electronAPI.stopVRMWindow) {
-                window.electronAPI.stopVRMWindow();
-            } else {
-                // 备用方案：直接关闭窗口
-                window.close();
-            }
+            window.close();
         });
         async function initbutton() {
             dragButton.title = await t('dragWindow');
@@ -2103,8 +2265,116 @@ if (isElectron) {
             closeButton.title = await t('closeWindow');
         }
         initbutton();
+
+        // 鼠标穿透锁定按钮
+        const lockButton = document.createElement('div');
+        lockButton.id = 'lock-handle';
+        let isMouseLocked = false; // 初始状态为解锁（不穿透）
+
+        // 初始化状态
+        async function initLockButton() {
+            lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
+            lockButton.style.cssText = `
+                width: 36px;
+                height: 36px;
+                background: rgba(255,255,255,0.95);
+                border: 2px solid rgba(0,0,0,0.1);
+                border-radius: 50%;
+                color: #28a745;
+                cursor: pointer;
+                -webkit-app-region: no-drag;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transition: all 0.2s ease;
+                user-select: none;
+                pointer-events: auto;
+                backdrop-filter: blur(10px);
+                margin-bottom: 8px;
+            `;
+            
+            lockButton.title = await t('UnlockWindow') || 'Unlock Window';
+            updateLockButtonState();
+        }
+
+        // 更新锁定按钮状态
+        function updateLockButtonState() {
+            if (isMouseLocked) {
+                lockButton.innerHTML = '<i class="fas fa-lock"></i>';
+                lockButton.style.color = '#dc3545';
+                lockButton.title = 'Locked (Click to unlock)';
+            } else {
+                lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
+                lockButton.style.color = '#28a745';
+                lockButton.title = 'Unlocked (Click to lock)';
+            }
+        }
+
+        // 切换锁定状态
+        async function toggleMouseLock() {
+            isMouseLocked = !isMouseLocked;
+            
+            if (isMouseLocked) {
+                // 锁定模式：窗口穿透，只有控制面板可交互
+                window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+            } else {
+                // 解锁模式：窗口正常交互
+                window.electronAPI.setIgnoreMouseEvents(false);
+            }
+            
+            updateLockButtonState();
+            
+            // 发送状态更新到主窗口
+            sendToMain('mouseLockStatus', { locked: isMouseLocked });
+        }
+
+        // 添加事件监听
+        lockButton.addEventListener('mouseenter', () => {
+            lockButton.style.background = 'rgba(255,255,255,1)';
+            lockButton.style.transform = 'scale(1.1)';
+            lockButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+        });
+
+        lockButton.addEventListener('mouseleave', () => {
+            lockButton.style.background = 'rgba(255,255,255,0.95)';
+            lockButton.style.transform = 'scale(1)';
+            lockButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+
+        lockButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMouseLock();
+        });
+
+        // 在控制面板鼠标事件中添加特殊处理
+        controlPanel.addEventListener('mouseenter', () => {
+            if (isMouseLocked) {
+                // 在锁定模式下，控制面板保持可交互
+                window.electronAPI.setIgnoreMouseEvents(false);
+            }
+        });
+
+        controlPanel.addEventListener('mouseleave', () => {
+            if (isMouseLocked) {
+                // 离开控制面板时恢复穿透
+                window.electronAPI.setIgnoreMouseEvents(true, { forward: true });
+            }
+        });
+
+        // 在组装控制面板时添加锁定按钮
+        await initLockButton();
+
         // 组装控制面板
         controlPanel.appendChild(dragButton);
+        controlPanel.appendChild(lockButton);
+        controlPanel.appendChild(wsStatusButton);
+        controlPanel.appendChild(subtitleButton);
+        controlPanel.appendChild(idleAnimationButton);
+        controlPanel.appendChild(prevModelButton);
+        controlPanel.appendChild(nextModelButton);
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
@@ -2184,7 +2454,7 @@ if (isElectron) {
         
         // 初始状态：隐藏控制面板
         scheduleHide();
-        
+
         console.log('控制面板已添加到页面');
     }, 1000);
 }
@@ -2294,81 +2564,6 @@ function handleTTSMessage(message) {
     }
 }
 
-// 在 Electron 环境中添加 WebSocket 控制按钮
-if (isElectron) {
-    // 在现有的控制面板创建代码中添加 WebSocket 状态按钮
-    setTimeout(() => {
-        const controlPanel = document.getElementById('control-panel');
-        if (controlPanel) {
-            // WebSocket 状态按钮
-            const wsStatusButton = document.createElement('div');
-            wsStatusButton.id = 'ws-status-handle';
-            wsStatusButton.innerHTML = '<i class="fas fa-wifi"></i>';
-            wsStatusButton.style.cssText = `
-                width: 36px;
-                height: 36px;
-                background: rgba(255,255,255,0.95);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: 50%;
-                color: #333;
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: all 0.2s ease;
-                user-select: none;
-                pointer-events: auto;
-                backdrop-filter: blur(10px);
-                color: ${wsConnected ? '#28a745' : '#dc3545'};
-            `;
-            // WebSocket 状态按钮事件
-            wsStatusButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (wsConnected) {
-                    // 断开连接
-                    if (ttsWebSocket) {
-                        ttsWebSocket.close();
-                    }
-                } else {
-                    // 重新连接
-                    initTTSWebSocket();
-                }
-            });
-            // 添加悬停效果
-            wsStatusButton.addEventListener('mouseenter', () => {
-                wsStatusButton.style.background = 'rgba(255,255,255,1)';
-                wsStatusButton.style.transform = 'scale(1.1)';
-                wsStatusButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-            });
-            
-            wsStatusButton.addEventListener('mouseleave', () => {
-                wsStatusButton.style.background = 'rgba(255,255,255,0.95)';
-                wsStatusButton.style.transform = 'scale(1)';
-                wsStatusButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            });
-            // 更新 WebSocket 状态显示
-            async function updateWSStatus() {
-                wsStatusButton.style.color = wsConnected ? '#28a745' : '#dc3545';
-                wsStatusButton.title = wsConnected ? await t('WebSocketConnected') :await t('WebSocketDisconnected');
-            }
-
-            // 定期更新状态
-            setInterval(updateWSStatus, 1000);
-            
-            // 添加到控制面板（在拖拽按钮后面）
-            const dragButton = controlPanel.querySelector('#drag-handle');
-            if (dragButton) {
-                controlPanel.insertBefore(wsStatusButton, dragButton.nextSibling);
-            } else {
-                controlPanel.appendChild(wsStatusButton);
-            }
-        }
-    }, 1200);
-}
 
 // 在页面加载完成后初始化 WebSocket
 document.addEventListener('DOMContentLoaded', () => {
@@ -2521,7 +2716,13 @@ async function switchToModel(index) {
                 currentVrm = vrm;
                 console.log('New VRM loaded:', vrm);
                 scene.add(vrm.scene);
-                
+                // 让模型投射阴影
+                vrm.scene.traverse((obj) => {
+                    if (obj.isMesh) {
+                        obj.castShadow = true;
+                        obj.receiveShadow = true;   // 如需让模型本身也接收阴影可保留
+                    }
+                });
                 // 设置自然姿势
                 setNaturalPose(vrm);
 
@@ -2652,163 +2853,6 @@ function getPrevModelInfo() {
     if (allModels.length === 0) return null;
     const prevIndex = ((currentModelIndex - 1) % allModels.length + allModels.length) % allModels.length;
     return allModels[prevIndex];
-}
-
-// 在 Electron 环境中添加模型切换按钮
-if (isElectron) {
-    setTimeout(async () => {
-        const controlPanel = document.getElementById('control-panel');
-        if (controlPanel) {
-            // 获取所有模型（只执行一次）
-            await getAllModels();
-            
-            // 向上箭头按钮（切换到上一个模型）
-            const prevModelButton = document.createElement('div');
-            prevModelButton.id = 'prev-model-handle';
-            prevModelButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
-            prevModelButton.style.cssText = `
-                width: 36px;
-                height: 36px;
-                background: rgba(255,255,255,0.95);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: 50%;
-                color: #333;
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: all 0.2s ease;
-                user-select: none;
-                pointer-events: auto;
-                backdrop-filter: blur(10px);
-            `;
-            
-            // 向下箭头按钮（切换到下一个模型）
-            const nextModelButton = document.createElement('div');
-            nextModelButton.id = 'next-model-handle';
-            nextModelButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
-            nextModelButton.style.cssText = `
-                width: 36px;
-                height: 36px;
-                background: rgba(255,255,255,0.95);
-                border: 2px solid rgba(0,0,0,0.1);
-                border-radius: 50%;
-                color: #333;
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                transition: all 0.2s ease;
-                user-select: none;
-                pointer-events: auto;
-                backdrop-filter: blur(10px);
-            `;
-            
-            // 添加悬停效果和工具提示 - 上一个模型按钮
-            prevModelButton.addEventListener('mouseenter', async () => {
-                prevModelButton.style.background = 'rgba(255,255,255,1)';
-                prevModelButton.style.transform = 'scale(1.1)';
-                prevModelButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-                
-                // 显示下一个模型的名称
-                const prevModel = getPrevModelInfo();
-                if (prevModel) {
-                    prevModelButton.title = `${await t('Previous')}: ${prevModel.name}`;
-                }
-            });
-            
-            prevModelButton.addEventListener('mouseleave', () => {
-                prevModelButton.style.background = 'rgba(255,255,255,0.95)';
-                prevModelButton.style.transform = 'scale(1)';
-                prevModelButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            });
-            
-            // 添加悬停效果和工具提示 - 下一个模型按钮
-            nextModelButton.addEventListener('mouseenter', async () => {
-                nextModelButton.style.background = 'rgba(255,255,255,1)';
-                nextModelButton.style.transform = 'scale(1.1)';
-                nextModelButton.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-                
-                // 显示下一个模型的名称
-                const nextModel = getNextModelInfo();
-                if (nextModel) {
-                    nextModelButton.title = `${await t('Next')}: ${nextModel.name}`;
-                }
-            });
-            
-            nextModelButton.addEventListener('mouseleave', () => {
-                nextModelButton.style.background = 'rgba(255,255,255,0.95)';
-                nextModelButton.style.transform = 'scale(1)';
-                nextModelButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            });
-            
-            // 上一个模型按钮点击事件
-            prevModelButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (allModels.length > 1) {
-                    switchToModel(currentModelIndex - 1);
-                }
-            });
-            
-            // 下一个模型按钮点击事件
-            nextModelButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (allModels.length > 1) {
-                    switchToModel(currentModelIndex + 1);
-                }
-            });
-            
-            // 设置按钮初始状态
-            async function initModelButtons() {
-                if (allModels.length <= 1) {
-                    // 如果只有一个或没有模型，禁用按钮
-                    prevModelButton.style.opacity = '0.5';
-                    prevModelButton.style.cursor = 'not-allowed';
-                    prevModelButton.title = 'No other models available';
-                    
-                    nextModelButton.style.opacity = '0.5';
-                    nextModelButton.style.cursor = 'not-allowed';
-                    nextModelButton.title = 'No other models available';
-                } else {
-                    // 设置初始工具提示
-                    const prevModel = getPrevModelInfo();
-                    const nextModel = getNextModelInfo();
-                    
-                    prevModelButton.title = prevModel ? `Previous: ${prevModel.name}` : 'Previous Model';
-                    nextModelButton.title = nextModel ? `Next: ${nextModel.name}` : 'Next Model';
-                }
-                
-                console.log(`Model buttons initialized. Current: ${getCurrentModelInfo()?.name || 'Unknown'} (${currentModelIndex + 1}/${allModels.length})`);
-            }
-            
-            initModelButtons();
-            
-            // 添加到控制面板
-            const wsStatusButton = controlPanel.querySelector('#ws-status-handle');
-            const dragButton = controlPanel.querySelector('#drag-handle');
-            
-            if (wsStatusButton) {
-                controlPanel.insertBefore(nextModelButton, wsStatusButton.nextSibling);
-                controlPanel.insertBefore(prevModelButton, nextModelButton);
-            } else if (dragButton) {
-                controlPanel.insertBefore(nextModelButton, dragButton.nextSibling);
-                controlPanel.insertBefore(prevModelButton, nextModelButton);
-            } else {
-                controlPanel.appendChild(prevModelButton);
-                controlPanel.appendChild(nextModelButton);
-            }
-            
-            console.log(`Model switching buttons added. Available models: ${allModels.length}`);
-        }
-    }, 1300);
 }
 
 animate();
