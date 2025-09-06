@@ -1798,7 +1798,74 @@ if (isElectron) {
         transition: all 0.3s ease;
         pointer-events: none;
         `;
+        // 创建工具提示容器
+        const tooltipContainer = document.createElement('div');
+        tooltipContainer.id = 'control-tooltip-container';
+        tooltipContainer.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+        `;
         
+        const tooltip = document.createElement('div');
+        tooltip.id = 'control-tooltip';
+        tooltip.style.cssText = `
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+        `;
+        
+        tooltipContainer.appendChild(tooltip);
+        document.body.appendChild(tooltipContainer);
+        
+        // 工具提示显示函数 - 现在在左侧显示
+        function showTooltip(button, text) {
+            const rect = button.getBoundingClientRect();
+            tooltip.textContent = text;
+            
+            // 计算位置（在按钮左侧）
+            const topPosition = rect.top + (rect.height - tooltip.offsetHeight) / 2;
+            tooltipContainer.style.left = `${rect.left - tooltip.offsetWidth - 15}px`;
+            tooltipContainer.style.top = `${topPosition}px`;
+            
+            // 显示工具提示
+            tooltipContainer.style.opacity = '1';
+            tooltipContainer.style.transform = 'translateX(0)';
+        }
+        
+        // 隐藏工具提示
+        function hideTooltip() {
+            tooltipContainer.style.opacity = '0';
+            tooltipContainer.style.transform = 'translateX(-10px)';
+        }
+        
+        // 为所有按钮添加悬浮效果
+        const addHoverEffect = (button, text) => {
+            button.addEventListener('mouseenter', (e) => {
+                showTooltip(button, text);
+            });
+            
+            button.addEventListener('mousemove', (e) => {
+                const rect = button.getBoundingClientRect();
+                const topPosition = rect.top + (rect.height - tooltip.offsetHeight) / 2;
+                tooltipContainer.style.left = `${rect.left - tooltip.offsetWidth - 15}px`;
+                tooltipContainer.style.top = `${topPosition}px`;
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+        };
+
         // 拖拽按钮
         const dragButton = document.createElement('div');
         dragButton.id = 'drag-handle';
@@ -2295,20 +2362,20 @@ if (isElectron) {
                 margin-bottom: 8px;
             `;
             
-            lockButton.title = await t('UnlockWindow') || 'Unlock Window';
+            lockButton.title = await t('UnlockWindow');
             updateLockButtonState();
         }
 
         // 更新锁定按钮状态
-        function updateLockButtonState() {
+        async function updateLockButtonState() {
             if (isMouseLocked) {
                 lockButton.innerHTML = '<i class="fas fa-lock"></i>';
                 lockButton.style.color = '#dc3545';
-                lockButton.title = 'Locked (Click to unlock)';
+                lockButton.title = await t('UnlockWindow');
             } else {
                 lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
                 lockButton.style.color = '#28a745';
-                lockButton.title = 'Unlocked (Click to lock)';
+                lockButton.title = await t('LockWindow');
             }
         }
 
@@ -2380,7 +2447,51 @@ if (isElectron) {
         
         // 添加到页面
         document.body.appendChild(controlPanel);
+
+        // 为每个按钮添加悬浮提示
+        addHoverEffect(dragButton, await t('dragWindow'));
+        addHoverEffect(lockButton, isMouseLocked ? await t('UnlockWindow') : await t('LockWindow'));
+        addHoverEffect(wsStatusButton, wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'));
+        addHoverEffect(subtitleButton, isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled'));
+        addHoverEffect(idleAnimationButton, useVRMAIdleAnimations ? 
+            await t('UsingVRMAAnimations') : 
+            await t('UsingProceduralAnimations'));
         
+        // 模型切换按钮
+        const prevModel = getPrevModelInfo();
+        const nextModel = getNextModelInfo();
+        addHoverEffect(prevModelButton, prevModel ? `${await t('Previous')}: ${prevModel.name}` : await t('NoPreviousModel'));
+        addHoverEffect(nextModelButton, nextModel ? `${await t('Next')}: ${nextModel.name}` : await t('NoNextModel'));
+        
+        addHoverEffect(refreshButton, await t('refreshWindow'));
+        addHoverEffect(closeButton, await t('closeWindow'));
+        
+        // 当状态变化时更新工具提示
+        async function updateButtonTooltips() {
+            // 更新锁定按钮提示
+            addHoverEffect(lockButton, isMouseLocked ? await t('UnlockWindow') : await t('LockWindow'));
+            
+            // 更新WebSocket状态提示
+            addHoverEffect(wsStatusButton, wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'));
+            
+            // 更新字幕按钮提示
+            addHoverEffect(subtitleButton, isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled'));
+            
+            // 更新闲置动画按钮提示
+            addHoverEffect(idleAnimationButton, useVRMAIdleAnimations ? 
+                await t('UsingVRMAAnimations') : 
+                await t('UsingProceduralAnimations'));
+            
+            // 更新模型切换按钮提示
+            const prevModel = getPrevModelInfo();
+            const nextModel = getNextModelInfo();
+            addHoverEffect(prevModelButton, prevModel ? `${await t('Previous')}: ${prevModel.name}` : await t('NoPreviousModel'));
+            addHoverEffect(nextModelButton, nextModel ? `${await t('Next')}: ${nextModel.name}` : await t('NoNextModel'));
+        }
+        
+        // 定期更新提示（状态变化时也需要调用）
+        setInterval(updateButtonTooltips, 1000);
+
         // 显示/隐藏控制逻辑
         let hideTimeout;
         let isControlPanelHovered = false;
