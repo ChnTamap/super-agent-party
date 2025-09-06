@@ -746,7 +746,7 @@ key3`,
         'getModelsList': '获取模型列表',
         "defaultTTS": "默认语音合成",
         "addNewTTS": "新增语音合成",
-        "ttsName": "语音名称",
+        "ttsName": "音色名（可以为【旁白】，也可以是角色名，最好和你的角色卡的名字一致）",
     },
     'en-US': {
         'chat': 'Chat',
@@ -1492,8 +1492,7 @@ Key3`,
         'getModelsList': 'Get models list',
         "defaultTTS": "Default TTS",
         "addNewTTS": "Add New TTS",
-        "ttsName": "TTS Name",
+        "ttsName": "Sound name (can be [narrator] or character name, preferably the same as the name of your character card)",
         "VRMAactionDeleted":"VRMA action deleted",
-        
     }
   };
