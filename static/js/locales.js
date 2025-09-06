@@ -744,6 +744,9 @@ key3`,
         'ttsNotEnabled': '语音合成未启用',
         'getAPIkey': '获取API密钥或者说明文档',
         'getModelsList': '获取模型列表',
+        "defaultTTS": "默认语音合成",
+        "addNewTTS": "新增语音合成",
+        "ttsName": "语音名称",
     },
     'en-US': {
         'chat': 'Chat',
@@ -1487,5 +1490,10 @@ Key3`,
         'ttsNotEnabled': 'TTS is not enabled',
         'getAPIkey': 'Get the API key or documentation',
         'getModelsList': 'Get models list',
+        "defaultTTS": "Default TTS",
+        "addNewTTS": "Add New TTS",
+        "ttsName": "TTS Name",
+        "VRMAactionDeleted":"VRMA action deleted",
+        
     }
   };

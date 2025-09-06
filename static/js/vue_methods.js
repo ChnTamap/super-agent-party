@@ -6331,13 +6331,13 @@ let vue_methods = {
         // 自动保存设置
         await this.autoSaveSettings();
         
-        showNotification('VRMA动作已删除');
+        showNotification(t("VRMAactionDeleted"));
       } else {
-        showNotification(`删除失败: ${result.message}`, 'error');
+        showNotification(`error: ${result.message}`, 'error');
       }
     } catch (error) {
       console.error('删除VRMA动作失败:', error);
-      showNotification('删除失败，请稍后再试', 'error');
+      showNotification(error, 'error');
     }
   },
 
@@ -6648,5 +6648,52 @@ let vue_methods = {
           console.error('Error:', error);
         }
     },
+
+  openAddTTSDialog() {
+    this.newTTSConfig = {
+      name: '',
+      enabled: false,
+      engine: 'edgetts',
+      edgettsLanguage: 'zh-CN',
+      edgettsGender: 'Female',
+      edgettsVoice: 'XiaoyiNeural',
+      edgettsRate: 1.0,
+      gsvServer: "http://127.0.0.1:9880",
+      gsvTextLang: 'zh',
+      gsvRate: 1.0,
+      gsvPromptLang: 'zh',
+      gsvPromptText: '',
+      gsvRefAudioPath: '',
+      gsvAudioOptions: [],
+      selectedProvider: null,
+      vendor: "OpenAI",
+      model: "",
+      base_url: "",
+      api_key: "",
+      openaiVoice:"alloy",
+      openaiSpeed: 1.0,
+      customTTSserver: "http://127.0.0.1:9880",
+      customTTSspeaker: "",
+      customTTSspeed: 1.0,
+    };
+    this.showAddTTSDialog = true;
+  },
+
+  saveNewTTSConfig() {
+    const name = this.newTTSConfig.name;
+    if (!name) return;
+
+    this.ttsSettings.newtts[name] = { ...this.newTTSConfig };
+    this.showAddTTSDialog = false;
+  },
+
+  deleteTTS(name) {
+    delete this.ttsSettings.newtts[name];
+  },
+
+  editTTS(name) {
+    this.newTTSConfig = { ...this.ttsSettings.newtts[name] };
+    this.showAddTTSDialog = true;
+  },
 
 }
