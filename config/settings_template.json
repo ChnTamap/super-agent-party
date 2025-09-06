@@ -112,7 +112,12 @@
     "knowledgeBases": [],
     "KBSettings": {
       "when": "before_thinking",
-      "is_rerank": false
+      "is_rerank": false,
+      "selectedProvider": null,
+      "model": "",
+      "base_url": "",
+      "api_key": "",
+      "top_n": 5
     },
     "modelProviders": [],
     "agents": {},

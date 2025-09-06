@@ -2096,12 +2096,7 @@ if (isElectron) {
         closeButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (window.electronAPI && window.electronAPI.stopVRMWindow) {
-                window.electronAPI.stopVRMWindow();
-            } else {
-                // 备用方案：直接关闭窗口
-                window.close();
-            }
+            window.close();
         });
         async function initbutton() {
             dragButton.title = await t('dragWindow');

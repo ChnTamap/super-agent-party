@@ -391,25 +391,23 @@ app.whenReady().then(async () => {
       app.exit();
     })
 
-    let vrmWindow = null;
+    let vrmWindows = []; 
 
-    ipcMain.handle('start-vrm-window', async (_,windowConfig = {}) => {
-      if (vrmWindow) {
-        vrmWindow.focus();
-        return;
-      }
-
+    ipcMain.handle('start-vrm-window', async (_, windowConfig = {}) => {
       const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-      
+
       // 使用传入的配置或默认值
       const windowWidth = windowConfig.width || 540;
       const windowHeight = windowConfig.height || 960;
-      
-      vrmWindow = new BrowserWindow({
+
+      const x = windowConfig.x !== undefined ? windowConfig.x : width - windowWidth - 40;
+      const y = windowConfig.y !== undefined ? windowConfig.y : 0;
+
+      const vrmWindow = new BrowserWindow({
         width: windowWidth,
         height: windowHeight,
-        x: width-windowWidth-40, 
-        y: 0, 
+        x,
+        y,
         transparent: true,
         frame: false,
         resizable: false,
@@ -431,21 +429,36 @@ app.whenReady().then(async () => {
           preload: path.join(__dirname, 'static/js/preload.js')
         }
       });
+
       // 加载页面
       await vrmWindow.loadURL(`http://${HOST}:${PORT}/vrm.html`);
 
+      // 保存窗口引用
+      vrmWindows.push(vrmWindow);
+
       // 窗口关闭处理
       vrmWindow.on('closed', () => {
-        vrmWindow = null;
+        vrmWindows = vrmWindows.filter(w => w !== vrmWindow);
       });
 
+      return vrmWindow.id;  // 可选：返回窗口 ID 用于后续操作
     });
 
-    // 停止VRM窗口
-    ipcMain.handle('stop-vrm-window', () => {
-      if (vrmWindow && !vrmWindow.isDestroyed()) {
-        vrmWindow.close();
-        vrmWindow = null;
+    ipcMain.handle('stop-vrm-window', (_, windowId) => {
+      if (windowId !== undefined) {
+        const win = vrmWindows.find(w => w.id === windowId);
+        if (win && !win.isDestroyed()) {
+          win.close();
+        }
+        vrmWindows = vrmWindows.filter(w => w.id !== windowId);
+      } else {
+        // 关闭所有窗口
+        vrmWindows.forEach(win => {
+          if (!win.isDestroyed()) {
+            win.close();
+          }
+        });
+        vrmWindows = [];
       }
     });
     // 检查更新IPC
