@@ -6061,11 +6061,17 @@ let vue_methods = {
     }
   },
   async rewrite(index){
-    // 删除this.messages中从index起之后的所有元素，包括index
-    this.messages.splice(index);
-    this.userInput = this.messages[index-1].pure_content??this.messages[index-1].content;
-    // 删除this.messages中最后一个元素
-    this.messages.pop();
+    if (index != 1){
+      // 删除this.messages中从index起之后的所有元素，包括index
+      this.messages.splice(index);
+      this.userInput = this.messages[index-1].pure_content??this.messages[index-1].content;
+      // 删除this.messages中最后一个元素
+      this.messages.pop();
+    }else{
+      // 替换开场白
+      this.randomGreetings();
+    }
+
     await this.sendMessage();
   },
   async updateProxy(){
