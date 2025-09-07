@@ -486,7 +486,13 @@ let vue_data = {
       userModels: [],     // 存储用户上传的模型
       defaultMotions: [], // 存储默认动作
       userMotions: [],     // 存储用户上传的动作
-      selectedMotionIds: []
+      selectedMotionIds: [],
+      newVRM:{}
+    },
+    newAppearanceConfig: {
+      name: '',
+      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedMotionIds: [],
     },
     showVrmaMotionDialog: false,
     newVrmaMotion: {

@@ -1947,7 +1947,39 @@ if ('serviceWorker' in navigator) {
               </div>
               <!-- 角色形象 -->
               <div v-show="subMenu === 'appearance'" class="page">
-                
+                <div class="provider-grid">
+                  <!-- 已有 形象 配置磁贴 -->
+                  <div v-for="(config, name) in VRMConfig.newVRM" :key="name" class="provider-card knowledge-card">
+                    <div class="card-header">
+                      <el-switch v-model="config.enabled"></el-switch>
+                      <div class="card-actions">
+                        <el-button @click="editAppearance(name)" type="primary" circle size="small">
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button @click="deleteAppearance(name)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="kb-content">
+                      <h3 class="kb-title">{{ t(name) }}</h3>
+                      <div class="kb-meta">
+                        <div class="kb-meta-item">
+                          <el-icon class="kb-icon">
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          <span>{{ config.selectedModelId }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 添加新 形象 磁贴 -->
+                  <div class="provider-card add-tile" @click="openAddAppearanceDialog">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewAppearance') }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
