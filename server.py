@@ -4142,10 +4142,10 @@ async def text_to_speech(request: Request):
         text = data['text']
         if text == "":
             return JSONResponse(status_code=400, content={"error": "Text is empty"})
+        new_voice = data.get('voice','default')
         tts_settings = data['ttsSettings']
         index = data['index']
         tts_engine = tts_settings.get('engine', 'edgetts')
-        new_voice = data.get('voice','default')
         if tts_engine == 'edgetts':
             edgettsLanguage = tts_settings.get('edgettsLanguage', 'zh-CN')
             edgettsVoice = tts_settings.get('edgettsVoice', 'XiaoyiNeural')
