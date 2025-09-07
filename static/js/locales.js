@@ -758,6 +758,7 @@ key3`,
         'role':'角色',
         'CharacterVoice':'角色语音',
         'CharacterAppearance':'角色外观',
+        "noNet":' (免费！但中国网络环境无法访问，且不稳定！)',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1516,5 +1517,6 @@ Key3`,
         'role': 'Role',
         'CharacterVoice': 'Character Voice',
         'CharacterAppearance': 'Character Appearance',
+        "noNet":' (FREE! The Chinese network environment cannot be accessed，Unstable!)',
     }
   };
