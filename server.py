@@ -551,6 +551,21 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
     return messages
 
 async def tools_change_messages(request: ChatRequest, settings: dict):
+    newttsList = []
+    if settings['ttsSettings']['newtts']:
+        # 遍历settings['ttsSettings']['newtts']，获取所有包含enabled: true的key
+        for key in settings['ttsSettings']['newtts']:
+            if settings['ttsSettings']['newtts'][key]['enabled']:
+                newttsList.append(key)
+        if newttsList:
+            newttsList.append('default')
+            newttsList = json.dumps(newttsList,ensure_ascii=False)
+            print(f"可用音色：{newttsList}")
+            newtts_messages = f"你可以使用以下音色：\n{newttsList}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括，或者使用<default></default>括起来。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<旁白>现在是下午三点，她说道：</旁白><角色名>”天气真好哇！“</角色名><旁白>说完她伸了个懒腰。</旁白>\n\n"
+            if request.messages and request.messages[0]['role'] == 'system':
+                request.messages[0]['content'] = newtts_messages + request.messages[0]['content']
+            else:
+                request.messages.insert(0, {'role': 'system', 'content': newtts_messages})
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'beforeThinking':
         time_message = f"消息发送时间：{local_timezone}  {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n\n"
         request.messages[-1]['content'] = time_message + request.messages[-1]['content']
@@ -590,6 +605,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
             request.messages[0]['content'] += Expression_messages
         else:
             request.messages.insert(0, {'role': 'system', 'content': Expression_messages})
+    print(f"系统提示：{request.messages[0]['content']}")
     return request
 
 def get_drs_stage(DRS_STAGE):

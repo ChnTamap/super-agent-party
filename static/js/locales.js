@@ -751,7 +751,8 @@ key3`,
         'UnlockWindow':'窗口已锁定（点击解锁）',
         'gotoComfyui':'如果想使用comfyui,请点击跳转',
         'ComfyuiInterface':'comfyui界面',
-        'text2imgNotice':'默认使用免费的Pollinations，你可以切换到类openai接口，以使用其他模型。'
+        'text2imgNotice':'默认使用免费的Pollinations，你可以切换到类openai接口，以使用其他模型。',
+        'translateAndMark':'翻译并标注音色'
     },
     'en-US': {
         'chat': 'Chat',
@@ -1504,5 +1505,6 @@ Key3`,
         'gotoComfyui':'If you want to use comfyui, please click to jump',
         'ComfyuiInterface':'Comfyui Interface',
         'text2imgNotice':'The free Pollinations are used by default, and you can switch to the OpenAI Like interface to use other models.',
+        'translateAndMark':'Translate and Label Voice'
     }
   };

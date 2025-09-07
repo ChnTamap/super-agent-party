@@ -1440,8 +1440,8 @@ let vue_methods = {
                     } = this.splitTTSBuffer(tts_buffer);
                     // 将完整的句子添加到 ttsChunks
                     if (chunks.length > 0) {
-                      lastMessage.ttsChunks.push(...chunks);
                       lastMessage.chunks_voice.push(...chunks_voice);
+                      lastMessage.ttsChunks.push(...chunks);
                     }
                     // 更新 tts_buffer 为剩余部分
                     tts_buffer = remaining;
@@ -1506,21 +1506,9 @@ let vue_methods = {
         // 循环结束后，处理 tts_buffer 中的剩余内容
         if (tts_buffer.trim() && this.ttsSettings.enabled) {
           const lastMessage = this.messages[this.messages.length - 1];
-          const {
-            chunks,
-            chunks_voice,
-            remaining,
-            remaining_voice
-          } = this.splitTTSBuffer(tts_buffer);
-          if (chunks.length > 0) {
-            lastMessage.ttsChunks.push(...chunks);
-            lastMessage.chunks_voice.push(...chunks_voice);
-          }
-          if (remaining) {
-            lastMessage.ttsChunks.push(remaining);
-            lastMessage.chunks_voice.push(remaining_voice);
-          }
-          console.log(lastMessage.ttsChunks)
+          // 这里不需要再次调用 splitTTSBuffer，因为 remaining 已经是清理后的文本
+          lastMessage.chunks_voice.push(this.cur_voice);
+          lastMessage.ttsChunks.push(tts_buffer);
         }
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1584,7 +1572,22 @@ let vue_methods = {
         try {
             const abortController = new AbortController();
             this.abortController = abortController;
-
+            // 遍历this.ttsSettings.newtts，获取所有包含enabled: true的key,放到newttsList中
+            let newttsList = [];
+            if (this.ttsSettings.newtts){
+              for (const key in this.ttsSettings.newtts) {
+                if (this.ttsSettings.newtts[key].enabled) {
+                  newttsList.push(key);
+                }
+              }
+            }
+            let tts_msg = ""
+            if (newttsList == []){
+                tts_msg = "如果被翻译的文字与目标语言一致，则返回原文即可"
+            }else{
+                tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
+            }
+                
             const response = await fetch('/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1593,7 +1596,7 @@ let vue_methods = {
                     messages: [
                         {
                             role: "system",
-                            content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。`
+                            content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。${tts_msg}`
                         },
                         {
                             role: "user",
@@ -4847,7 +4850,7 @@ let vue_methods = {
      * }
      */
     splitTTSBuffer(buffer) {
-      // 0. 清理 emoji / markdown / html 等，保持原来逻辑
+      // 0. 清理
       buffer = buffer
         .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
         .replace(/[*_~`]/g, '')
@@ -4864,83 +4867,77 @@ let vue_methods = {
         };
       }
 
-      // 1. 将分隔符里的转义字符还原
-      const separators = this.ttsSettings.separators.map(s =>
-        s.replace(/\\n/g, '\n')
-        .replace(/\\t/g, '\t')
-        .replace(/\\r/g, '\r')
-      );
+      // 1. 还原分隔符里的转义
+      const separators = (this.ttsSettings.separators || [])
+        .map(s => s.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r'));
 
-      // 2. 正则：一次匹配三种东西 —— 开标签 / 闭标签 / 任意分隔符
-      // 开标签：<voiceName> 且 voiceName 必须在 this.ttsSettings.newtts 里
-      const openTagRe = new RegExp(
-        `<(${Object.keys(this.ttsSettings.newtts || {}).join('|')})>`,
-      );
-      const closeTagRe = /<\/\w+>/gi;          // </任意标签>
-      const sepRe = new RegExp(separators.map(this.escapeRegExp).join('|'), 'g');
+      // 2. 构造正则：确保至少有一个合法捕获组
+      const voiceKeys = ['default', ...Object.keys(this.ttsSettings.newtts || {})]
+        .filter(Boolean);
+      const openTagRe = new RegExp(`<(${voiceKeys.join('|')})>`, 'gi');
+      const closeTagRe = /<\/\w+>/gi;
+      
+      // 修复分隔符正则表达式
+      const sepRe = separators.length
+        ? new RegExp(separators.map(s => {
+            // 对正则特殊字符进行转义
+            return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          }).join('|'), 'g')
+        : /$^/;
 
+      // 3. 扫描 token
       const tokens = [];
-      let lastIndex = 0;
+      const pushToken = (type, value, index) => tokens.push({ type, value, index });
 
-      // 构造 token 列表（标签 / 分隔符 / 普通文本）
-      function pushToken(type, value, index) {
-        tokens.push({ type, value, index });
-      }
-
-      // 扫描所有标签
       let m;
-      while ((m = openTagRe.exec(buffer)) !== null) pushToken('open', m[1], m.index);
       openTagRe.lastIndex = 0;
-      while ((m = closeTagRe.exec(buffer)) !== null) pushToken('close', m[0], m.index);
-      closeTagRe.lastIndex = 0;
-      while ((m = sepRe.exec(buffer)) !== null) pushToken('sep', m[0], m.index);
-      sepRe.lastIndex = 0;
+      while ((m = openTagRe.exec(buffer)) !== null) pushToken('open', m[1], m.index);
 
-      // 按出现顺序排序
+      closeTagRe.lastIndex = 0;
+      while ((m = closeTagRe.exec(buffer)) !== null) pushToken('close', m[0], m.index);
+
+      sepRe.lastIndex = 0;
+      while ((m = sepRe.exec(buffer)) !== null) pushToken('sep', m[0], m.index);
+
       tokens.sort((a, b) => a.index - b.index);
 
-      // 3. 逐段切分
+      // 4. 逐段切分
       const chunks = [];
       const chunks_voice = [];
-      let currentVoice = this.cur_voice || 'default';
-      let segmentStart = 0;   // 普通文本起始
+      let currentVoice = (this.cur_voice || 'default')
+      let segmentStart = 0;
 
-      function emitText(upTo, voice) {
-        const text = buffer.slice(segmentStart, upTo);
-        if (text.trim()) {
-          const cleaned = text.replace(/\s+/g, ' ').trim();
-          if (!this.isOnlyPunctuationAndWhitespace(cleaned)) {
-            chunks.push(cleaned);
-            chunks_voice.push(voice);
-          }
+      const emitText = (endIdx, voice) => {
+        const text = buffer.slice(segmentStart, endIdx);
+        const cleaned = text.replace(/\s+/g, ' ').trim();
+        if (cleaned && !/^[\s\p{P}]*$/u.test(cleaned)) {
+          chunks.push(cleaned);
+          chunks_voice.push(voice);
         }
-      }
+      };
 
       for (const tok of tokens) {
         switch (tok.type) {
-          case 'open': {
-            emitText.call(this, tok.index, currentVoice);
-            segmentStart = tok.index + tok.value.length + 2; // 跳过 <voice1>
-            currentVoice = tok.value.toLowerCase();
+          case 'open':
+            emitText(tok.index, currentVoice);
+            segmentStart = tok.index + `<${tok.value}>`.length;
+            currentVoice = tok.value
             break;
-          }
-          case 'close': {
-            emitText.call(this, tok.index, currentVoice);
+          case 'close':
+            emitText(tok.index, currentVoice);
             segmentStart = tok.index + tok.value.length;
-            currentVoice = 'default'; // 回到默认
+            currentVoice = 'default';
             break;
-          }
-          case 'sep': {
-            emitText.call(this, tok.index + tok.value.length, currentVoice);
+          case 'sep':
+            emitText(tok.index, currentVoice); // 修改为在分隔符之前结束
             segmentStart = tok.index + tok.value.length;
             break;
-          }
         }
       }
 
-      // 4. 剩余
+      // 5. 剩余
       const remaining = buffer.slice(segmentStart);
-      const remaining_voice = currentVoice;
+      const remaining_voice = currentVoice || this.cur_voice || 'default';
 
       return { chunks, chunks_voice, remaining, remaining_voice };
     },
@@ -4984,7 +4981,17 @@ let vue_methods = {
       while (this.TTSrunning) {
         if (nextIndex == 0){
           let remainingText = lastMessage.ttsChunks?.[0] || '';
-          if (remainingText && this.ttsSettings.bufferWordList.length > 0){
+          // 遍历this.ttsSettings.newtts，获取所有包含enabled: true的key,放到newttsList中
+          let newttsList = [];
+          if (remainingText && this.ttsSettings.newtts){
+            for (const key in this.ttsSettings.newtts) {
+              if (this.ttsSettings.newtts[key].enabled) {
+                newttsList.push(key);
+              }
+            }
+          }
+          
+          if (remainingText && this.ttsSettings.bufferWordList.length > 0  && newttsList == []){
             for (const exp of this.expressionMap) {
               const regex = new RegExp(exp, 'g');
               if (remainingText.includes(exp)) {
@@ -6656,7 +6663,7 @@ let vue_methods = {
   openAddTTSDialog() {
     this.newTTSConfig = {
       name: '',
-      enabled: false,
+      enabled: true,
       engine: 'edgetts',
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',
