@@ -5468,7 +5468,27 @@ let vue_methods = {
         this.isVRMStarting = true;
         const windowConfig = {
           width: this.VRMConfig.windowWidth,
-          height: this.VRMConfig.windowHeight
+          height: this.VRMConfig.windowHeight,
+        };
+        await window.electronAPI.startVRMWindow(windowConfig);
+      } catch (error) {
+        console.error('启动失败:', error);
+      } finally {
+        this.isVRMStarting = false;
+      }
+    } else {
+      // 浏览器环境
+      window.open(`${this.partyURL}/vrm.html`, '_blank');
+    }
+  },
+    async startNewVRM(name) {
+    if (this.isElectron) {
+      // Electron 环境
+      try {
+        this.isVRMStarting = true;
+        const windowConfig = {
+          width: this.VRMConfig.windowWidth,
+          height: this.VRMConfig.windowHeight,
         };
         await window.electronAPI.startVRMWindow(windowConfig);
       } catch (error) {
@@ -6702,6 +6722,7 @@ let vue_methods = {
 
     this.ttsSettings.newtts[name] = { ...this.newTTSConfig };
     this.showAddTTSDialog = false;
+    this.autoSaveSettings();
   },
 
   deleteTTS(name) {
@@ -6713,4 +6734,29 @@ let vue_methods = {
     this.showAddTTSDialog = true;
   },
 
+  openAddAppearanceDialog() {
+    this.newAppearanceConfig = {
+      name: '',
+      windowWidth: 540,
+      windowHeight: 960,
+      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedMotionIds: [],
+    };
+    this.showAddAppearanceDialog = true;
+  },
+  editAppearance(name) {
+    this.newAppearanceConfig = { ...this.VRMConfig.newVRM[name] };
+    this.showAddAppearanceDialog = true;
+  },
+  deleteAppearance(name) {
+    delete this.VRMConfig.newVRM[name];
+  },
+  saveNewAppearanceConfig() {
+    const name = this.newAppearanceConfig.name;
+    if (!name) return;
+
+    this.VRMConfig.newVRM[name] = { ...this.newAppearanceConfig };
+    this.showAddAppearanceDialog = false;
+    this.autoSaveSettings();
+  },
 }

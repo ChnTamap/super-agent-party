@@ -5,7 +5,10 @@ const { remote } = require('@electron/remote/main')
 // 与 main.js 保持一致的服务器配置
 const HOST = '127.0.0.1'
 const PORT = 3456
-
+// 获取从主进程传递的配置数据
+const windowConfig = {
+    windowName: "default",
+};
 // 暴露基本的ipcRenderer给骨架屏页面使用
 contextBridge.exposeInMainWorld('electron', {
   isMac: process.platform === 'darwin',
@@ -67,4 +70,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getServerInfo: () => ipcRenderer.invoke('get-server-info'),
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
   getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
+    // 修改：添加回调参数
+    getWindowConfig: (callback) => {
+        if (windowConfig.windowName !== "default") {
+            // 如果配置已更新，直接返回
+            callback(windowConfig);
+        } else {
+            // 如果配置未更新，监听更新事件
+            const handler = (event) => {
+                callback(event.detail);
+                window.removeEventListener('window-config-updated', handler);
+            };
+            window.addEventListener('window-config-updated', handler);
+        }
+    },
+});
+
+// 在文件末尾添加以下代码来接收主进程传递的配置
+ipcRenderer.on('set-window-config', (event, config) => {
+    Object.assign(windowConfig, config);
+    console.log('收到窗口配置:', windowConfig);
+    
+    // 添加：配置更新后发送事件通知页面
+    window.dispatchEvent(new CustomEvent('window-config-updated', {
+        detail: windowConfig
+    }));
 });

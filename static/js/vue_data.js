@@ -478,6 +478,7 @@ let vue_data = {
       file: null
     },
     VRMConfig: {
+      name: 'default',
       enabledExpressions: false,
       selectedModelId: 'alice', // 默认选择Alice模型
       windowWidth: 540,
@@ -491,9 +492,12 @@ let vue_data = {
     },
     newAppearanceConfig: {
       name: '',
+      windowWidth: 540,
+      windowHeight: 960,
       selectedModelId: 'alice', // 默认选择Alice模型
       selectedMotionIds: [],
     },
+    showAddAppearanceDialog: false,
     showVrmaMotionDialog: false,
     newVrmaMotion: {
       name: '',
