@@ -191,10 +191,6 @@ let vue_methods = {
       this.activeMenu = 'toolkit';
       this.subMenu = 'sticker';
     },
-    switchToComfyui(){
-      this.activeMenu = 'toolkit';
-      this.subMenu = 'comfyui';
-    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()
@@ -425,6 +421,10 @@ let vue_methods = {
       if (key === 'model-config') {
         this.activeMenu = 'model-config';
         this.subMenu = 'service'; // 默认显示第一个子菜单
+      }
+      else if (key === 'role') {
+        this.activeMenu = 'role';
+        this.subMenu = 'memory'; // 默认显示第一个子菜单
       }
       else if (key === 'toolkit') {
         this.activeMenu = 'toolkit';

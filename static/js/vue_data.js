@@ -837,6 +837,11 @@ let vue_data = {
     { language: "zu-ZA", gender: "Female", name: "ThandoNeural" },
     { language: "zu-ZA", gender: "Male", name: "ThembaNeural" }
 ],
+    roleTiles:[
+        { id: 'memory', title: 'CharacterMemory', icon: 'fa-solid fa-brain' },
+        { id: 'voice', title: 'CharacterVoice', icon: 'fa-solid fa-volume-high' },
+        { id: 'appearance', title: 'CharacterAppearance', icon: 'fa-solid fa-person' },
+    ],
     modelTiles: [
       { id: 'service', title: 'modelService', icon: 'fa-solid fa-cloud' },
       { id: 'main', title: 'mainModel', icon: 'fa-solid fa-microchip' },
@@ -850,7 +855,6 @@ let vue_data = {
       { id: 'tools', title: 'utilityTools', icon: 'fa-solid fa-screwdriver-wrench' },
       { id: 'websearch', title: 'webSearch', icon: 'fa-solid fa-globe' },
       { id: 'document', title: 'knowledgeBase', icon: 'fa-solid fa-book' },
-      { id: 'memory', title: 'memory', icon: 'fa-solid fa-brain'},
       { id: 'interpreter', title: 'interpreter', icon: 'fa-solid fa-code'},
       { id: 'sticker', title: 'sticker/image', icon: 'fa-solid fa-face-smile'},
       { id: 'HA', title: 'homeAssistant', icon: 'fa-solid fa-house'},
