@@ -284,7 +284,7 @@ async function startBackend() {
 
 // 修改等待后端函数
 async function waitForBackend() {
-  const MAX_RETRIES = 30
+  const MAX_RETRIES = 200
   const RETRY_INTERVAL = 500
   let retries = 0
 
