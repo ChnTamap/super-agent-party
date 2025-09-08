@@ -1405,7 +1405,7 @@ if ('serviceWorker' in navigator) {
                             />
                           </el-form-item>
                           <div style="text-align:right">
-                            <el-button circle size="small" type="primary" @click="clearBook(idx)">
+                            <el-button circle size="small" type="default" @click="clearBook(idx)">
                               <i class="fa-solid fa-eraser"></i>
                             </el-button>
                             <el-button
@@ -2271,6 +2271,19 @@ if ('serviceWorker' in navigator) {
             <div class="suite-content">
               <!-- 模型服务界面 -->
               <div v-show="subMenu === 'service'" class="page">
+               <!-- 顶部说明条 -->
+                <div class="toolbar">
+                    <el-alert
+                      :title="t('modelConfigDescription')"
+                      type="info"
+                      :closable="false"
+                      class="mb-2"
+                    >
+                      1. {{ t('localConfigNotice') }}<br>
+                      2. {{ t('localConfigNotice02') }}<br>
+                      3. {{ t('localConfigNotice03') }}<br>
+                    </el-alert>
+                </div>
                 <!-- 磁贴网格 -->
                 <div class="provider-grid">
                   <!-- 已有供应商磁贴 -->

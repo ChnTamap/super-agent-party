@@ -701,7 +701,7 @@ const translations = {
 key2
 key3`,
         'contentPlaceholder': '请输入当提及相关关键词，会添加到上下文中的相关内容',
-        "firstGreeting": "开场白",
+        "firstGreetings": "开场白",
         'firstMes': '开场白',
         'alternateGreeting': '额外开场白',
         'keys': '关键词(每行一个)',
@@ -763,6 +763,9 @@ key3`,
         "noNet":' (免费！但中国网络环境无法访问，且不稳定！)',
         'addNewAppearance':'新增角色外观',
         'AppearanceName':'外观名称',
+        'localConfigNotice02':'点击钥匙按钮，可以跳转到API key的获取网页或者github相关文档',
+        'localConfigNotice03':'点击放大镜按钮，可以获取模型列表，如果没有获取到，可能是该供应商不支持获取模型列表（例如火山引擎），或者API key不正确',
+        'modelConfigDescription':'模型配置说明',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1453,19 +1456,19 @@ key3`,
         'characterDescriptionPlaceholder':' Please enter character description ',
         'Personality':' Character ',
         'personalityPlaceholder':' Please enter character ',
-        'MesExample':' Dialogue Example ',
+        'mesExample':' Dialogue Example ',
         'mesExamplePlaceholder':`Please enter a conversation example, for example:
 {{User}}: Hello
 {{char}}: Hello`,
         'systemPromptPlaceholder':'Please enter the system prompt ',
-        'Character Book':'Character Book ',
-        'KeysPlaceholder':`key1
+        'characterBook':'Character Book ',
+        'keysPlaceholder':`key1
 Key2
 Key3`,
-        'ContentPlaceholder':'Please enter relevant content that will be added to the context when relevant keywords are mentioned',
+        'contentPlaceholder':'Please enter relevant content that will be added to the context when relevant keywords are mentioned',
         "firstGreetings": "Opening remarks",
-        'FirstMes': 'Opening remarks',
-        'AlternateGreetings': 'Extra opening remarks',
+        'firstMes': 'Opening remarks',
+        'alternateGreeting': 'Extra opening remarks',
         'keys': 'Keys (one per line)',
         'content': 'Content',
         'userName': 'User Name',
@@ -1526,5 +1529,8 @@ Key3`,
         "noNet":' (FREE! The Chinese network environment cannot be accessed，Unstable!)',
         'addNewAppearance': 'Add New Appearance',
         'AppearanceName': 'Appearance Name',
+        'localConfigNotice02':'Click the key button to jump to the API key acquisition webpage or github related documentation',
+        'localConfigNotice03':'Click the magnifying glass button to get the model list. If you don not get it, it may be that the supplier does not support getting the model list (such as Volcano Engine), or the API key is incorrect',
+        'modelConfigDescription':'Model configuration description',
     }
   };
