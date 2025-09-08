@@ -4787,13 +4787,6 @@ if ('serviceWorker' in navigator) {
                               <el-option :label="t('both')" value="both"></el-option>
                             </el-select>
                           </el-form-item>
-                          <!-- 新增参数设置 -->
-                          <el-form-item :label="t('rerankEnable')" class="form-item-align" label-position="left">
-                            <el-switch
-                              v-model="KBSettings.is_rerank"
-                              @change="autoSaveSettings"
-                            ></el-switch>
-                          </el-form-item>
                           <el-form-item :label="t('returnChunks')" class="form-item-align">
                             <el-slider
                               v-model="KBSettings.top_n"
@@ -4803,8 +4796,15 @@ if ('serviceWorker' in navigator) {
                               @input="autoSaveSettings"
                             />
                           </el-form-item>
+                          <!-- 新增参数设置 -->
+                          <el-form-item :label="t('rerankEnable')" class="form-item-align" label-position="left">
+                            <el-switch
+                              v-model="KBSettings.is_rerank"
+                              @change="autoSaveSettings"
+                            ></el-switch>
+                          </el-form-item>
                           <!-- 模型参数 -->
-                          <el-form-item :label="t('rerankProvider')" class="form-item-align">
+                          <el-form-item :label="t('rerankProvider')" class="form-item-align" v-show="KBSettings.is_rerank">
                             <el-select
                               v-model="KBSettings.selectedProvider"
                               :placeholder="t('selectProvider')"
@@ -4835,7 +4835,7 @@ if ('serviceWorker' in navigator) {
                             class="mb-2"
                           >
                             <template #default>
-                              <div class="alert-content">
+                              <div class="alert-content" v-show="KBSettings.is_rerank">
                                 {{ t('firstTimeUse') }}
                                 <el-link
                                   type="primary"
