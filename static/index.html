@@ -1522,7 +1522,7 @@ if ('serviceWorker' in navigator) {
                   <!-- 已有 TTS 配置磁贴 -->
                   <div v-for="(config, name) in ttsSettings.newtts" :key="name" class="provider-card knowledge-card">
                     <div class="card-header">
-                      <el-switch v-model="config.enabled"></el-switch>
+                      <el-switch v-model="config.enabled" @change="autoSaveSettings"></el-switch>
                       <div class="card-actions">
                         <el-button @click="editTTS(name)" type="primary" circle size="small">
                           <i class="fa-solid fa-pen-to-square"></i>

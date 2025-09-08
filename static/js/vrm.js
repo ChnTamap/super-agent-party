@@ -56,6 +56,7 @@ async function fetchVRMConfig() {
     } catch (error) {
         console.error('Error fetching VRMConfig:', error);
         return   {
+            name: 'default',
             enabledExpressions: false,
             selectedModelId: 'alice', // 默认选择Alice模型
             defaultModels: [], // 存储默认模型
@@ -66,7 +67,8 @@ async function fetchVRMConfig() {
         };
     }
 }
-
+const modelConfig = await fetchVRMConfig();
+const windowName = modelConfig.name;
 async function getVRMpath() {
     const vrmConfig = await fetchVRMConfig();
     const modelId = vrmConfig.selectedModelId;
@@ -2697,10 +2699,18 @@ function handleTTSMessage(message) {
 
         case 'startSpeaking':
             console.log('收到播放指令, Chunk:', data.chunkIndex);
-            // 调用新的口型同步函数
-            startLipSyncForChunk(data); 
-            if (data.text) {
-                updateSubtitle(data.text, data.chunkIndex);
+            if (windowName == 'default'){
+                // 调用新的口型同步函数
+                startLipSyncForChunk(data); 
+                if (data.text) {
+                    updateSubtitle(data.text, data.chunkIndex);
+                }
+            }else if (windowName == data.voice){
+                // 调用新的口型同步函数
+                startLipSyncForChunk(data); 
+                if (data.text) {
+                    updateSubtitle(data.text, data.chunkIndex);
+                }
             }
             break;
 

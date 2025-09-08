@@ -1582,12 +1582,11 @@ let vue_methods = {
               }
             }
             let tts_msg = ""
-            if (newttsList == []){
+            if (newttsList?.length == 0){
                 tts_msg = "如果被翻译的文字与目标语言一致，则返回原文即可"
             }else{
                 tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
             }
-                
             const response = await fetch('/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -5149,7 +5148,6 @@ let vue_methods = {
       }
       const currentIndex = lastMessage.currentChunk;
       const audioChunk = lastMessage.audioChunks[currentIndex];
-      
       if (!this.ttsSettings.enabled) {
         lastMessage.isPlaying = false;
         lastMessage.currentChunk = 0;
@@ -5175,7 +5173,8 @@ let vue_methods = {
             chunkIndex: currentIndex,
             totalChunks: lastMessage.ttsChunks.length,
             text: audioChunk.text,
-            expressions: audioChunk.expressions
+            expressions: audioChunk.expressions,
+            voice: lastMessage.chunks_voice[currentIndex]
           });
           console.log(audioChunk.expressions);
           await new Promise((resolve) => {
@@ -6650,7 +6649,8 @@ let vue_methods = {
         chunkIndex: curIdx,
         totalChunks: total,
         text: audioChunk.text,
-        expressions: audioChunk.expressions
+        expressions: audioChunk.expressions,
+        voice: this.readState.chunks_voice[curIdx]
       });
 
       await new Promise(resolve => {
