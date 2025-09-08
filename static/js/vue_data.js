@@ -478,6 +478,7 @@ let vue_data = {
       file: null
     },
     VRMConfig: {
+      name: 'default',
       enabledExpressions: false,
       selectedModelId: 'alice', // 默认选择Alice模型
       windowWidth: 540,
@@ -486,9 +487,21 @@ let vue_data = {
       userModels: [],     // 存储用户上传的模型
       defaultMotions: [], // 存储默认动作
       userMotions: [],     // 存储用户上传的动作
-      selectedMotionIds: []
+      selectedMotionIds: [],
+      selectedNewModelId: 'alice',
+      selectedNewMotionIds: [],
+      newVRM:{}
     },
+    newAppearanceConfig: {
+      name: '',
+      windowWidth: 540,
+      windowHeight: 960,
+      selectedModelId: 'alice', // 默认选择Alice模型
+      selectedMotionIds: [],
+    },
+    showAddAppearanceDialog: false,
     showVrmaMotionDialog: false,
+    showFileDialog: false,
     newVrmaMotion: {
       name: '',
       displayName: '',
@@ -837,6 +850,11 @@ let vue_data = {
     { language: "zu-ZA", gender: "Female", name: "ThandoNeural" },
     { language: "zu-ZA", gender: "Male", name: "ThembaNeural" }
 ],
+    roleTiles:[
+        { id: 'memory', title: 'CharacterMemory', icon: 'fa-solid fa-brain' },
+        { id: 'voice', title: 'CharacterVoice', icon: 'fa-solid fa-volume-high' },
+        { id: 'appearance', title: 'CharacterAppearance', icon: 'fa-solid fa-person' },
+    ],
     modelTiles: [
       { id: 'service', title: 'modelService', icon: 'fa-solid fa-cloud' },
       { id: 'main', title: 'mainModel', icon: 'fa-solid fa-microchip' },
@@ -850,7 +868,6 @@ let vue_data = {
       { id: 'tools', title: 'utilityTools', icon: 'fa-solid fa-screwdriver-wrench' },
       { id: 'websearch', title: 'webSearch', icon: 'fa-solid fa-globe' },
       { id: 'document', title: 'knowledgeBase', icon: 'fa-solid fa-book' },
-      { id: 'memory', title: 'memory', icon: 'fa-solid fa-brain'},
       { id: 'interpreter', title: 'interpreter', icon: 'fa-solid fa-code'},
       { id: 'sticker', title: 'sticker/image', icon: 'fa-solid fa-face-smile'},
       { id: 'HA', title: 'homeAssistant', icon: 'fa-solid fa-house'},

@@ -47,20 +47,28 @@ async function fetchVRMConfig() {
         const HOST = window.location.host;
         let res = await fetch(`${http_protocol}//${HOST}/vrm_config`);
         const data = await res.json();
+        if(data.VRMConfig.name != 'default'){
+            data.VRMConfig.selectedModelId = data.VRMConfig.selectedNewModelId;
+            data.VRMConfig.selectedMotionIds = data.VRMConfig.selectedNewMotionIds;
+        }
+        console.log(data.VRMConfig);
         return data.VRMConfig;
     } catch (error) {
         console.error('Error fetching VRMConfig:', error);
         return   {
+            name: 'default',
             enabledExpressions: false,
             selectedModelId: 'alice', // 默认选择Alice模型
             defaultModels: [], // 存储默认模型
             userModels: [],     // 存储用户上传的模型
             defaultMotions: [], // 存储默认动作
-            userMotions: []     // 存储用户上传的动作
+            userMotions: [],     // 存储用户上传的动作
+            selectedMotionIds: [],
         };
     }
 }
-
+const modelConfig = await fetchVRMConfig();
+const windowName = modelConfig.name;
 async function getVRMpath() {
     const vrmConfig = await fetchVRMConfig();
     const modelId = vrmConfig.selectedModelId;
@@ -2691,10 +2699,18 @@ function handleTTSMessage(message) {
 
         case 'startSpeaking':
             console.log('收到播放指令, Chunk:', data.chunkIndex);
-            // 调用新的口型同步函数
-            startLipSyncForChunk(data); 
-            if (data.text) {
-                updateSubtitle(data.text, data.chunkIndex);
+            if (windowName == 'default'){
+                // 调用新的口型同步函数
+                startLipSyncForChunk(data); 
+                if (data.text) {
+                    updateSubtitle(data.text, data.chunkIndex);
+                }
+            }else if (windowName == data.voice){
+                // 调用新的口型同步函数
+                startLipSyncForChunk(data); 
+                if (data.text) {
+                    updateSubtitle(data.text, data.chunkIndex);
+                }
             }
             break;
 

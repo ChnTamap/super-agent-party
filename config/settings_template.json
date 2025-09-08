@@ -239,6 +239,7 @@
       "wakeWord": "小派"
     },
     "VRMConfig": {
+      "name": "default",
       "enabledExpressions": false,
       "selectedModelId": "alice", 
       "windowWidth": 540,
@@ -247,7 +248,10 @@
       "userModels": [],
       "defaultMotions": [],
       "userMotions": [], 
-      "selectedMotionIds": []
+      "selectedMotionIds": [],
+      "newVRM":{},
+      "selectedNewModelId": "alice",
+      "selectedNewMotionIds": []
     },
     "comfyuiServers": ["http://127.0.0.1:8188"],
     "comfyuiAPIkey": "",

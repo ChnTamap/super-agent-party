@@ -174,6 +174,12 @@ if ('serviceWorker' in navigator) {
             </el-icon>
             <template #title>{{ t('modelConfig') }}</template>
           </el-menu-item>
+          <el-menu-item index="role">
+            <el-icon>
+              <i class="fa-solid fa-masks-theater"></i>
+            </el-icon>
+            <template #title>{{ t('role') }}</template>
+          </el-menu-item>
           <el-menu-item index="toolkit">
             <el-icon>
               <i class="fa-solid fa-toolbox"></i>
@@ -315,7 +321,7 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-copy"></i>
                   </el-button>
                 </el-tooltip>
-                <el-tooltip  :content="t('translate')" placement="bottom">
+                <el-tooltip  :content="t('translateAndMark')" placement="bottom">
                   <el-button @click="translateMessage(index)" circle size="small">
                     <i class="fa-solid fa-language"></i>
                   </el-button>
@@ -1032,6 +1038,1219 @@ if ('serviceWorker' in navigator) {
           </div>
         </div>
 
+        <div v-show="activeMenu === 'role'" class="page agent-suite-container">
+          <div class="suite-layout">
+            <!-- 左侧二级导航 -->
+            <div class="suite-sidebar">
+              <div class="tile-nav">
+                <div 
+                  v-for="tile in roleTiles" 
+                  :key="tile.id"
+                  class="nav-item"
+                  :class="{ active: subMenu === tile.id }"
+                  @click="subMenu = tile.id">
+                  <el-icon class="nav-icon"><i :class="tile.icon"></i></el-icon>
+                  <span class="nav-text">{{ t(tile.title) }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- 右侧内容区 -->
+            <div class="suite-content">
+              <!-- 角色卡 -->
+              <div v-show="subMenu === 'memory'" class="page">
+                <el-tabs v-model="activeMemoryTab">
+                  <!-- 记忆配置标签页 -->
+                  <el-tab-pane :label="t('memoryConfig')" name="config">
+                    <el-form :model="memorySettings" class="settings-form"  label-position="top">
+                      <div class="tool-item">
+                        <div class="tool-header">
+                          <div class="header-left">
+                            <span>
+                              <el-icon>
+                                <i class="fa-solid fa-brain"></i>
+                              </el-icon>
+                              {{ t('memory') }}
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                href="https://github.com/SillyTavern/SillyTavern" 
+                                target="_blank"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>{{ t('gotoGithub') }}
+                              </el-link>
+                            </span>
+                          </div>
+                          <el-switch v-model="memorySettings.is_memory" @click.stop @change="changeMemory"/>
+                        </div>
+                        <div class="tool-content">
+                          <el-form-item :label="t('memoryResultCount')" class="form-item-align">
+                            <el-slider
+                              v-model="memorySettings.memoryLimit"
+                              :min="1"
+                              :max="20"
+                              :step="1"
+                              @input="autoSaveSettings"
+                            />
+                          </el-form-item>
+                          <el-form-item :label="t('selectMemory')">
+                            <el-select 
+                              v-model="memorySettings.selectedMemory" 
+                              :placeholder="t('selectMemoryPlaceholder')"
+                              class="full-width-input"
+                              @change ="changeMemory"
+                              >
+                              <el-option
+                                v-for="memory in memories"
+                                :key="memory.id"
+                                :label="memory.name"
+                                :value="memory.id"
+                              />
+                            </el-select>
+                          </el-form-item>
+                          <el-form-item :label="t('userName')" class="form-item-align">
+                            <el-input
+                              v-model="memorySettings.userName"
+                              :placeholder="t('userNamePlaceholder')"
+                              @input="autoSaveSettings"
+                              class="full-width-input"
+                            />
+                          </el-form-item>
+                          <el-form-item :label="t('genericSystemPrompt')" class="form-item-align">
+                            <el-input
+                              v-model="memorySettings.genericSystemPrompt"
+                              :placeholder="t('genericSystemPromptPlaceholder')"
+                              type="textarea"
+                              :rows="3"
+                              @input="autoSaveSettings"
+                              class="full-width-input"
+                            />
+                          </el-form-item>
+                          <el-form-item :label="t('getCardLink')" class="form-item-align">
+                            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: nowrap;">
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                href="https://chub.ai/" 
+                                target="_blank"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>
+                                chub.ai
+                              </el-link>
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                href="https://janitorai.com/" 
+                                target="_blank"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>
+                                janitorai.com
+                              </el-link>
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                href="https://pygmalion.chat/" 
+                                target="_blank"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>
+                                pygmalion.chat
+                              </el-link>
+                            </div>
+                          </el-form-item>
+                        </div>
+                      </div>
+                    </el-form>
+                  </el-tab-pane>
+                  <!-- 添加新记忆标签页 -->
+                  <el-tab-pane :label="t('addNewMemory')" name="add">
+                    <div class="provider-grid">
+                      <!-- 已有记忆磁贴 -->
+                      <div class="provider-card knowledge-card" v-for="memory in memories" :key="memory.id">
+                        <div class="card-header">
+                          <img 
+                            :src="memory.avatar? memory.avatar : 'source/Avatar.png'" 
+                            class="mini-vendor-logo"
+                          />
+                          <div class="card-actions">
+                            <el-button
+                              @click="downloadMemory(memory)"
+                              type="primary"
+                              circle
+                              size="small"
+                            >
+                              <i class="fa-solid fa-download"></i>
+                            </el-button>
+                            <el-button
+                              @click="editMemory(memory.id)"
+                              type="default"
+                              circle
+                              size="small"
+                            >
+                              <i class="fa-solid fa-pen-to-square"></i>
+                            </el-button>
+                            <el-button
+                              @click="removeMemory(memory.id)"
+                              type="danger"
+                              circle
+                              size="small"
+                            >
+                              <i class="fa-solid fa-trash"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                        <div class="kb-content">
+                          <h3 class="kb-title">{{memory.name }}</h3>
+                          <div class="kb-meta">
+                            <div class="kb-meta-item">
+                              <el-icon class="kb-icon">
+                                <i class="fa-solid fa-brain"></i>
+                              </el-icon>
+                              <span>{{ getVendorName(memory.providerId) }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- 添加新记忆磁贴 -->
+                      <div class="provider-card add-tile" @click="showAddMemoryDialog = true">
+                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewMemory') }}</div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
+                <!-- 添加记忆对话框 -->
+                <el-dialog v-model="showAddMemoryDialog" :title="t('memoryConfig')" width="80%">
+                  <el-form label-position="top">
+                    <el-form-item :label="t('memoryName')" required>
+                      <el-input v-model="newMemory.name" />
+                    </el-form-item>
+
+                    <el-form-item :label="t('avatar')">
+                      <el-input v-model="newMemory.avatar" 
+                      :placeholder="t('avatarPlaceholder')"/>
+                    </el-form-item>
+
+                    <!-- 新增已有记忆选择框 -->
+                    <el-form-item :label="t('selectExistingMemory')">
+                      <el-select 
+                        v-model="selectedExistingMemoryId" 
+                        :placeholder="t('selectExistingMemoryPlaceholder')"
+                        @change="copyExistingMemoryData"
+                        class="full-width-input">
+                        <!-- 添加“无”选项，默认选中 -->
+                        <el-option
+                          :key="'none'"
+                          :label="t('none')"
+                          :value="null">
+                        </el-option>
+                        
+                        <el-option
+                          v-for="memory in memories"
+                          :key="memory.id"
+                          :label="memory.name"
+                          :value="memory.id">
+                        </el-option>
+                      </el-select>
+                    </el-form-item>
+                    <div class="upload-container">
+                      <div
+                        class="drop-zone"
+                        @dragover.prevent
+                        @drop.prevent="handleJsonDrop"
+                        @click="browseJsonFile"
+                      >
+                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                        <p>{{ t('clickOrDropCharacterCards') }}</p>
+                      </div>
+                    </div>
+                    <el-tabs type="border-card" v-model="activeMemoryTabName">
+
+                      <!-- 自动更新设定（供应商） -->
+                      <el-tab-pane name="autoUpdateSetting">
+                        <template #label>
+                          <span>{{ t('autoUpdateSetting') }}</span>
+                        </template>
+                        <el-form-item :label="t('embeddingProvider')">
+                          <el-select
+                            v-model="newMemory.providerId"
+                            :placeholder="t('selectProvider')"
+                            clearable
+                            class="full-width-input"
+                          >
+                            <!-- 添加“无”选项，默认选中 -->
+                            <el-option
+                              :key="'none'"
+                              :label="t('none')"
+                              :value="null"
+                            >
+                              <div class="provider-option">
+                                <img 
+                                  src="source/providers/custom.png" 
+                                  class="mini-vendor-logo"
+                                />
+                                <span class="model-id">{{ t("NoLongTermMemory") }}</span>
+                              </div>
+                            </el-option>
+                            <el-option
+                              v-for="p in modelProviders"
+                              :key="p.id"
+                              :label="p.vendor + ' - ' + p.modelId"
+                              :value="p.id"
+                            >
+                              <div class="provider-option">
+                                <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
+                                <span class="model-id">{{ p.modelId }}</span>
+                              </div>
+                            </el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-alert type="info" :closable="false" class="mb-2">
+                          <template #default>
+                            <div class="alert-content">
+                              {{ t('firstTimeUse') }}
+                              <el-link
+                                type="primary"
+                                :underline="false"
+                                class="font-medium"
+                                @click="switchToApiBox"
+                              >
+                                <el-icon class="mr-1">
+                                  <i class="fa-solid fa-key"></i>
+                                </el-icon>{{ t('keyBoxInterface') }}
+                              </el-link>
+                              {{ t('addProviderReturnSelect') }}
+                              {{ t('addemdNotice') }}
+                              {{ t('autoUpdateSettingNote') }}
+                            </div>
+                          </template>
+                        </el-alert>
+                      </el-tab-pane>
+
+                      <!-- 角色描述 -->
+                      <el-tab-pane name="description" :label="t('characterDescription')">
+                        <el-form-item>
+                          <el-input
+                            v-model="newMemory.description"
+                            type="textarea"
+                            :rows="8"
+                            :placeholder="t('characterDescriptionPlaceholder')"
+                          />
+                        </el-form-item>
+                      </el-tab-pane>
+
+                      <!-- 性格 -->
+                      <el-tab-pane name="personality" :label="t('personality')">
+                        <el-form-item>
+                          <el-input
+                            v-model="newMemory.personality"
+                            type="textarea"
+                            :rows="8"
+                            :placeholder="t('personalityPlaceholder')"
+                          />
+                        </el-form-item>
+                      </el-tab-pane>
+
+                      <!-- 对话示例（一问一答） -->
+                      <el-tab-pane name="mesExample" :label="t('mesExample')">
+                        <el-form-item>
+                          <el-input
+                            v-model="newMemory.mesExample"
+                            type="textarea"
+                            :rows="8"
+                            :placeholder="t('mesExamplePlaceholder')"
+                          />
+                        </el-form-item>
+                      </el-tab-pane>
+
+                      <!-- 系统提示 -->
+                      <el-tab-pane name="systemPrompt" :label="t('systemPrompt')">
+                        <el-form-item>
+                          <el-input
+                            v-model="newMemory.systemPrompt"
+                            type="textarea"
+                            :rows="8"
+                            :placeholder="t('systemPromptPlaceholder')"
+                          />
+                        </el-form-item>
+                      </el-tab-pane>
+
+                      <el-tab-pane name="characterBook" :label="t('characterBook')">
+                        <div
+                          v-for="(item, idx) in newMemory.characterBook"
+                          :key="idx"
+                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
+                        >
+                          <el-form-item :label="t('keys')">
+                            <el-input
+                              v-model="item.keysRaw"
+                              type="textarea"
+                              :rows="3"
+                              :placeholder="t('keysPlaceholder')"
+                            />
+                          </el-form-item>
+                          <el-form-item :label="t('content')">
+                            <el-input
+                              v-model="item.content"
+                              type="textarea"
+                              :rows="4"
+                              :placeholder="t('contentPlaceholder')"
+                            />
+                          </el-form-item>
+                          <div style="text-align:right">
+                            <el-button circle size="small" type="default" @click="clearBook(idx)">
+                              <i class="fa-solid fa-eraser"></i>
+                            </el-button>
+                            <el-button
+                              v-if="newMemory.characterBook.length>1"
+                              circle
+                              size="small"
+                              type="danger"
+                              @click="removeBook(idx)"
+                            >
+                              <i class="fa-solid fa-trash"></i>
+                            </el-button>
+                            <el-button circle size="small" type="primary" @click="addBook">
+                              <i class="fa-solid fa-plus"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                      </el-tab-pane>
+
+                      <el-tab-pane name="firstGreeting" :label="t('firstGreeting')">
+                        <div
+                          class="param-row"
+                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
+                        >
+                          <el-form-item>
+                            <el-input
+                              v-model="newMemory.firstMes"
+                              type="textarea"
+                              :rows="3"
+                              :placeholder="t('firstMes')"
+                              
+                            />
+                          </el-form-item>
+                          <div style="text-align:right">
+                            <el-button
+                              @click="clearFirstMes"
+                              type="default"
+                              size="small"
+                              circle
+                            >
+                              <i class="fa-solid fa-eraser"></i>
+                            </el-button>
+                            <el-button
+                              @click="addGreeting"
+                              type="primary"
+                              circle
+                              size="small"
+                              class="header-add-btn"
+                            >
+                              <i class="fa-solid fa-plus"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                        <div
+                          v-for="(g, idx) in newMemory.alternateGreetings"
+                          :key="idx"
+                          class="param-row"
+                          style="margin-bottom:12px;border:1px solid #dcdfe6;border-radius:4px;padding:8px"
+                        >
+                          <el-form-item>
+                            <el-input
+                              v-model="newMemory.alternateGreetings[idx]"
+                              type="textarea"
+                              :rows="3"
+                              :placeholder="t('alternateGreeting') + ' ' + (idx + 1)"
+                              
+                            />
+                          </el-form-item>
+                          <div style="text-align:right">
+                            <el-button
+                              @click="clearGreeting(idx)"
+                              type="default"
+                              size="small"
+                              circle
+                            >
+                              <i class="fa-solid fa-eraser"></i>
+                            </el-button>
+                            <el-button
+                              @click="removeGreeting(idx)"
+                              type="danger"
+                              size="small"
+                              circle
+                            >
+                              <i class="fa-solid fa-trash"></i>
+                            </el-button>
+                            <el-button
+                              @click="addGreeting"
+                              type="primary"
+                              circle
+                              size="small"
+                              class="header-add-btn"
+                            >
+                              <i class="fa-solid fa-plus"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                      </el-tab-pane>
+                    </el-tabs>
+                  </el-form>
+
+                  <template #footer>
+                    <el-button @click="showAddMemoryDialog = false">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="addMemory"
+                      :disabled="!newMemory.name">
+                      {{ t('confirmAdd') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- 角色语音 -->
+              <div v-show="subMenu === 'voice'" class="page">
+                <div class="provider-grid">
+                  <!-- 已有 TTS 配置磁贴 -->
+                  <div v-for="(config, name) in ttsSettings.newtts" :key="name" class="provider-card knowledge-card">
+                    <div class="card-header">
+                      <el-switch v-model="config.enabled" @change="autoSaveSettings"></el-switch>
+                      <div class="card-actions">
+                        <el-button @click="editTTS(name)" type="primary" circle size="small">
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button @click="deleteTTS(name)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="kb-content">
+                      <h3 class="kb-title">{{ name }}</h3>
+                      <div class="kb-meta">
+                        <div class="kb-meta-item">
+                          <el-icon class="kb-icon">
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          <span>{{ config.engine }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 添加新 TTS 磁贴 -->
+                  <div class="provider-card add-tile" @click="openAddTTSDialog">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewTTS') }}</div>
+                  </div>
+                </div>
+
+                <!-- 新增 TTS 配置对话框 -->
+                <el-dialog v-model="showAddTTSDialog" :title="t('addNewTTS')" width="80%">
+                  <el-form ref="form" :model="newTTSConfig" label-position="top">
+                    <!-- 名称输入 -->
+                    <el-form-item :label="t('ttsName')" required>
+                      <el-select 
+                        v-model="newTTSConfig.name" 
+                        filterable
+                        allow-create
+                      class="full-width-input">
+                        <el-option :label="t('Narrator')" :value="t('Narrator')"></el-option>
+                        <el-option
+                          v-for="memory in memories"
+                          :key="memory.id"
+                          :label="memory.name"
+                          :value="memory.name"
+                        ></el-option>
+                      </el-select>
+                    </el-form-item>
+
+                    <!-- 引擎选择 -->
+                    <el-form-item :label="t('ttsEngine')" class="form-item-align">
+                      <el-select v-model="newTTSConfig.engine" class="full-width-input">
+                        <el-option label="Edge TTS" value="edgetts"></el-option>
+                        <el-option label="GPT Sovits" value="GSV"></el-option>
+                        <el-option :label="t('openaiLike')" value="openai"></el-option>
+                        <el-option :label="t('customTTS')" value="customTTS"></el-option>
+                      </el-select>
+                    </el-form-item>
+
+                    <div class="tool-item" v-show="newTTSConfig.engine === 'openai'">
+                      <div class="tool-header">
+                        <div class="header-left">
+                          <span>
+                            <el-icon>
+                              <i class="fa-solid fa-microphone"></i>
+                            </el-icon>
+                            {{t('openaiLike')}}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="tool-content">
+                        <el-form-item :label="t('TTSModelProvider')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.selectedProvider"
+                            :placeholder="t('selectProvider')"
+                            filterable
+                            @change="selectTTSProvider"
+                            @visible-change="handleTTSProviderVisibleChange"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="provider in modelProviders"
+                              :key="provider.id"
+                              :label="provider.vendor+' - '+provider.modelId"
+                              :value="provider.id"
+                            >
+                              <div class="provider-option">
+                                <img 
+                                  :src="getVendorLogo(provider.vendor)" 
+                                  class="mini-vendor-logo"
+                                />
+                                <span class="model-id">{{ provider.modelId }}</span>
+                              </div>
+                            </el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item :label="t('TTSVoice')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.openaiVoice"
+                            :placeholder="t('selectVoice')"
+                            filterable
+                            allow-create
+                            @change="autoSaveSettings"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="voice in openaiVoices"
+                              :key="voice"
+                              :label="voice"
+                              :value="voice"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <!-- 提示音频选择框 -->
+                        <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.gsvRefAudioPath"
+                            @change="handleRefAudioPathChange"
+                            class="full-width-input"
+                          >
+                            <el-option :key="null" :value="null" :label="t('noRefAudio')"></el-option>
+                            <el-option
+                              v-for="audio in newTTSConfig.gsvAudioOptions"
+                              :key="audio.path"
+                              :label="audio.name"
+                              :value="audio.path"
+                            >
+                              <div class="model-option-item">
+                                <span>{{ audio.name }}</span>
+                                <i 
+                                  class="fa-solid fa-trash-can"
+                                  style="color: #ff0000"
+                                  @click.stop="deleteAudioOption(audio.path)"
+                                ></i>
+                              </div>
+                            </el-option>
+                            
+                          </el-select>
+                        </el-form-item>
+                        <!-- 语速滑动条 -->
+                        <el-form-item :label="t('TTSRate')" class="form-item-align">
+                          <el-slider
+                            v-model="newTTSConfig.openaiSpeed"
+                            :min="0.1"
+                            :max="2"
+                            :step="0.1"
+                            @change="autoSaveSettings">
+                        </el-form-item>
+                      </div>
+                      <el-button 
+                        @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
+                        type="primary" 
+                        plain 
+                        class="add-server-btn">
+                        <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
+                      </el-button>
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            {{ t('firstTimeUse') }}
+                            <el-link
+                              type="primary"
+                              :underline="false"
+                              class="font-medium"
+                              @click="switchToApiBox"
+                            >
+                              <el-icon class="mr-1">
+                                <i class="fa-solid fa-key"></i>
+                              </el-icon>{{ t('keyBoxInterface') }}
+                            </el-link>
+                            {{ t('addProviderReturnSelect') }}
+                            {{ t('addTTSNotice') }}
+                          </div>
+                        </template>
+                      </el-alert>
+                    </div>
+
+                    <div class="tool-item" v-show="newTTSConfig.engine === 'customTTS'">
+                      <div class="tool-header">
+                        <div class="header-left">
+                          <span>
+                            <el-icon>
+                              <i class="fa-solid fa-volume-high"></i>
+                            </el-icon>
+                            {{t('customTTS')}}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="tool-content">
+                        <el-form-item :label="t('customTTSserver')" class="form-item-align">
+                          <el-input
+                            v-model="newTTSConfig.customTTSserver"
+                            :placeholder="t('customTTSServerPlaceholder')"
+                            @input="autoSaveSettings"
+                            type="textarea"
+                          />
+                        </el-form-item>
+                        <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
+                          <el-input
+                            v-model="newTTSConfig.customTTSspeaker"
+                            :placeholder="t('customTTSspeakerPlaceholder')"
+                            @input="autoSaveSettings"
+                            class="full-width-input"
+                          />
+                        </el-form-item>
+                        <!-- 语速滑动条 -->
+                        <el-form-item :label="t('customTTSspeed')" class="form-item-align">
+                          <el-slider
+                            v-model="newTTSConfig.customTTSspeed"
+                            :min="0.1"
+                            :max="2"
+                            :step="0.1"
+                            @change="autoSaveSettings">
+                        </el-form-item>
+                      </div>
+                    </div>
+
+                    <div class="tool-item" v-show="newTTSConfig.engine === 'edgetts'">
+                      <div class="tool-header">
+                        <div class="header-left">
+                          <span>
+                            <el-icon>
+                              <i class="fa-solid fa-volume-high"></i>
+                            </el-icon>
+                            Edge TTS
+                          </span>
+                        </div>
+                      </div>
+                      <div class="tool-content">
+                        <!-- 语速滑动条 -->
+                        <el-form-item :label="t('edgettsRate')" class="form-item-align">
+                          <el-slider
+                            v-model="newTTSConfig.edgettsRate"
+                            :min="0.1"
+                            :max="2"
+                            :step="0.1"
+                            @change="autoSaveSettings">
+                        </el-form-item>
+                        <!-- 语言选择框 -->
+                        <el-form-item :label="t('edgettsLanguage')" class="form-item-align">
+                          <el-select
+                            v-model="edgettsLanguage"
+                            @change="updateLanguages"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="language in uniqueLanguages"
+                              :key="language"
+                              :label="language"
+                              :value="language"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <!-- 性别选择框 -->
+                        <el-form-item :label="t('edgettsGender')" class="form-item-align">
+                          <el-select
+                            v-model="edgettsGender"
+                            @change="updateGenders"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="gender in uniqueGenders"
+                              :key="gender"
+                              :label="t(gender)"
+                              :value="gender"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <!-- 语音选择框 -->
+                        <el-form-item :label="t('edgettsVoice')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.edgettsVoice"
+                            class="full-width-input"
+                            @change="updateVoices"
+                          >
+                            <el-option
+                              v-for="voice in filteredVoices"
+                              :key="voice.name"
+                              :label="voice.name"
+                              :value="voice.name"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+                      </div>
+                    </div>
+                    <div class="tool-item" v-show="newTTSConfig.engine === 'GSV'">
+                      <div class="tool-header">
+                        <div class="header-left">
+                          <span>
+                            <el-icon>
+                              <i class="fa-solid fa-volume-high"></i>
+                            </el-icon>
+                            GPT Sovits
+                            <el-link
+                              type="primary"
+                              :underline="false"
+                              href="https://github.com/RVC-Boss/GPT-SoVITS" 
+                              target="_blank"
+                            >
+                              <el-icon class="mr-1">
+                                <i class="fa-solid fa-key"></i>
+                              </el-icon>{{ t('gotoGithub') }}
+                            </el-link>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="tool-content">
+                        <el-form-item :label="t('gsvServer')" class="form-item-align">
+                          <el-input
+                            v-model="newTTSConfig.gsvServer"
+                            :placeholder="t('gsvServerPlaceholder')"
+                            @input="autoSaveSettings"
+                            type="textarea"
+                          />
+                        </el-form-item>
+
+                        <!-- 语速滑动条 -->
+                        <el-form-item :label="t('gsvRate')" class="form-item-align">
+                          <el-slider
+                            v-model="newTTSConfig.gsvRate"
+                            :min="0.1"
+                            :max="2"
+                            :step="0.1"
+                            @change="autoSaveSettings">
+                        </el-form-item>
+
+                        <!-- 语言选择框 -->
+                        <el-form-item :label="t('gsvTextLang')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.gsvTextLang"
+                            @change="autoSaveSettings"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="language in gsvTextLangs"
+                              :key="language"
+                              :label="t(language)"
+                              :value="language"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <!-- 提示语言选择框 -->
+                        <el-form-item :label="t('gsvPromptLang')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.gsvPromptLang"
+                            @change="autoSaveSettings"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="language in gsvTextLangs"
+                              :key="language"
+                              :label="t(language)"
+                              :value="language"
+                            ></el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <!-- 提示音频选择框 -->
+                        <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
+                          <el-select
+                            v-model="newTTSConfig.gsvRefAudioPath"
+                            @change="handleRefAudioPathChange"
+                            class="full-width-input"
+                          >
+                            <el-option
+                              v-for="audio in newTTSConfig.gsvAudioOptions"
+                              :key="audio.path"
+                              :label="audio.name"
+                              :value="audio.path"
+                            >
+                              <div class="model-option-item">
+                                <span>{{ audio.name }}</span>
+                                <i 
+                                  class="fa-solid fa-trash-can"
+                                  style="color: #ff0000"
+                                  @click.stop="deleteAudioOption(audio.path)"
+                                ></i>
+                              </div>
+                            </el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <el-button 
+                          @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
+                          type="primary" 
+                          plain 
+                          class="add-server-btn">
+                          <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
+                        </el-button>
+
+                        <el-alert
+                          type="info"
+                          :closable="false"
+                          class="mb-2"
+                        >
+                          <template #default>
+                            <div class="alert-content">
+                              {{ t('gsvNotice1') }}<br>
+                              {{ t('gsvNotice2') }}
+                            </div>
+                          </template>
+                        </el-alert>
+                      </div>
+                    </div>
+
+                  </el-form>
+
+                  <template #footer>
+                    <el-button @click="showAddTTSDialog = false">{{ t('cancel') }}</el-button>
+                    <el-button type="primary" @click="saveNewTTSConfig" :disabled="!newTTSConfig.name">
+                      {{ t('confirmAdd') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- 角色形象 -->
+              <div v-show="subMenu === 'appearance'" class="page">
+                <div class="provider-grid">
+                  <!-- 已有 形象 配置磁贴 -->
+                  <div v-for="(config, name) in VRMConfig.newVRM" :key="name" class="provider-card knowledge-card">
+                    <div class="card-header">
+                      <!-- 启动按钮 -->
+                      <el-tooltip :content="t('start_table_pet')" placement="top">
+                        <el-button 
+                          type="primary" 
+                          @click="startNewVRM(name)" 
+                          circle
+                        >
+                          <template v-if="isVRMStarting">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                          </template>
+                          <template v-else>
+                            <i class="fa-solid fa-play"></i>
+                          </template>
+                        </el-button>
+                      </el-tooltip>
+                      <div class="card-actions">
+                        <el-button @click="editAppearance(name)" type="primary" circle size="small">
+                          <i class="fa-solid fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button @click="deleteAppearance(name)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="kb-content">
+                      <h3 class="kb-title">{{ t(name) }}</h3>
+                    </div>
+                  </div>
+
+                  <!-- 添加新 形象 磁贴 -->
+                  <div class="provider-card add-tile" @click="openAddAppearanceDialog()">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewAppearance') }}</div>
+                  </div>
+                <!-- 新增 形象 配置对话框 -->
+                <el-dialog v-model="showAddAppearanceDialog" :title="t('addNewAppearance')" width="80%">
+                  <div class="tool-content">
+                    <!-- 名称输入 -->
+                    <el-form-item :label="t('AppearanceName')" required label-position="top">
+                      <el-select 
+                        v-model="newAppearanceConfig.name" 
+                        filterable
+                        allow-create
+                      class="full-width-input">
+                        <el-option :label="t('Narrator')" value='Narrator'></el-option>
+                        <el-option
+                          v-for="memory in memories"
+                          :key="memory.id"
+                          :label="memory.name"
+                          :value="memory.name"
+                        ></el-option>
+                      </el-select>
+                    </el-form-item>
+                      <el-form-item :label="t('windowWidth')" class="form-item-align">
+                        <el-slider
+                          v-model="newAppearanceConfig.windowWidth"
+                          :min="300"
+                          :max="2560"
+                          :step="10"
+                          @change="autoSaveSettings"
+                        />
+                      </el-form-item>
+                      <el-form-item :label="t('windowHeight')" class="form-item-align">
+                        <el-slider
+                          v-model="newAppearanceConfig.windowHeight"
+                          :min="300"
+                          :max="2560"
+                          :step="10"
+                          @change="autoSaveSettings"
+                        />
+                      </el-form-item>
+
+                      <!-- VRM模型选择框 -->
+                      <el-form-item :label="t('selectVrmModel')" label-position="top">
+                        <el-select
+                          v-model="newAppearanceConfig.selectedModelId"
+                          @change="handleModelChange"
+                          class="full-width-input"
+                        >
+                          <!-- 默认模型分组 -->
+                          <el-option-group :label="t('defaultModels')">
+                            <el-option
+                              v-for="model in VRMConfig.defaultModels"
+                              :key="model.id"
+                              :label="model.name"
+                              :value="model.id"
+                            >
+                              <div class="model-option-item">
+                                <!-- 图标在最前 -->
+                                <i class="fa-solid fa-star" style="color: #f39c12; margin-right: 6px;"></i>
+                                <span>{{ model.name }}</span>
+                              </div>
+                            </el-option>
+                          </el-option-group>
+
+                          <!-- 用户上传模型分组 -->
+                          <el-option-group :label="t('userModels')" v-if="VRMConfig.userModels.length > 0">
+                            <el-option
+                              v-for="model in VRMConfig.userModels"
+                              :key="model.id"
+                              :label="model.name"
+                              :value="model.id"
+                            >
+                              <div class="model-option-item">
+                                <!-- 图标在最前 -->
+                                <i
+                                  class="fa-solid fa-trash-can"
+                                  style="color: #ff0000; margin-right: 6px;"
+                                  @click.stop="deleteModelOption(model.id)"
+                                ></i>
+                                <span>{{ model.name }}</span>
+                              </div>
+                            </el-option>
+                          </el-option-group>
+                        </el-select>
+
+                        <!-- 模型上传按钮 -->
+                        <el-button
+                          @click="showVrmModelDialog = true"
+                          type="primary"
+                          plain
+                          class="add-server-btn"
+                        >
+                          <i class="fa-solid fa-plus"></i> {{ t('addVrmModel') }}
+                        </el-button>
+                      </el-form-item>
+
+                      <!-- VRMA动作选择框（已统一） -->
+                      <el-form-item :label="t('selectVrmaMotions')" label-position="top">
+                        <el-select
+                          v-model="newAppearanceConfig.selectedMotionIds"
+                          @change="handleMotionChange"
+                          class="full-width-input"
+                          multiple
+                        >
+                          <!-- 默认动作分组 -->
+                          <el-option-group :label="t('defaultMotions')">
+                            <el-option
+                              v-for="motion in VRMConfig.defaultMotions"
+                              :key="motion.id"
+                              :label="motion.name"
+                              :value="motion.id"
+                            >
+                              <div class="motion-option-item">
+                                <i class="fa-solid fa-star" style="color: #f39c12; margin-right: 6px;"></i>
+                                <span>{{ motion.name }}</span>
+                              </div>
+                            </el-option>
+                          </el-option-group>
+
+                          <!-- 用户上传动作分组 -->
+                          <el-option-group :label="t('userMotions')" v-if="VRMConfig.userMotions.length > 0">
+                            <el-option
+                              v-for="motion in VRMConfig.userMotions"
+                              :key="motion.id"
+                              :label="motion.name"
+                              :value="motion.id"
+                            >
+                              <div class="motion-option-item">
+                                <i
+                                  class="fa-solid fa-trash-can"
+                                  style="color: #ff0000; margin-right: 6px;"
+                                  @click.stop="deleteMotionOption(motion.id)"
+                                ></i>
+                                <span>{{ motion.name }}</span>
+                              </div>
+                            </el-option>
+                          </el-option-group>
+                        </el-select>
+
+                        <!-- 动作上传按钮 -->
+                        <el-button
+                          @click="showVrmaMotionDialog = true"
+                          type="success"
+                          plain
+                          class="add-server-btn"
+                        >
+                          <i class="fa-solid fa-plus"></i> {{ t('addVrmaMotion') }}
+                        </el-button>
+                      </el-form-item>
+                      
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            {{ t('vrmNotice1') }}<br>
+                            {{ t('vrmNotice2') }}<br>
+                            {{ t('vrmNotice3') }}
+                          </div>
+                        </template>
+                      </el-alert>
+                  </div>
+
+                  <!-- VRM模型上传对话框 -->
+                  <el-dialog
+                    v-model="showVrmModelDialog"
+                    :title="t('uploadVrmModel')"
+                    width="600px"
+                  >
+                    <div class="upload-container">
+                      <div
+                        class="drop-zone"
+                        @dragover.prevent
+                        @drop.prevent="handleVrmModelDrop"
+                        @click="browseVrmModelFile"
+                      >
+                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                        <p>{{ t('clickOrDropVrm') }}</p>
+                      </div>
+                      
+                      <!-- 文件列表 -->
+                      <div class="compact-file-list" v-if="newVrmModel.name">
+                        <div class="compact-file-item">
+                          <span class="file-name">{{ newVrmModel.name }}</span>
+                          <el-button
+                            @click.stop="removeNewVrmModel"
+                            class="delete-icon"
+                            circle
+                          >
+                            <i class="fa-solid fa-trash"></i>
+                          </el-button>
+                        </div>
+                      </div>
+
+                      <el-input
+                        v-model="newVrmModel.displayName"
+                        :label="t('modelDisplayName')"
+                        :placeholder="t('modelDisplayNamePlaceholder')"
+                        required
+                      />
+                    </div>
+                    <template #footer>
+                      <el-button @click="cancelVrmModelUpload">{{ t('cancel') }}</el-button>
+                      <el-button type="primary" @click="uploadVrmModel" :disabled="!newVrmModel.name">
+                        {{ t('createImmediately') }}
+                      </el-button>
+                    </template>
+                  </el-dialog>
+
+                  <!-- VRMA动作上传对话框 -->
+                  <el-dialog
+                    v-model="showVrmaMotionDialog"
+                    :title="t('uploadVrmaMotion')"
+                    width="600px"
+                  >
+                    <div class="upload-container">
+                      <div
+                        class="drop-zone"
+                        @dragover.prevent
+                        @drop.prevent="handleVrmaMotionDrop"
+                        @click="browseVrmaMotionFile"
+                      >
+                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                        <p>{{ t('clickOrDropVrma') }}</p>
+                      </div>
+                      
+                      <!-- 文件列表 -->
+                      <div class="compact-file-list" v-if="newVrmaMotion.name">
+                        <div class="compact-file-item">
+                          <span class="file-name">{{ newVrmaMotion.name }}</span>
+                          <el-button
+                            @click.stop="removeNewVrmaMotion"
+                            class="delete-icon"
+                            circle
+                          >
+                            <i class="fa-solid fa-trash"></i>
+                          </el-button>
+                        </div>
+                      </div>
+
+                      <el-input
+                        v-model="newVrmaMotion.displayName"
+                        :label="t('motionDisplayName')"
+                        :placeholder="t('motionDisplayNamePlaceholder')"
+                        required
+                      />
+                    </div>
+                    <template #footer>
+                      <el-button @click="cancelVrmaMotionUpload">{{ t('cancel') }}</el-button>
+                      <el-button type="primary" @click="uploadVrmaMotion" :disabled="!newVrmaMotion.name">
+                        {{ t('createImmediately') }}
+                      </el-button>
+                    </template>
+                  </el-dialog>
+                  <template #footer>
+                    <el-button @click="showAddAppearanceDialog = false">{{ t('cancel') }}</el-button>
+                    <el-button type="primary" @click="saveNewAppearanceConfig" :disabled="!newAppearanceConfig.name">
+                      {{ t('confirmAdd') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div v-show="activeMenu === 'model-config'" class="page agent-suite-container">
           <div class="suite-layout">
             <!-- 左侧二级导航 -->
@@ -1052,6 +2271,19 @@ if ('serviceWorker' in navigator) {
             <div class="suite-content">
               <!-- 模型服务界面 -->
               <div v-show="subMenu === 'service'" class="page">
+               <!-- 顶部说明条 -->
+                <div class="toolbar">
+                    <el-alert
+                      :title="t('modelConfigDescription')"
+                      type="info"
+                      :closable="false"
+                      class="mb-2"
+                    >
+                      1. {{ t('localConfigNotice') }}<br>
+                      2. {{ t('localConfigNotice02') }}<br>
+                      3. {{ t('localConfigNotice03') }}<br>
+                    </el-alert>
+                </div>
                 <!-- 磁贴网格 -->
                 <div class="provider-grid">
                   <!-- 已有供应商磁贴 -->
@@ -1654,6 +2886,28 @@ if ('serviceWorker' in navigator) {
                           <el-option :label="t('openaiLike')" value="openai" ></el-option>
                         </el-select>
                       </el-form-item>
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            1. {{ t('text2imgNotice') }}<br>
+                            2. {{ t('gotoComfyui') }}
+                            <el-link
+                              type="primary"
+                              :underline="false"
+                              class="font-medium"
+                              @click="switchToComfyui"
+                            >
+                              <el-icon class="mr-1">
+                                <i class="fa-solid fa-key"></i>
+                              </el-icon>{{ t('ComfyuiInterface') }}
+                            </el-link>
+                          </div>
+                        </template>
+                      </el-alert>
                     </div>
                   </div>
                   <div class="tool-item" v-show="text2imgSettings.engine === 'pollinations'">
@@ -2026,633 +3280,407 @@ if ('serviceWorker' in navigator) {
 
               <!-- 语音合成界面 -->
               <div v-show="subMenu === 'tts'" class="page">
-                <el-tabs v-model="activeTTSTab">
-                  <!-- 默认语音合成 -->
-                  <el-tab-pane :label="t('defaultTTS')" name="default">
-                    <!-- 原有的 TTS 设置界面保持不变 -->
-                    <el-form :model="ttsSettings" class="settings-form"  label-position="top">
-                      <div class="tool-item">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-volume-high"></i>
-                              </el-icon>
-                              {{ t('ttsModel') }}
-                            </span>
-                          </div>
-                          <el-switch v-model="ttsSettings.enabled" @click.stop @change="changeTTSstatus" />
-                        </div>
-                        <div class="tool-content">
-                          <el-form-item :label="t('ttsEngine')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.engine"
-                              @change="autoSaveSettings"
-                              class="full-width-input"
-                            >
-                              <el-option label="Edge TTS" value="edgetts" ></el-option>
-                              <el-option label="GPT Sovits" value="GSV" ></el-option>
-                              <el-option :label="t('openaiLike')" value="openai" ></el-option>
-                              <el-option :label="t('customTTS')" value="customTTS" ></el-option>
-                            </el-select>
-                          </el-form-item>
-                          <el-form-item :label="t('separators')">
-                            <el-select
-                              v-model="ttsSettings.separators"
-                              multiple
-                              filterable
-                              allow-create
-                              @keyup.enter.native="handleEnter"
-                              @create="handleCreateSeparator"
-                            >
-                              <el-option
-                                v-for="sep in filteredSeparators"
-                                :key="sep.value"
-                                :label="sep.label"
-                                :value="sep.value"
-                              />
-                            </el-select>
-                          </el-form-item>
-                          <el-form-item :label="t('enabledInterruption')" class="form-item-align" label-position="left">
-                            <el-switch 
-                              v-model="ttsSettings.enabledInterruption" 
-                              @change="autoSaveSettings"
-                            ></el-switch>
-                          </el-form-item>
-                        <el-form-item :label="t('maxConcurrency')" class="form-item-align">
-                          <el-slider
-                            v-model="ttsSettings.maxConcurrency"
-                            :min="1"
-                            :max="16"
-                            :step="1"
-                            @change="autoSaveSettings">
-                        </el-form-item>
-                        <el-form-item :label="t('bufferWord')">
-                          <el-select
-                            v-model="ttsSettings.bufferWordList"
-                            multiple
-                            filterable
-                            allow-create
-                            :placeholder="t('bufferWordPlaceholder')"
-                            class="full-width-input"
-                            @change="autoSaveSettings"
-                          >
-                          </el-select>
-                        </el-form-item>
-                        </div>
+                <el-form :model="ttsSettings" class="settings-form"  label-position="top">
+                  <div class="tool-item">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          {{ t('ttsModel') }}
+                        </span>
                       </div>
-                      <div class="tool-item" v-show="ttsSettings.engine === 'openai'">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-microphone"></i>
-                              </el-icon>
-                              {{t('openaiLike')}}
-                            </span>
-                          </div>
-                        </div>
-                        <div class="tool-content">
-                          <el-form-item :label="t('TTSModelProvider')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.selectedProvider"
-                              :placeholder="t('selectProvider')"
-                              filterable
-                              @change="selectTTSProvider"
-                              @visible-change="handleTTSProviderVisibleChange"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="provider in modelProviders"
-                                :key="provider.id"
-                                :label="provider.vendor+' - '+provider.modelId"
-                                :value="provider.id"
-                              >
-                                <div class="provider-option">
-                                  <img 
-                                    :src="getVendorLogo(provider.vendor)" 
-                                    class="mini-vendor-logo"
-                                  />
-                                  <span class="model-id">{{ provider.modelId }}</span>
-                                </div>
-                              </el-option>
-                            </el-select>
-                          </el-form-item>
-                          <el-form-item :label="t('TTSVoice')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.openaiVoice"
-                              :placeholder="t('selectVoice')"
-                              filterable
-                              allow-create
-                              @change="autoSaveSettings"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="voice in openaiVoices"
-                                :key="voice"
-                                :label="voice"
-                                :value="voice"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-                          <!-- 提示音频选择框 -->
-                          <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.gsvRefAudioPath"
-                              @change="handleRefAudioPathChange"
-                              class="full-width-input"
-                            >
-                              <el-option :key="null" :value="null" :label="t('noRefAudio')"></el-option>
-                              <el-option
-                                v-for="audio in ttsSettings.gsvAudioOptions"
-                                :key="audio.path"
-                                :label="audio.name"
-                                :value="audio.path"
-                              >
-                                <div class="model-option-item">
-                                  <span>{{ audio.name }}</span>
-                                  <i 
-                                    class="fa-solid fa-trash-can"
-                                    style="color: #ff0000"
-                                    @click.stop="deleteAudioOption(audio.path)"
-                                  ></i>
-                                </div>
-                              </el-option>
-                              
-                            </el-select>
-                          </el-form-item>
-                          <!-- 语速滑动条 -->
-                          <el-form-item :label="t('TTSRate')" class="form-item-align">
-                            <el-slider
-                              v-model="ttsSettings.openaiSpeed"
-                              :min="0.1"
-                              :max="2"
-                              :step="0.1"
-                              @change="autoSaveSettings">
-                          </el-form-item>
-                        </div>
-                        <el-button 
-                          @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
-                          type="primary" 
-                          plain 
-                          class="add-server-btn">
-                          <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
-                        </el-button>
-                        <el-alert
-                          type="info"
-                          :closable="false"
-                          class="mb-2"
-                        >
-                          <template #default>
-                            <div class="alert-content">
-                              {{ t('firstTimeUse') }}
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                class="font-medium"
-                                @click="switchToApiBox"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>{{ t('keyBoxInterface') }}
-                              </el-link>
-                              {{ t('addProviderReturnSelect') }}
-                              {{ t('addTTSNotice') }}
-                            </div>
-                          </template>
-                        </el-alert>
-                      </div>
-
-                      <div class="tool-item" v-show="ttsSettings.engine === 'customTTS'">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-volume-high"></i>
-                              </el-icon>
-                              {{t('customTTS')}}
-                            </span>
-                          </div>
-                        </div>
-                        <div class="tool-content">
-                          <el-form-item :label="t('customTTSserver')" class="form-item-align">
-                            <el-input
-                              v-model="ttsSettings.customTTSserver"
-                              :placeholder="t('customTTSServerPlaceholder')"
-                              @input="autoSaveSettings"
-                              type="textarea"
-                            />
-                          </el-form-item>
-                          <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
-                            <el-input
-                              v-model="ttsSettings.customTTSspeaker"
-                              :placeholder="t('customTTSspeakerPlaceholder')"
-                              @input="autoSaveSettings"
-                              class="full-width-input"
-                            />
-                          </el-form-item>
-                          <!-- 语速滑动条 -->
-                          <el-form-item :label="t('customTTSspeed')" class="form-item-align">
-                            <el-slider
-                              v-model="ttsSettings.customTTSspeed"
-                              :min="0.1"
-                              :max="2"
-                              :step="0.1"
-                              @change="autoSaveSettings">
-                          </el-form-item>
-                        </div>
-                      </div>
-
-                      <div class="tool-item" v-show="ttsSettings.engine === 'edgetts'">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-volume-high"></i>
-                              </el-icon>
-                              Edge TTS
-                            </span>
-                          </div>
-                        </div>
-                        <div class="tool-content">
-                          <!-- 语速滑动条 -->
-                          <el-form-item :label="t('edgettsRate')" class="form-item-align">
-                            <el-slider
-                              v-model="ttsSettings.edgettsRate"
-                              :min="0.1"
-                              :max="2"
-                              :step="0.1"
-                              @change="autoSaveSettings">
-                          </el-form-item>
-                          <!-- 语言选择框 -->
-                          <el-form-item :label="t('edgettsLanguage')" class="form-item-align">
-                            <el-select
-                              v-model="edgettsLanguage"
-                              @change="updateLanguages"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="language in uniqueLanguages"
-                                :key="language"
-                                :label="language"
-                                :value="language"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-
-                          <!-- 性别选择框 -->
-                          <el-form-item :label="t('edgettsGender')" class="form-item-align">
-                            <el-select
-                              v-model="edgettsGender"
-                              @change="updateGenders"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="gender in uniqueGenders"
-                                :key="gender"
-                                :label="t(gender)"
-                                :value="gender"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-
-                          <!-- 语音选择框 -->
-                          <el-form-item :label="t('edgettsVoice')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.edgettsVoice"
-                              class="full-width-input"
-                              @change="updateVoices"
-                            >
-                              <el-option
-                                v-for="voice in filteredVoices"
-                                :key="voice.name"
-                                :label="voice.name"
-                                :value="voice.name"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-                        </div>
-                      </div>
-                      <div class="tool-item" v-show="ttsSettings.engine === 'GSV'">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-volume-high"></i>
-                              </el-icon>
-                              GPT Sovits
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://github.com/RVC-Boss/GPT-SoVITS" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>{{ t('gotoGithub') }}
-                              </el-link>
-                            </span>
-                          </div>
-                        </div>
-                        <div class="tool-content">
-                          <el-form-item :label="t('gsvServer')" class="form-item-align">
-                            <el-input
-                              v-model="ttsSettings.gsvServer"
-                              :placeholder="t('gsvServerPlaceholder')"
-                              @input="autoSaveSettings"
-                              type="textarea"
-                            />
-                          </el-form-item>
-
-                          <!-- 语速滑动条 -->
-                          <el-form-item :label="t('gsvRate')" class="form-item-align">
-                            <el-slider
-                              v-model="ttsSettings.gsvRate"
-                              :min="0.1"
-                              :max="2"
-                              :step="0.1"
-                              @change="autoSaveSettings">
-                          </el-form-item>
-
-                          <!-- 语言选择框 -->
-                          <el-form-item :label="t('gsvTextLang')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.gsvTextLang"
-                              @change="autoSaveSettings"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="language in gsvTextLangs"
-                                :key="language"
-                                :label="t(language)"
-                                :value="language"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-
-                          <!-- 提示语言选择框 -->
-                          <el-form-item :label="t('gsvPromptLang')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.gsvPromptLang"
-                              @change="autoSaveSettings"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="language in gsvTextLangs"
-                                :key="language"
-                                :label="t(language)"
-                                :value="language"
-                              ></el-option>
-                            </el-select>
-                          </el-form-item>
-
-                          <!-- 提示音频选择框 -->
-                          <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
-                            <el-select
-                              v-model="ttsSettings.gsvRefAudioPath"
-                              @change="handleRefAudioPathChange"
-                              class="full-width-input"
-                            >
-                              <el-option
-                                v-for="audio in ttsSettings.gsvAudioOptions"
-                                :key="audio.path"
-                                :label="audio.name"
-                                :value="audio.path"
-                              >
-                                <div class="model-option-item">
-                                  <span>{{ audio.name }}</span>
-                                  <i 
-                                    class="fa-solid fa-trash-can"
-                                    style="color: #ff0000"
-                                    @click.stop="deleteAudioOption(audio.path)"
-                                  ></i>
-                                </div>
-                              </el-option>
-                            </el-select>
-                          </el-form-item>
-
-                          <el-button 
-                            @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
-                            type="primary" 
-                            plain 
-                            class="add-server-btn">
-                            <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
-                          </el-button>
-
-                          <el-alert
-                            type="info"
-                            :closable="false"
-                            class="mb-2"
-                          >
-                            <template #default>
-                              <div class="alert-content">
-                                {{ t('gsvNotice1') }}<br>
-                                {{ t('gsvNotice2') }}
-                              </div>
-                            </template>
-                          </el-alert>
-                        </div>
-                      </div>
-                      <!-- 音频上传对话框 -->
-                      <el-dialog
-                        v-model="showGsvRefAudioPathDialog"
-                        :title="t('uploadGsvRefAudio')"
-                        width="600px"
-                      >
-                        <div class="upload-container">
-                          <div
-                            class="drop-zone"
-                            @dragover.prevent
-                            @drop.prevent="handleGsvRefAudioDrop"
-                            @click="browseGsvRefAudioFile"
-                          >
-                            <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
-                            <p>{{ t('clickOrDrop') }}</p>
-                          </div>
-                          
-                          <!-- 文件列表 -->
-                          <div class="compact-file-list" v-if="newGsvAudio.file">
-                            <div class="compact-file-item">
-                              <span class="file-name">@{{ newGsvAudio.name }}</span>
-                              <el-button
-                                @click.stop="removeNewGsvAudio"
-                                class="delete-icon"
-                                circle
-                              >
-                                <i class="fa-solid fa-trash"></i>
-                              </el-button>
-                            </div>
-                          </div>
-                        </div>
-                        <el-form-item :label="t('gsvGsvAudioPath')" class="form-item-align" v-if="!newGsvAudio.file">
-                          <el-input
-                            v-model="newGsvAudio.path"
-                            :placeholder="t('gsvGsvAudioPathPlaceholder')"
-                            @input="changeGsvAudioPath"
-                          ></el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('gsvPromptText')" class="form-item-align">
-                          <el-input
-                            v-model="newGsvAudio.text"
-                            :placeholder="t('gsvPromptTextPlaceholder')"
-                          ></el-input>
-                        </el-form-item>
-                        <template #footer>
-                          <el-button @click="cancelGsvAudioUpload">{{ t('cancel') }}</el-button>
-                          <el-button type="primary" @click="uploadGsvAudio" :disabled="!newGsvAudio.name">
-                            {{ t('createImmediately') }}
-                          </el-button>
-                        </template>
-                      </el-dialog>
-                    </el-form>
-                  </el-tab-pane>
-
-                  <!-- 新增语音合成 -->
-                  <el-tab-pane :label="t('addNewTTS')" name="add">
-                    <div class="provider-grid">
-                      <!-- 已有 TTS 配置磁贴 -->
-                      <div v-for="(config, name) in ttsSettings.newtts" :key="name" class="provider-card knowledge-card">
-                        <div class="card-header">
-                          <el-switch v-model="config.enabled"></el-switch>
-                          <div class="card-actions">
-                            <el-button @click="editTTS(name)" type="primary" circle size="small">
-                              <i class="fa-solid fa-pen-to-square"></i>
-                            </el-button>
-                            <el-button @click="deleteTTS(name)" type="danger" circle size="small">
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                        <div class="kb-content">
-                          <h3 class="kb-title">{{ name }}</h3>
-                          <div class="kb-meta">
-                            <div class="kb-meta-item">
-                              <el-icon class="kb-icon">
-                                <i class="fa-solid fa-volume-high"></i>
-                              </el-icon>
-                              <span>{{ config.engine }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <!-- 添加新 TTS 磁贴 -->
-                      <div class="provider-card add-tile" @click="openAddTTSDialog">
-                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewTTS') }}</div>
-                      </div>
+                      <el-switch v-model="ttsSettings.enabled" @click.stop @change="changeTTSstatus" />
                     </div>
-                  </el-tab-pane>
-                </el-tabs>
-
-                <!-- 新增 TTS 配置对话框 -->
-                <el-dialog v-model="showAddTTSDialog" :title="t('addNewTTS')" width="80%">
-                  <el-form ref="form" :model="newTTSConfig" label-position="top">
-                    <!-- 名称输入 -->
-                    <el-form-item :label="t('ttsName')" required>
-                      <el-input v-model="newTTSConfig.name" />
+                    <div class="tool-content">
+                      <el-form-item :label="t('ttsEngine')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.engine"
+                          @change="autoSaveSettings"
+                          class="full-width-input"
+                        >
+                          <el-option label="Edge TTS" value="edgetts" ></el-option>
+                          <el-option label="GPT Sovits" value="GSV" ></el-option>
+                          <el-option :label="t('openaiLike')" value="openai" ></el-option>
+                          <el-option :label="t('customTTS')" value="customTTS" ></el-option>
+                        </el-select>
+                      </el-form-item>
+                      <el-form-item :label="t('separators')">
+                        <el-select
+                          v-model="ttsSettings.separators"
+                          multiple
+                          filterable
+                          allow-create
+                          @keyup.enter.native="handleEnter"
+                          @create="handleCreateSeparator"
+                        >
+                          <el-option
+                            v-for="sep in filteredSeparators"
+                            :key="sep.value"
+                            :label="sep.label"
+                            :value="sep.value"
+                          />
+                        </el-select>
+                      </el-form-item>
+                      <el-form-item :label="t('enabledInterruption')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="ttsSettings.enabledInterruption" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
+                    <el-form-item :label="t('maxConcurrency')" class="form-item-align">
+                      <el-slider
+                        v-model="ttsSettings.maxConcurrency"
+                        :min="1"
+                        :max="16"
+                        :step="1"
+                        @change="autoSaveSettings">
                     </el-form-item>
-
-                    <!-- 引擎选择 -->
-                    <el-form-item :label="t('ttsEngine')" class="form-item-align">
-                      <el-select v-model="newTTSConfig.engine" class="full-width-input">
-                        <el-option label="Edge TTS" value="edgetts"></el-option>
-                        <el-option label="GPT Sovits" value="GSV"></el-option>
-                        <el-option :label="t('openaiLike')" value="openai"></el-option>
-                        <el-option :label="t('customTTS')" value="customTTS"></el-option>
+                    <el-form-item :label="t('bufferWord')">
+                      <el-select
+                        v-model="ttsSettings.bufferWordList"
+                        multiple
+                        filterable
+                        allow-create
+                        :placeholder="t('bufferWordPlaceholder')"
+                        class="full-width-input"
+                        @change="autoSaveSettings"
+                      >
                       </el-select>
                     </el-form-item>
-
-                    <div class="tool-item" v-show="newTTSConfig.engine === 'openai'">
-                      <div class="tool-header">
-                        <div class="header-left">
-                          <span>
-                            <el-icon>
-                              <i class="fa-solid fa-microphone"></i>
-                            </el-icon>
-                            {{t('openaiLike')}}
-                          </span>
+                    </div>
+                  </div>
+                  <div class="tool-item" v-show="ttsSettings.engine === 'openai'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-microphone"></i>
+                          </el-icon>
+                          {{t('openaiLike')}}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="tool-content">
+                      <el-form-item :label="t('TTSModelProvider')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.selectedProvider"
+                          :placeholder="t('selectProvider')"
+                          filterable
+                          @change="selectTTSProvider"
+                          @visible-change="handleTTSProviderVisibleChange"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="provider in modelProviders"
+                            :key="provider.id"
+                            :label="provider.vendor+' - '+provider.modelId"
+                            :value="provider.id"
+                          >
+                            <div class="provider-option">
+                              <img 
+                                :src="getVendorLogo(provider.vendor)" 
+                                class="mini-vendor-logo"
+                              />
+                              <span class="model-id">{{ provider.modelId }}</span>
+                            </div>
+                          </el-option>
+                        </el-select>
+                      </el-form-item>
+                      <el-form-item :label="t('TTSVoice')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.openaiVoice"
+                          :placeholder="t('selectVoice')"
+                          filterable
+                          allow-create
+                          @change="autoSaveSettings"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="voice in openaiVoices"
+                            :key="voice"
+                            :label="voice"
+                            :value="voice"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+                      <!-- 提示音频选择框 -->
+                      <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.gsvRefAudioPath"
+                          @change="handleRefAudioPathChange"
+                          class="full-width-input"
+                        >
+                          <el-option :key="null" :value="null" :label="t('noRefAudio')"></el-option>
+                          <el-option
+                            v-for="audio in ttsSettings.gsvAudioOptions"
+                            :key="audio.path"
+                            :label="audio.name"
+                            :value="audio.path"
+                          >
+                            <div class="model-option-item">
+                              <span>{{ audio.name }}</span>
+                              <i 
+                                class="fa-solid fa-trash-can"
+                                style="color: #ff0000"
+                                @click.stop="deleteAudioOption(audio.path)"
+                              ></i>
+                            </div>
+                          </el-option>
+                          
+                        </el-select>
+                      </el-form-item>
+                      <!-- 语速滑动条 -->
+                      <el-form-item :label="t('TTSRate')" class="form-item-align">
+                        <el-slider
+                          v-model="ttsSettings.openaiSpeed"
+                          :min="0.1"
+                          :max="2"
+                          :step="0.1"
+                          @change="autoSaveSettings">
+                      </el-form-item>
+                    </div>
+                    <el-button 
+                      @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
+                      type="primary" 
+                      plain 
+                      class="add-server-btn">
+                      <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
+                    </el-button>
+                    <el-alert
+                      type="info"
+                      :closable="false"
+                      class="mb-2"
+                    >
+                      <template #default>
+                        <div class="alert-content">
+                          {{ t('firstTimeUse') }}
+                          <el-link
+                            type="primary"
+                            :underline="false"
+                            class="font-medium"
+                            @click="switchToApiBox"
+                          >
+                            <el-icon class="mr-1">
+                              <i class="fa-solid fa-key"></i>
+                            </el-icon>{{ t('keyBoxInterface') }}
+                          </el-link>
+                          {{ t('addProviderReturnSelect') }}
+                          {{ t('addTTSNotice') }}
                         </div>
+                      </template>
+                    </el-alert>
+                  </div>
+
+                  <div class="tool-item" v-show="ttsSettings.engine === 'customTTS'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          {{t('customTTS')}}
+                        </span>
                       </div>
-                      <div class="tool-content">
-                        <el-form-item :label="t('TTSModelProvider')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.selectedProvider"
-                            :placeholder="t('selectProvider')"
-                            filterable
-                            @change="selectTTSProvider"
-                            @visible-change="handleTTSProviderVisibleChange"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="provider in modelProviders"
-                              :key="provider.id"
-                              :label="provider.vendor+' - '+provider.modelId"
-                              :value="provider.id"
-                            >
-                              <div class="provider-option">
-                                <img 
-                                  :src="getVendorLogo(provider.vendor)" 
-                                  class="mini-vendor-logo"
-                                />
-                                <span class="model-id">{{ provider.modelId }}</span>
-                              </div>
-                            </el-option>
-                          </el-select>
-                        </el-form-item>
-                        <el-form-item :label="t('TTSVoice')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.openaiVoice"
-                            :placeholder="t('selectVoice')"
-                            filterable
-                            allow-create
-                            @change="autoSaveSettings"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="voice in openaiVoices"
-                              :key="voice"
-                              :label="voice"
-                              :value="voice"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-                        <!-- 提示音频选择框 -->
-                        <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.gsvRefAudioPath"
-                            @change="handleRefAudioPathChange"
-                            class="full-width-input"
-                          >
-                            <el-option :key="null" :value="null" :label="t('noRefAudio')"></el-option>
-                            <el-option
-                              v-for="audio in newTTSConfig.gsvAudioOptions"
-                              :key="audio.path"
-                              :label="audio.name"
-                              :value="audio.path"
-                            >
-                              <div class="model-option-item">
-                                <span>{{ audio.name }}</span>
-                                <i 
-                                  class="fa-solid fa-trash-can"
-                                  style="color: #ff0000"
-                                  @click.stop="deleteAudioOption(audio.path)"
-                                ></i>
-                              </div>
-                            </el-option>
-                            
-                          </el-select>
-                        </el-form-item>
-                        <!-- 语速滑动条 -->
-                        <el-form-item :label="t('TTSRate')" class="form-item-align">
-                          <el-slider
-                            v-model="newTTSConfig.openaiSpeed"
-                            :min="0.1"
-                            :max="2"
-                            :step="0.1"
-                            @change="autoSaveSettings">
-                        </el-form-item>
+                    </div>
+                    <div class="tool-content">
+                      <el-form-item :label="t('customTTSserver')" class="form-item-align">
+                        <el-input
+                          v-model="ttsSettings.customTTSserver"
+                          :placeholder="t('customTTSServerPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                        />
+                      </el-form-item>
+                      <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
+                        <el-input
+                          v-model="ttsSettings.customTTSspeaker"
+                          :placeholder="t('customTTSspeakerPlaceholder')"
+                          @input="autoSaveSettings"
+                          class="full-width-input"
+                        />
+                      </el-form-item>
+                      <!-- 语速滑动条 -->
+                      <el-form-item :label="t('customTTSspeed')" class="form-item-align">
+                        <el-slider
+                          v-model="ttsSettings.customTTSspeed"
+                          :min="0.1"
+                          :max="2"
+                          :step="0.1"
+                          @change="autoSaveSettings">
+                      </el-form-item>
+                    </div>
+                  </div>
+
+                  <div class="tool-item" v-show="ttsSettings.engine === 'edgetts'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          Edge TTS
+                        </span>
                       </div>
+                    </div>
+                    <div class="tool-content">
+                      <!-- 语速滑动条 -->
+                      <el-form-item :label="t('edgettsRate')" class="form-item-align">
+                        <el-slider
+                          v-model="ttsSettings.edgettsRate"
+                          :min="0.1"
+                          :max="2"
+                          :step="0.1"
+                          @change="autoSaveSettings">
+                      </el-form-item>
+                      <!-- 语言选择框 -->
+                      <el-form-item :label="t('edgettsLanguage')" class="form-item-align">
+                        <el-select
+                          v-model="edgettsLanguage"
+                          @change="updateLanguages"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="language in uniqueLanguages"
+                            :key="language"
+                            :label="language"
+                            :value="language"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+
+                      <!-- 性别选择框 -->
+                      <el-form-item :label="t('edgettsGender')" class="form-item-align">
+                        <el-select
+                          v-model="edgettsGender"
+                          @change="updateGenders"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="gender in uniqueGenders"
+                            :key="gender"
+                            :label="t(gender)"
+                            :value="gender"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+
+                      <!-- 语音选择框 -->
+                      <el-form-item :label="t('edgettsVoice')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.edgettsVoice"
+                          class="full-width-input"
+                          @change="updateVoices"
+                        >
+                          <el-option
+                            v-for="voice in filteredVoices"
+                            :key="voice.name"
+                            :label="voice.name"
+                            :value="voice.name"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+                    </div>
+                  </div>
+                  <div class="tool-item" v-show="ttsSettings.engine === 'GSV'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-volume-high"></i>
+                          </el-icon>
+                          GPT Sovits
+                          <el-link
+                            type="primary"
+                            :underline="false"
+                            href="https://github.com/RVC-Boss/GPT-SoVITS" 
+                            target="_blank"
+                          >
+                            <el-icon class="mr-1">
+                              <i class="fa-solid fa-key"></i>
+                            </el-icon>{{ t('gotoGithub') }}
+                          </el-link>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="tool-content">
+                      <el-form-item :label="t('gsvServer')" class="form-item-align">
+                        <el-input
+                          v-model="ttsSettings.gsvServer"
+                          :placeholder="t('gsvServerPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                        />
+                      </el-form-item>
+
+                      <!-- 语速滑动条 -->
+                      <el-form-item :label="t('gsvRate')" class="form-item-align">
+                        <el-slider
+                          v-model="ttsSettings.gsvRate"
+                          :min="0.1"
+                          :max="2"
+                          :step="0.1"
+                          @change="autoSaveSettings">
+                      </el-form-item>
+
+                      <!-- 语言选择框 -->
+                      <el-form-item :label="t('gsvTextLang')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.gsvTextLang"
+                          @change="autoSaveSettings"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="language in gsvTextLangs"
+                            :key="language"
+                            :label="t(language)"
+                            :value="language"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+
+                      <!-- 提示语言选择框 -->
+                      <el-form-item :label="t('gsvPromptLang')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.gsvPromptLang"
+                          @change="autoSaveSettings"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="language in gsvTextLangs"
+                            :key="language"
+                            :label="t(language)"
+                            :value="language"
+                          ></el-option>
+                        </el-select>
+                      </el-form-item>
+
+                      <!-- 提示音频选择框 -->
+                      <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
+                        <el-select
+                          v-model="ttsSettings.gsvRefAudioPath"
+                          @change="handleRefAudioPathChange"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="audio in ttsSettings.gsvAudioOptions"
+                            :key="audio.path"
+                            :label="audio.name"
+                            :value="audio.path"
+                          >
+                            <div class="model-option-item">
+                              <span>{{ audio.name }}</span>
+                              <i 
+                                class="fa-solid fa-trash-can"
+                                style="color: #ff0000"
+                                @click.stop="deleteAudioOption(audio.path)"
+                              ></i>
+                            </div>
+                          </el-option>
+                        </el-select>
+                      </el-form-item>
+
                       <el-button 
                         @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
                         type="primary" 
@@ -2660,6 +3688,7 @@ if ('serviceWorker' in navigator) {
                         class="add-server-btn">
                         <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
                       </el-button>
+
                       <el-alert
                         type="info"
                         :closable="false"
@@ -2667,264 +3696,65 @@ if ('serviceWorker' in navigator) {
                       >
                         <template #default>
                           <div class="alert-content">
-                            {{ t('firstTimeUse') }}
-                            <el-link
-                              type="primary"
-                              :underline="false"
-                              class="font-medium"
-                              @click="switchToApiBox"
-                            >
-                              <el-icon class="mr-1">
-                                <i class="fa-solid fa-key"></i>
-                              </el-icon>{{ t('keyBoxInterface') }}
-                            </el-link>
-                            {{ t('addProviderReturnSelect') }}
-                            {{ t('addTTSNotice') }}
+                            {{ t('gsvNotice1') }}<br>
+                            {{ t('gsvNotice2') }}
                           </div>
                         </template>
                       </el-alert>
                     </div>
-
-                    <div class="tool-item" v-show="newTTSConfig.engine === 'customTTS'">
-                      <div class="tool-header">
-                        <div class="header-left">
-                          <span>
-                            <el-icon>
-                              <i class="fa-solid fa-volume-high"></i>
-                            </el-icon>
-                            {{t('customTTS')}}
-                          </span>
+                  </div>
+                  <!-- 音频上传对话框 -->
+                  <el-dialog
+                    v-model="showGsvRefAudioPathDialog"
+                    :title="t('uploadGsvRefAudio')"
+                    width="600px"
+                  >
+                    <div class="upload-container">
+                      <div
+                        class="drop-zone"
+                        @dragover.prevent
+                        @drop.prevent="handleGsvRefAudioDrop"
+                        @click="browseGsvRefAudioFile"
+                      >
+                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                        <p>{{ t('clickOrDrop') }}</p>
+                      </div>
+                      
+                      <!-- 文件列表 -->
+                      <div class="compact-file-list" v-if="newGsvAudio.file">
+                        <div class="compact-file-item">
+                          <span class="file-name">@{{ newGsvAudio.name }}</span>
+                          <el-button
+                            @click.stop="removeNewGsvAudio"
+                            class="delete-icon"
+                            circle
+                          >
+                            <i class="fa-solid fa-trash"></i>
+                          </el-button>
                         </div>
                       </div>
-                      <div class="tool-content">
-                        <el-form-item :label="t('customTTSserver')" class="form-item-align">
-                          <el-input
-                            v-model="newTTSConfig.customTTSserver"
-                            :placeholder="t('customTTSServerPlaceholder')"
-                            @input="autoSaveSettings"
-                            type="textarea"
-                          />
-                        </el-form-item>
-                        <el-form-item :label="t('customTTSspeaker')" class="form-item-align">
-                          <el-input
-                            v-model="newTTSConfig.customTTSspeaker"
-                            :placeholder="t('customTTSspeakerPlaceholder')"
-                            @input="autoSaveSettings"
-                            class="full-width-input"
-                          />
-                        </el-form-item>
-                        <!-- 语速滑动条 -->
-                        <el-form-item :label="t('customTTSspeed')" class="form-item-align">
-                          <el-slider
-                            v-model="newTTSConfig.customTTSspeed"
-                            :min="0.1"
-                            :max="2"
-                            :step="0.1"
-                            @change="autoSaveSettings">
-                        </el-form-item>
-                      </div>
                     </div>
-
-                    <div class="tool-item" v-show="newTTSConfig.engine === 'edgetts'">
-                      <div class="tool-header">
-                        <div class="header-left">
-                          <span>
-                            <el-icon>
-                              <i class="fa-solid fa-volume-high"></i>
-                            </el-icon>
-                            Edge TTS
-                          </span>
-                        </div>
-                      </div>
-                      <div class="tool-content">
-                        <!-- 语速滑动条 -->
-                        <el-form-item :label="t('edgettsRate')" class="form-item-align">
-                          <el-slider
-                            v-model="newTTSConfig.edgettsRate"
-                            :min="0.1"
-                            :max="2"
-                            :step="0.1"
-                            @change="autoSaveSettings">
-                        </el-form-item>
-                        <!-- 语言选择框 -->
-                        <el-form-item :label="t('edgettsLanguage')" class="form-item-align">
-                          <el-select
-                            v-model="edgettsLanguage"
-                            @change="updateLanguages"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="language in uniqueLanguages"
-                              :key="language"
-                              :label="language"
-                              :value="language"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-
-                        <!-- 性别选择框 -->
-                        <el-form-item :label="t('edgettsGender')" class="form-item-align">
-                          <el-select
-                            v-model="edgettsGender"
-                            @change="updateGenders"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="gender in uniqueGenders"
-                              :key="gender"
-                              :label="t(gender)"
-                              :value="gender"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-
-                        <!-- 语音选择框 -->
-                        <el-form-item :label="t('edgettsVoice')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.edgettsVoice"
-                            class="full-width-input"
-                            @change="updateVoices"
-                          >
-                            <el-option
-                              v-for="voice in filteredVoices"
-                              :key="voice.name"
-                              :label="voice.name"
-                              :value="voice.name"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-                      </div>
-                    </div>
-                    <div class="tool-item" v-show="newTTSConfig.engine === 'GSV'">
-                      <div class="tool-header">
-                        <div class="header-left">
-                          <span>
-                            <el-icon>
-                              <i class="fa-solid fa-volume-high"></i>
-                            </el-icon>
-                            GPT Sovits
-                            <el-link
-                              type="primary"
-                              :underline="false"
-                              href="https://github.com/RVC-Boss/GPT-SoVITS" 
-                              target="_blank"
-                            >
-                              <el-icon class="mr-1">
-                                <i class="fa-solid fa-key"></i>
-                              </el-icon>{{ t('gotoGithub') }}
-                            </el-link>
-                          </span>
-                        </div>
-                      </div>
-                      <div class="tool-content">
-                        <el-form-item :label="t('gsvServer')" class="form-item-align">
-                          <el-input
-                            v-model="newTTSConfig.gsvServer"
-                            :placeholder="t('gsvServerPlaceholder')"
-                            @input="autoSaveSettings"
-                            type="textarea"
-                          />
-                        </el-form-item>
-
-                        <!-- 语速滑动条 -->
-                        <el-form-item :label="t('gsvRate')" class="form-item-align">
-                          <el-slider
-                            v-model="newTTSConfig.gsvRate"
-                            :min="0.1"
-                            :max="2"
-                            :step="0.1"
-                            @change="autoSaveSettings">
-                        </el-form-item>
-
-                        <!-- 语言选择框 -->
-                        <el-form-item :label="t('gsvTextLang')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.gsvTextLang"
-                            @change="autoSaveSettings"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="language in gsvTextLangs"
-                              :key="language"
-                              :label="t(language)"
-                              :value="language"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-
-                        <!-- 提示语言选择框 -->
-                        <el-form-item :label="t('gsvPromptLang')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.gsvPromptLang"
-                            @change="autoSaveSettings"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="language in gsvTextLangs"
-                              :key="language"
-                              :label="t(language)"
-                              :value="language"
-                            ></el-option>
-                          </el-select>
-                        </el-form-item>
-
-                        <!-- 提示音频选择框 -->
-                        <el-form-item :label="t('gsvPromptAudio')" class="form-item-align">
-                          <el-select
-                            v-model="newTTSConfig.gsvRefAudioPath"
-                            @change="handleRefAudioPathChange"
-                            class="full-width-input"
-                          >
-                            <el-option
-                              v-for="audio in newTTSConfig.gsvAudioOptions"
-                              :key="audio.path"
-                              :label="audio.name"
-                              :value="audio.path"
-                            >
-                              <div class="model-option-item">
-                                <span>{{ audio.name }}</span>
-                                <i 
-                                  class="fa-solid fa-trash-can"
-                                  style="color: #ff0000"
-                                  @click.stop="deleteAudioOption(audio.path)"
-                                ></i>
-                              </div>
-                            </el-option>
-                          </el-select>
-                        </el-form-item>
-
-                        <el-button 
-                          @click="showGsvRefAudioPathDialog = true;currentUploadType='audio'"
-                          type="primary" 
-                          plain 
-                          class="add-server-btn">
-                          <i class="fa-solid fa-plus"></i> {{ t('addRefAudio') }}
-                        </el-button>
-
-                        <el-alert
-                          type="info"
-                          :closable="false"
-                          class="mb-2"
-                        >
-                          <template #default>
-                            <div class="alert-content">
-                              {{ t('gsvNotice1') }}<br>
-                              {{ t('gsvNotice2') }}
-                            </div>
-                          </template>
-                        </el-alert>
-                      </div>
-                    </div>
-
-                  </el-form>
-
-                  <template #footer>
-                    <el-button @click="showAddTTSDialog = false">{{ t('cancel') }}</el-button>
-                    <el-button type="primary" @click="saveNewTTSConfig" :disabled="!newTTSConfig.name">
-                      {{ t('confirmAdd') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
+                    <el-form-item :label="t('gsvGsvAudioPath')" class="form-item-align" v-if="!newGsvAudio.file">
+                      <el-input
+                        v-model="newGsvAudio.path"
+                        :placeholder="t('gsvGsvAudioPathPlaceholder')"
+                        @input="changeGsvAudioPath"
+                      ></el-input>
+                    </el-form-item>
+                    <el-form-item :label="t('gsvPromptText')" class="form-item-align">
+                      <el-input
+                        v-model="newGsvAudio.text"
+                        :placeholder="t('gsvPromptTextPlaceholder')"
+                      ></el-input>
+                    </el-form-item>
+                    <template #footer>
+                      <el-button @click="cancelGsvAudioUpload">{{ t('cancel') }}</el-button>
+                      <el-button type="primary" @click="uploadGsvAudio" :disabled="!newGsvAudio.name">
+                        {{ t('createImmediately') }}
+                      </el-button>
+                    </template>
+                  </el-dialog>
+                </el-form>
               </div>
             </div>
           </div>
@@ -3475,7 +4305,7 @@ if ('serviceWorker' in navigator) {
                           <el-icon>
                             <i class="fa-solid fa-globe"></i>
                           </el-icon>
-                          DuckDuckGo
+                          DuckDuckGo{{t("noNet")}}
                         </span>
                       </div>
                     </div>
@@ -3957,13 +4787,6 @@ if ('serviceWorker' in navigator) {
                               <el-option :label="t('both')" value="both"></el-option>
                             </el-select>
                           </el-form-item>
-                          <!-- 新增参数设置 -->
-                          <el-form-item :label="t('rerankEnable')" class="form-item-align" label-position="left">
-                            <el-switch
-                              v-model="KBSettings.is_rerank"
-                              @change="autoSaveSettings"
-                            ></el-switch>
-                          </el-form-item>
                           <el-form-item :label="t('returnChunks')" class="form-item-align">
                             <el-slider
                               v-model="KBSettings.top_n"
@@ -3973,8 +4796,15 @@ if ('serviceWorker' in navigator) {
                               @input="autoSaveSettings"
                             />
                           </el-form-item>
+                          <!-- 新增参数设置 -->
+                          <el-form-item :label="t('rerankEnable')" class="form-item-align" label-position="left">
+                            <el-switch
+                              v-model="KBSettings.is_rerank"
+                              @change="autoSaveSettings"
+                            ></el-switch>
+                          </el-form-item>
                           <!-- 模型参数 -->
-                          <el-form-item :label="t('rerankProvider')" class="form-item-align">
+                          <el-form-item :label="t('rerankProvider')" class="form-item-align" v-show="KBSettings.is_rerank">
                             <el-select
                               v-model="KBSettings.selectedProvider"
                               :placeholder="t('selectProvider')"
@@ -4005,7 +4835,7 @@ if ('serviceWorker' in navigator) {
                             class="mb-2"
                           >
                             <template #default>
-                              <div class="alert-content">
+                              <div class="alert-content" v-show="KBSettings.is_rerank">
                                 {{ t('firstTimeUse') }}
                                 <el-link
                                   type="primary"
@@ -4488,7 +5318,7 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <h3>{{ file.original_filename }}</h3>
-                        <span>{{ file.description }}</span>
+                        <span>{{ (file.description?.substring(0, 50) + '...') || '' }}</span>
                       </div>
                       <!-- 添加上传按钮 -->
                       <div class="provider-card add-tile" @click="showWorkflowUploadDialog = true">
@@ -4964,466 +5794,6 @@ if ('serviceWorker' in navigator) {
                   </template>
                 </el-dialog>
               </div>
-              <!--记忆-->
-              <div v-show="subMenu === 'memory'" class="page">
-                <el-tabs v-model="activeMemoryTab">
-                  <!-- 记忆配置标签页 -->
-                  <el-tab-pane :label="t('memoryConfig')" name="config">
-                    <el-form :model="memorySettings" class="settings-form"  label-position="top">
-                      <div class="tool-item">
-                        <div class="tool-header">
-                          <div class="header-left">
-                            <span>
-                              <el-icon>
-                                <i class="fa-solid fa-brain"></i>
-                              </el-icon>
-                              {{ t('memory') }}
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://github.com/SillyTavern/SillyTavern" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>{{ t('gotoGithub') }}
-                              </el-link>
-                            </span>
-                          </div>
-                          <el-switch v-model="memorySettings.is_memory" @click.stop @change="changeMemory"/>
-                        </div>
-                        <div class="tool-content">
-                          <el-form-item :label="t('memoryResultCount')" class="form-item-align">
-                            <el-slider
-                              v-model="memorySettings.memoryLimit"
-                              :min="1"
-                              :max="20"
-                              :step="1"
-                              @input="autoSaveSettings"
-                            />
-                          </el-form-item>
-                          <el-form-item :label="t('selectMemory')">
-                            <el-select 
-                              v-model="memorySettings.selectedMemory" 
-                              :placeholder="t('selectMemoryPlaceholder')"
-                              class="full-width-input"
-                              @change ="changeMemory"
-                              >
-                              <el-option
-                                v-for="memory in memories"
-                                :key="memory.id"
-                                :label="memory.name"
-                                :value="memory.id"
-                              />
-                            </el-select>
-                          </el-form-item>
-                          <el-form-item :label="t('userName')" class="form-item-align">
-                            <el-input
-                              v-model="memorySettings.userName"
-                              :placeholder="t('userNamePlaceholder')"
-                              @input="autoSaveSettings"
-                              class="full-width-input"
-                            />
-                          </el-form-item>
-                          <el-form-item :label="t('genericSystemPrompt')" class="form-item-align">
-                            <el-input
-                              v-model="memorySettings.genericSystemPrompt"
-                              :placeholder="t('genericSystemPromptPlaceholder')"
-                              type="textarea"
-                              :rows="3"
-                              @input="autoSaveSettings"
-                              class="full-width-input"
-                            />
-                          </el-form-item>
-                          <el-form-item :label="t('getCardLink')" class="form-item-align">
-                            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: nowrap;">
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://chub.ai/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                chub.ai
-                              </el-link>
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://janitorai.com/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                janitorai.com
-                              </el-link>
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://pygmalion.chat/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                pygmalion.chat
-                              </el-link>
-                            </div>
-                          </el-form-item>
-                        </div>
-                      </div>
-                    </el-form>
-                  </el-tab-pane>
-                  <!-- 添加新记忆标签页 -->
-                  <el-tab-pane :label="t('addNewMemory')" name="add">
-                    <div class="provider-grid">
-                      <!-- 已有记忆磁贴 -->
-                      <div class="provider-card knowledge-card" v-for="memory in memories" :key="memory.id">
-                        <div class="card-header">
-                          <img 
-                            :src="memory.avatar? memory.avatar : 'source/Avatar.png'" 
-                            class="mini-vendor-logo"
-                          />
-                          <div class="card-actions">
-                            <el-button
-                              @click="downloadMemory(memory)"
-                              type="primary"
-                              circle
-                              size="small"
-                            >
-                              <i class="fa-solid fa-download"></i>
-                            </el-button>
-                            <el-button
-                              @click="editMemory(memory.id)"
-                              type="default"
-                              circle
-                              size="small"
-                            >
-                              <i class="fa-solid fa-pen-to-square"></i>
-                            </el-button>
-                            <el-button
-                              @click="removeMemory(memory.id)"
-                              type="danger"
-                              circle
-                              size="small"
-                            >
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                        <div class="kb-content">
-                          <h3 class="kb-title">{{memory.name }}</h3>
-                          <div class="kb-meta">
-                            <div class="kb-meta-item">
-                              <el-icon class="kb-icon">
-                                <i class="fa-solid fa-brain"></i>
-                              </el-icon>
-                              <span>{{ getVendorName(memory.providerId) }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <!-- 添加新记忆磁贴 -->
-                      <div class="provider-card add-tile" @click="showAddMemoryDialog = true">
-                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewMemory') }}</div>
-                      </div>
-                    </div>
-                  </el-tab-pane>
-                </el-tabs>
-                <!-- 添加记忆对话框 -->
-                <el-dialog v-model="showAddMemoryDialog" :title="t('memoryConfig')" width="80%">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('memoryName')" required>
-                      <el-input v-model="newMemory.name" />
-                    </el-form-item>
-
-                    <el-form-item :label="t('avatar')">
-                      <el-input v-model="newMemory.avatar" 
-                      :placeholder="t('avatarPlaceholder')"/>
-                    </el-form-item>
-
-                    <!-- 新增已有记忆选择框 -->
-                    <el-form-item :label="t('selectExistingMemory')">
-                      <el-select 
-                        v-model="selectedExistingMemoryId" 
-                        :placeholder="t('selectExistingMemoryPlaceholder')"
-                        @change="copyExistingMemoryData"
-                        class="full-width-input">
-                        <!-- 添加“无”选项，默认选中 -->
-                        <el-option
-                          :key="'none'"
-                          :label="t('none')"
-                          :value="null">
-                        </el-option>
-                        
-                        <el-option
-                          v-for="memory in memories"
-                          :key="memory.id"
-                          :label="memory.name"
-                          :value="memory.id">
-                        </el-option>
-                      </el-select>
-                    </el-form-item>
-                    <div class="upload-container">
-                      <div
-                        class="drop-zone"
-                        @dragover.prevent
-                        @drop.prevent="handleJsonDrop"
-                        @click="browseJsonFile"
-                      >
-                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
-                        <p>{{ t('clickOrDropCharacterCards') }}</p>
-                      </div>
-                    </div>
-                    <el-tabs type="border-card" v-model="activeMemoryTabName">
-
-                      <!-- 自动更新设定（供应商） -->
-                      <el-tab-pane name="autoUpdateSetting">
-                        <template #label>
-                          <span>{{ t('autoUpdateSetting') }}</span>
-                        </template>
-                        <el-form-item :label="t('embeddingProvider')">
-                          <el-select
-                            v-model="newMemory.providerId"
-                            :placeholder="t('selectProvider')"
-                            clearable
-                            class="full-width-input"
-                          >
-                            <!-- 添加“无”选项，默认选中 -->
-                            <el-option
-                              :key="'none'"
-                              :label="t('none')"
-                              :value="null"
-                            >
-                              <div class="provider-option">
-                                <img 
-                                  src="source/providers/custom.png" 
-                                  class="mini-vendor-logo"
-                                />
-                                <span class="model-id">{{ t("NoLongTermMemory") }}</span>
-                              </div>
-                            </el-option>
-                            <el-option
-                              v-for="p in modelProviders"
-                              :key="p.id"
-                              :label="p.vendor + ' - ' + p.modelId"
-                              :value="p.id"
-                            >
-                              <div class="provider-option">
-                                <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
-                                <span class="model-id">{{ p.modelId }}</span>
-                              </div>
-                            </el-option>
-                          </el-select>
-                        </el-form-item>
-                        <el-alert type="info" :closable="false" class="mb-2">
-                          <template #default>
-                            <div class="alert-content">
-                              {{ t('firstTimeUse') }}
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                class="font-medium"
-                                @click="switchToApiBox"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>{{ t('keyBoxInterface') }}
-                              </el-link>
-                              {{ t('addProviderReturnSelect') }}
-                              {{ t('addemdNotice') }}
-                              {{ t('autoUpdateSettingNote') }}
-                            </div>
-                          </template>
-                        </el-alert>
-                      </el-tab-pane>
-
-                      <!-- 角色描述 -->
-                      <el-tab-pane name="description" :label="t('characterDescription')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.description"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('characterDescriptionPlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 性格 -->
-                      <el-tab-pane name="personality" :label="t('personality')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.personality"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('personalityPlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 对话示例（一问一答） -->
-                      <el-tab-pane name="mesExample" :label="t('mesExample')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.mesExample"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('mesExamplePlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 系统提示 -->
-                      <el-tab-pane name="systemPrompt" :label="t('systemPrompt')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.systemPrompt"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('systemPromptPlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <el-tab-pane name="characterBook" :label="t('characterBook')">
-                        <div
-                          v-for="(item, idx) in newMemory.characterBook"
-                          :key="idx"
-                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item :label="t('keys')">
-                            <el-input
-                              v-model="item.keysRaw"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('keysPlaceholder')"
-                            />
-                          </el-form-item>
-                          <el-form-item :label="t('content')">
-                            <el-input
-                              v-model="item.content"
-                              type="textarea"
-                              :rows="4"
-                              :placeholder="t('contentPlaceholder')"
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button circle size="small" type="primary" @click="clearBook(idx)">
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              v-if="newMemory.characterBook.length>1"
-                              circle
-                              size="small"
-                              type="danger"
-                              @click="removeBook(idx)"
-                            >
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                            <el-button circle size="small" type="primary" @click="addBook">
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                      </el-tab-pane>
-
-                      <el-tab-pane name="firstGreeting" :label="t('firstGreeting')">
-                        <div
-                          class="param-row"
-                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item>
-                            <el-input
-                              v-model="newMemory.firstMes"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('firstMes')"
-                              
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button
-                              @click="clearFirstMes"
-                              type="default"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              @click="addGreeting"
-                              type="primary"
-                              circle
-                              size="small"
-                              class="header-add-btn"
-                            >
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                        <div
-                          v-for="(g, idx) in newMemory.alternateGreetings"
-                          :key="idx"
-                          class="param-row"
-                          style="margin-bottom:12px;border:1px solid #dcdfe6;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item>
-                            <el-input
-                              v-model="newMemory.alternateGreetings[idx]"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('alternateGreeting') + ' ' + (idx + 1)"
-                              
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button
-                              @click="clearGreeting(idx)"
-                              type="default"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              @click="removeGreeting(idx)"
-                              type="danger"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                            <el-button
-                              @click="addGreeting"
-                              type="primary"
-                              circle
-                              size="small"
-                              class="header-add-btn"
-                            >
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                      </el-tab-pane>
-                    </el-tabs>
-                  </el-form>
-
-                  <template #footer>
-                    <el-button @click="showAddMemoryDialog = false">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="addMemory"
-                      :disabled="!newMemory.name">
-                      {{ t('confirmAdd') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
-              </div>
             </div>
           </div>
         </div>
@@ -5528,6 +5898,17 @@ if ('serviceWorker' in navigator) {
                   ></el-input>
                 </el-form-item>
               </div>
+              <el-alert
+                type="info"
+                :closable="false"
+                class="mb-2"
+              >
+                <template #default>
+                  <div class="alert-content">
+                    {{ t('proxyNotice') }}
+                  </div>
+                </template>
+              </el-alert>
             </div>
             <div class="browser-mode-btn-container" v-show="isElectron">
               <el-button
@@ -5602,9 +5983,9 @@ if ('serviceWorker' in navigator) {
                     <el-checkbox
                       v-model="selectedFiles"
                       :label="file.unique_filename"
+                      style="margin-right: 10px;"
                       class="checkbox-no-label">  
                     </el-checkbox>
-                    <el-icon class="file-icon"><i class="fa-solid fa-file-lines"></i></el-icon>
                     <div class="file-info">
                       <span class="file-name">{{ file.original_filename }}</span>
                     </div>
@@ -5749,7 +6130,7 @@ if ('serviceWorker' in navigator) {
         <!-- logo页面 -->
         <div v-show="activeMenu === 'logo'" class="page logo-container">
           <div class="license-notice">
-            <h1>Super Agent Party v0.2.8</h1>
+            <h1>Super Agent Party v0.2.9</h1>
             <h3>开源协议声明 / Open Source License</h3>
             <div class="notice-section">
               <p class="warning-text">❗ 注意！本项目是基于AGPL协议开源的，请遵守AGPL协议，以避免不必要的法律问题！</p>
@@ -6582,6 +6963,7 @@ if ('serviceWorker' in navigator) {
                             {{ t('readBot') }}
                           </span>
                           <div>
+                            
                             <!-- 启动按钮 -->
                             <el-tooltip :content="t('start_read')" placement="top">
                               <el-button 
@@ -6620,21 +7002,10 @@ if ('serviceWorker' in navigator) {
 
                         <div class="tool-item">
                           <div class="tool-content">
-                            <div class="upload-container">
-                              <!-- 可点击的拖拽区域 -->
-                              <div
-                                class="drop-zone"
-                                @dragover.prevent
-                                @drop.prevent="handleReadDrop"
-                                @click="browseReadFiles"
-                              >
-                                <el-icon :size="50"><upload /></el-icon>
-                                <p>{{ t('clickOrDrop') }}</p>
-                              </div>
-                            </div>
+                            <!-- 文件选择区域 -->
                             <el-form-item>
                               <!-- 选择textFiles中的文件 -->
-                              <el-select class="full-width-input" v-model="selectedFile" :placeholder="t('selectFile')">
+                              <el-select class="full-width-input" v-model="selectedFile" @change="parseSelectedFile" :placeholder="t('selectFile')">
                                 <el-option
                                   v-for="file in textFiles"
                                   :key="file.unique_filename"
@@ -6643,10 +7014,27 @@ if ('serviceWorker' in navigator) {
                                 ></el-option>
                               </el-select>
                             </el-form-item>
-                              <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
-                                <el-button type="primary" @click="parseSelectedFile" plain><i class="fa-solid fa-file-import"></i>{{t("parseFileContent")}}</el-button>
-                                <el-button type="danger" @click="clearLongText" plain><i class="fa-solid fa-broom"></i>{{t("clearText")}}</el-button>
-                              </div>
+                            <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <!-- 新增上传文件按钮 -->
+                              <el-tooltip :content="t('uploadFile')" placement="top">
+                                <el-button 
+                                  type="success" 
+                                  @click="showFileDialog = true" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-file-arrow-up"></i>
+                                </el-button>
+                              </el-tooltip>
+                              <el-tooltip :content="t('clearText')" placement="top">
+                                <el-button 
+                                  type="danger" 
+                                  @click="clearLongText" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-broom"></i>
+                                </el-button>
+                              </el-tooltip>
+                            </div>
                             <el-form-item>
                               <el-input
                                   v-model="readConfig.longText"
@@ -6660,6 +7048,26 @@ if ('serviceWorker' in navigator) {
                         </div>
                       </div>
                     </el-form>
+
+                    <!-- 文件上传对话框 -->
+                    <el-dialog 
+                      :title="t('uploadFile')" 
+                      v-model="showFileDialog" 
+                      width="600px"
+                    >
+                      <div class="upload-container">
+                        <!-- 可点击的拖拽区域 -->
+                        <div
+                          class="drop-zone"
+                          @dragover.prevent
+                          @drop.prevent="handleReadDrop"
+                          @click="browseReadFiles"
+                        >
+                          <el-icon :size="50"><upload /></el-icon>
+                          <p>{{ t('clickOrDrop') }}</p>
+                        </div>
+                      </div>
+                    </el-dialog>
                   </div>
                   <!-- 直播页面 -->
                   <div v-show="subMenu === 'live_stream'">

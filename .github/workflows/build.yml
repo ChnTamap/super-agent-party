@@ -57,13 +57,6 @@ jobs:
             ubuntu-latest)
               npx electron-builder build --linux --publish always
               ;;
-            macos-latest)
-              npx electron-builder build --mac \
-                --config.mac.identity=null \
-                --config.mac.hardenedRuntime=false \
-                --config.mac.gatekeeperAssess=false \
-                --publish always
-              ;;
           esac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
