@@ -414,6 +414,7 @@ app.whenReady().then(async () => {
         alwaysOnTop: true,
         skipTaskbar: true,
         hasShadow: false,
+        focusable: false,
         acceptFirstMouse: true,
         backgroundColor: 'rgba(0, 0, 0, 0)',
         webPreferences: {
