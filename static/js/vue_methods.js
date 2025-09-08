@@ -127,6 +127,7 @@ let vue_methods = {
   },
 
   async deleteMessage(index) {
+    this.stopGenerate();
     this.messages.splice(index, 1);
     await this.autoSaveSettings();
   },
@@ -138,14 +139,20 @@ let vue_methods = {
     this.showEditDialog = true;
   },
   async saveEdit() {
+    this.showEditDialog = false;
     if (this.editType === 'system') {
       this.system_prompt = this.editContent;
     }
-    if (this.editIndex !== null) {
-      this.messages[this.editIndex].content = this.editContent;
+    if (this.editType === 'user') {
+      // 移除this.editIndex之后的所有消息
+      this.messages.splice(this.editIndex);
+      this.userInput = this.editContent;
+      this.stopGenerate();
+      await this.sendMessage();
+    }else{
+      this.messages[this.editIndex].content = this.editContent; // 更新this.editIndex对应的消息内容
     }
     await this.autoSaveSettings();
-    this.showEditDialog = false;
   },
     async addParam() {
       this.settings.extra_params.push({
