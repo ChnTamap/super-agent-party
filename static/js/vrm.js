@@ -47,6 +47,11 @@ async function fetchVRMConfig() {
         const HOST = window.location.host;
         let res = await fetch(`${http_protocol}//${HOST}/vrm_config`);
         const data = await res.json();
+        if(data.VRMConfig.name != 'default'){
+            data.VRMConfig.selectedModelId = data.VRMConfig.selectedNewModelId;
+            data.VRMConfig.selectedMotionIds = data.VRMConfig.selectedNewMotionIds;
+        }
+        console.log(data.VRMConfig);
         return data.VRMConfig;
     } catch (error) {
         console.error('Error fetching VRMConfig:', error);
@@ -56,7 +61,8 @@ async function fetchVRMConfig() {
             defaultModels: [], // 存储默认模型
             userModels: [],     // 存储用户上传的模型
             defaultMotions: [], // 存储默认动作
-            userMotions: []     // 存储用户上传的动作
+            userMotions: [],     // 存储用户上传的动作
+            selectedMotionIds: [],
         };
     }
 }

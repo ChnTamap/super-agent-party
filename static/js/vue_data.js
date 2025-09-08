@@ -488,6 +488,8 @@ let vue_data = {
       defaultMotions: [], // 存储默认动作
       userMotions: [],     // 存储用户上传的动作
       selectedMotionIds: [],
+      selectedNewModelId: 'alice',
+      selectedNewMotionIds: [],
       newVRM:{}
     },
     newAppearanceConfig: {

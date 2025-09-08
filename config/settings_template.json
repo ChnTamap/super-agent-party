@@ -249,7 +249,9 @@
       "defaultMotions": [],
       "userMotions": [], 
       "selectedMotionIds": [],
-      "newVRM":{}
+      "newVRM":{},
+      "selectedNewModelId": "alice",
+      "selectedNewMotionIds": []
     },
     "comfyuiServers": ["http://127.0.0.1:8188"],
     "comfyuiAPIkey": "",

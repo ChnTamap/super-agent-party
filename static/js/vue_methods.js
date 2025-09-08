@@ -5463,6 +5463,7 @@ let vue_methods = {
   },
     async startVRM() {
     if (this.isElectron) {
+      this.VRMConfig.name = 'default';
       // Electron 环境
       try {
         this.isVRMStarting = true;
@@ -5482,24 +5483,28 @@ let vue_methods = {
     }
   },
     async startNewVRM(name) {
+    try {
+      this.isVRMStarting = true;
+      this.VRMConfig.name = name;
+      this.VRMConfig.selectedNewModelId = this.VRMConfig.newVRM[name].selectedModelId;
+      this.VRMConfig.selectedNewMotionIds = this.VRMConfig.newVRM[name].selectedMotionIds;
+      await this.autoSaveSettings();
     if (this.isElectron) {
       // Electron 环境
-      try {
-        this.isVRMStarting = true;
         const windowConfig = {
-          width: this.VRMConfig.windowWidth,
-          height: this.VRMConfig.windowHeight,
+          width: this.VRMConfig.newVRM[name].windowWidth,
+          height: this.VRMConfig.newVRM[name].windowHeight,
         };
         await window.electronAPI.startVRMWindow(windowConfig);
-      } catch (error) {
-        console.error('启动失败:', error);
-      } finally {
-        this.isVRMStarting = false;
-      }
     } else {
       // 浏览器环境
       window.open(`${this.partyURL}/vrm.html`, '_blank');
-    }
+    }      
+  } catch (error) {
+    console.error('启动失败:', error);
+  } finally {
+    this.isVRMStarting = false;
+  }
   },
   async startVRMweb() {
     if (this.isElectron) {
