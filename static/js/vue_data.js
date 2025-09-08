@@ -501,6 +501,7 @@ let vue_data = {
     },
     showAddAppearanceDialog: false,
     showVrmaMotionDialog: false,
+    showFileDialog: false,
     newVrmaMotion: {
       name: '',
       displayName: '',

@@ -1997,6 +1997,7 @@ let vue_methods = {
     },
     // 统一处理文件
     async handleReadFiles(files) {
+      this.showFileDialog = false;
       const allowedExtensions = this.currentUploadType === 'image' ? ALLOWED_IMAGE_EXTENSIONS : ALLOWED_EXTENSIONS;
 
       const validFiles = files.filter(file => {
@@ -2033,10 +2034,7 @@ let vue_methods = {
           }
 
           const data = await response.json();
-          if (data.success) {
-            // 更新文件链接和文本文件
-            this.files = data.fileLinks;
-            
+          if (data.success) {      
             // 将新的文件信息添加到 this.textFiles
             this.textFiles = [...data.textFiles,...this.textFiles];
             this.autoSaveSettings();
@@ -2052,6 +2050,7 @@ let vue_methods = {
       }
     },
     clearLongText() {
+      this.selectedFile = null;
       this.readConfig.longText = '';
     },
     removeItem(index, type) {
@@ -6462,8 +6461,9 @@ let vue_methods = {
     /* ===============  朗读主流程  =============== */
   async startRead() {
     if (!this.ttsSettings.enabled) {
-      showNotification(this.t('ttsNotEnabled'), 'error')
-      return;
+        this.ttsSettings.enabled = true;
+        this.changeTTSstatus();
+        showNotification(this.t('ttsAutoEnabled'))
     }
     if (!this.readConfig.longText.trim()) return;
 

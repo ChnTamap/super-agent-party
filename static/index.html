@@ -1533,7 +1533,7 @@ if ('serviceWorker' in navigator) {
                       </div>
                     </div>
                     <div class="kb-content">
-                      <h3 class="kb-title">{{ t(name) }}</h3>
+                      <h3 class="kb-title">{{ name }}</h3>
                       <div class="kb-meta">
                         <div class="kb-meta-item">
                           <el-icon class="kb-icon">
@@ -1562,7 +1562,7 @@ if ('serviceWorker' in navigator) {
                         filterable
                         allow-create
                       class="full-width-input">
-                        <el-option :label="t('Narrator')" value='Narrator'></el-option>
+                        <el-option :label="t('Narrator')" :value="t('Narrator')"></el-option>
                         <el-option
                           v-for="memory in memories"
                           :key="memory.id"
@@ -1977,14 +1977,6 @@ if ('serviceWorker' in navigator) {
                     </div>
                     <div class="kb-content">
                       <h3 class="kb-title">{{ t(name) }}</h3>
-                      <div class="kb-meta">
-                        <div class="kb-meta-item">
-                          <el-icon class="kb-icon">
-                            <i class="fa-solid fa-person"></i>
-                          </el-icon>
-                          <span>{{ config.selectedModelId }}</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -5313,7 +5305,7 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <h3>{{ file.original_filename }}</h3>
-                        <span>{{ file.description }}</span>
+                        <span>{{ (file.description?.substring(0, 50) + '...') || '' }}</span>
                       </div>
                       <!-- 添加上传按钮 -->
                       <div class="provider-card add-tile" @click="showWorkflowUploadDialog = true">
@@ -6958,6 +6950,7 @@ if ('serviceWorker' in navigator) {
                             {{ t('readBot') }}
                           </span>
                           <div>
+                            
                             <!-- 启动按钮 -->
                             <el-tooltip :content="t('start_read')" placement="top">
                               <el-button 
@@ -6996,21 +6989,10 @@ if ('serviceWorker' in navigator) {
 
                         <div class="tool-item">
                           <div class="tool-content">
-                            <div class="upload-container">
-                              <!-- 可点击的拖拽区域 -->
-                              <div
-                                class="drop-zone"
-                                @dragover.prevent
-                                @drop.prevent="handleReadDrop"
-                                @click="browseReadFiles"
-                              >
-                                <el-icon :size="50"><upload /></el-icon>
-                                <p>{{ t('clickOrDrop') }}</p>
-                              </div>
-                            </div>
+                            <!-- 文件选择区域 -->
                             <el-form-item>
                               <!-- 选择textFiles中的文件 -->
-                              <el-select class="full-width-input" v-model="selectedFile" :placeholder="t('selectFile')">
+                              <el-select class="full-width-input" v-model="selectedFile" @change="parseSelectedFile" :placeholder="t('selectFile')">
                                 <el-option
                                   v-for="file in textFiles"
                                   :key="file.unique_filename"
@@ -7019,10 +7001,27 @@ if ('serviceWorker' in navigator) {
                                 ></el-option>
                               </el-select>
                             </el-form-item>
-                              <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
-                                <el-button type="primary" @click="parseSelectedFile" plain><i class="fa-solid fa-file-import"></i>{{t("parseFileContent")}}</el-button>
-                                <el-button type="danger" @click="clearLongText" plain><i class="fa-solid fa-broom"></i>{{t("clearText")}}</el-button>
-                              </div>
+                            <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <!-- 新增上传文件按钮 -->
+                              <el-tooltip :content="t('uploadFile')" placement="top">
+                                <el-button 
+                                  type="success" 
+                                  @click="showFileDialog = true" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-file-arrow-up"></i>
+                                </el-button>
+                              </el-tooltip>
+                              <el-tooltip :content="t('clearText')" placement="top">
+                                <el-button 
+                                  type="danger" 
+                                  @click="clearLongText" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-broom"></i>
+                                </el-button>
+                              </el-tooltip>
+                            </div>
                             <el-form-item>
                               <el-input
                                   v-model="readConfig.longText"
@@ -7036,6 +7035,26 @@ if ('serviceWorker' in navigator) {
                         </div>
                       </div>
                     </el-form>
+
+                    <!-- 文件上传对话框 -->
+                    <el-dialog 
+                      :title="t('uploadFile')" 
+                      v-model="showFileDialog" 
+                      width="600px"
+                    >
+                      <div class="upload-container">
+                        <!-- 可点击的拖拽区域 -->
+                        <div
+                          class="drop-zone"
+                          @dragover.prevent
+                          @drop.prevent="handleReadDrop"
+                          @click="browseReadFiles"
+                        >
+                          <el-icon :size="50"><upload /></el-icon>
+                          <p>{{ t('clickOrDrop') }}</p>
+                        </div>
+                      </div>
+                    </el-dialog>
                   </div>
                   <!-- 直播页面 -->
                   <div v-show="subMenu === 'live_stream'">
