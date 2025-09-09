@@ -5469,6 +5469,7 @@ let vue_methods = {
     async startVRM() {
     if (this.isElectron) {
       this.VRMConfig.name = 'default';
+      await this.autoSaveSettings();
       // Electron 环境
       try {
         this.isVRMStarting = true;
