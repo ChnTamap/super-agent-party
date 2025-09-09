@@ -766,6 +766,8 @@ key3`,
         'localConfigNotice02':'点击钥匙按钮，可以跳转到API key的获取网页或者github相关文档',
         'localConfigNotice03':'点击放大镜按钮，可以获取模型列表，如果没有获取到，可能是该供应商不支持获取模型列表（例如火山引擎），或者API key不正确',
         'modelConfigDescription':'模型配置说明',
+        'vrmAPI':'VRM桌宠API',
+        'vrmAPIInstructions':'将下方的url复制到录屏软件，如：OBS 的浏览器源中，即可将桌宠透明地嵌入到你的视频里',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1532,5 +1534,7 @@ Key3`,
         'localConfigNotice02':'Click the key button to jump to the API key acquisition webpage or github related documentation',
         'localConfigNotice03':'Click the magnifying glass button to get the model list. If you don not get it, it may be that the supplier does not support getting the model list (such as Volcano Engine), or the API key is incorrect',
         'modelConfigDescription':'Model configuration description',
+        'vrmAPI':'VRM Table Pet API',
+        'vrmAPIInstructions':'Copy the url below to the screen recording software, such as the browser source of OBS, to transparently embed the table pet into your video'
     }
   };

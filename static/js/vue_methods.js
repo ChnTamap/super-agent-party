@@ -1796,7 +1796,7 @@ let vue_methods = {
 
     // 修改copyEndpoint方法
     copyEndpoint() {
-      navigator.clipboard.writeText(`/v1`)
+      navigator.clipboard.writeText(`${this.partyURL}/v1`)
         .then(() => {
           showNotification(this.t('copy_success'), 'success');
         })
@@ -1806,7 +1806,7 @@ let vue_methods = {
     },
 
     copyMCPEndpoint(){
-      navigator.clipboard.writeText(`/mcp`)
+      navigator.clipboard.writeText(`${this.partyURL}/mcp`)
         .then(() => {
           showNotification(this.t('copy_success'), 'success');
         })
@@ -1814,7 +1814,15 @@ let vue_methods = {
           showNotification(this.t('copy_fail'), 'error');
         });
     },
-
+    copyVrmEndpoint(){
+      navigator.clipboard.writeText(`${this.partyURL}/vrm.html`)
+        .then(() => {
+          showNotification(this.t('copy_success'), 'success');
+        })
+        .catch(() => {
+          showNotification(this.t('copy_fail'), 'error');
+        });
+    },
     copyModel() {
       navigator.clipboard.writeText('super-model')
         .then(() => {

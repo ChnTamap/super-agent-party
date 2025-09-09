@@ -7480,6 +7480,46 @@ if ('serviceWorker' in navigator) {
                   </div>
                 </el-form>
               </div>
+              <!-- VRM桌宠API -->
+              <div v-show="subMenu === 'vrm'" class="page">
+                <el-form class="settings-form">
+                  <div class="tool-item">
+                    <!-- 原有SuperAPI内容 -->
+                    <div class="tool-header">
+                      <span>
+                        <el-icon><i class='fa-solid fa-server'></i></el-icon>
+                        {{ t('vrmAPI') }}
+                      </span>
+                    </div>
+                    <div class="tool-content">
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        {{ t('vrmAPIInstructions') }}
+                      </el-alert>
+                      <!-- API端点 -->
+                      <el-form-item :label="t('apiEndpoint')" class="form-item-align">
+                        <el-input
+                          :value="partyURL+'/vrm.html'"
+                          readonly
+                          class="full-width-input"
+                        >
+                          <template #append>
+                            <el-button
+                              @click="copyVrmEndpoint"
+                              class="copy-btn"
+                            >
+                            <i class="fa-solid fa-copy"></i>
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </el-form-item>
+                    </div>
+                  </div>
+                </el-form>
+              </div>
               <!-- docker -->
               <div v-show="subMenu === 'docker'" class="page">
                 <el-form class="settings-form">

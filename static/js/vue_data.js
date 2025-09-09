@@ -881,6 +881,7 @@ let vue_data = {
     apiTiles: [
       { id: 'openai', title: 'openaiStyleAPI', icon: 'fa-solid fa-link' },
       { id: 'mcp', title: 'MCPStyleAPI', icon: 'fa-solid fa-server' },
+      { id: 'vrm', title: 'vrmAPI', icon: 'fa-solid fa-user-ninja' },
       { id: 'agents', title: 'agentSnapshot', icon: 'fa-solid fa-robot'},
       { id: 'docker', title: 'docker', icon: 'fa-brands fa-docker'},
       { id: 'browser', title: 'browserMode', icon: 'fa-solid fa-globe' },
