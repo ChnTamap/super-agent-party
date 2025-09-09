@@ -79,8 +79,8 @@ locales = {}
 _TOOL_HOOKS = {}
 ALLOWED_EXTENSIONS = [
   # 办公文档
-  'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
-  'numbers', 'key', 'rtf', 'odt',
+    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
+    'numbers', 'key', 'rtf', 'odt', 'epub',
   
   # 编程开发
   'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',

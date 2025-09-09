@@ -881,6 +881,7 @@ let vue_data = {
     apiTiles: [
       { id: 'openai', title: 'openaiStyleAPI', icon: 'fa-solid fa-link' },
       { id: 'mcp', title: 'MCPStyleAPI', icon: 'fa-solid fa-server' },
+      { id: 'vrm', title: 'vrmAPI', icon: 'fa-solid fa-user-ninja' },
       { id: 'agents', title: 'agentSnapshot', icon: 'fa-solid fa-robot'},
       { id: 'docker', title: 'docker', icon: 'fa-brands fa-docker'},
       { id: 'browser', title: 'browserMode', icon: 'fa-solid fa-globe' },
@@ -935,6 +936,11 @@ let vue_data = {
       quickRestart: true,
       is_sandbox: false,
     },
+    isAudioSynthesizing: false, // 音频合成状态
+    audioChunksCount: 0,        // 已生成的音频片段数
+    totalChunksCount: 0,        // 总音频片段数
+    isConvertingAudio: false,    // 音频转换状态
+    isConvertStopping: false, // 新增状态
     ttsWebSocket: null,
     wsConnected: false,
     isVRMRunning: false,

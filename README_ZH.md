@@ -32,19 +32,19 @@
 
 ## 快速开始
 
+### windows整合包（推荐！免安装源码版本，支持一键同步到仓库最新版本，无需等待桌面版打包）
+
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/super-agent-party-v0.2.8.zip)
+
+⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
+
 ### windows桌面版安装
 
   👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-Setup-0.2.8.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
 
-### windows整合包（免安装源码版本）
-
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/super-agent-party-v0.2.8.zip)
-
-⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
-
-### MacOS桌面版安装
+### MacOS桌面版安装（目前只支持M芯片）
 
   👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-0.2.8-Mac.dmg)
 
@@ -68,7 +68,7 @@
 
   👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/Super-Agent-Party-0.2.8-Linux.deb)
 
-### docker部署（推荐）
+### docker部署（该版本桌宠只能通过浏览器查看）
 
 - 两行命令安装本项目：
   ```shell

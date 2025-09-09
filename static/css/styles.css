@@ -3237,3 +3237,25 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   margin-bottom: 12px;
 }
+
+/* 进度条容器样式 */
+.progress-container {
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 12px 15px;
+  border: 1px solid #ebeef5;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+/* 进度条信息样式 */
+.progress-info {
+  font-size: 13px;
+  color: #606266;
+  font-weight: 500;
+}
+
+/* 进度条统计信息样式 */
+.progress-stats {
+  text-align: center;
+}
