@@ -171,6 +171,29 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    // 计算处理百分比
+    processingPercentage() {
+      if (this.totalChunksCount === 0) return 0;
+      return Math.round((this.audioChunksCount / this.totalChunksCount) * 100);
+    },
+    
+    // 生成进度文本
+    processingProgressText() {
+      if (this.totalChunksCount === 0) return this.t('waiting');
+      
+      return `${this.audioChunksCount} / ${this.totalChunksCount} (${this.processingPercentage}%)`;
+    },
+    
+    // 根据状态设置进度条颜色
+    progressStatus() {
+      if (this.isReadRunning || this.isConvertingAudio) {
+        if (this.processingPercentage >= 90) return 'success';
+        if (this.processingPercentage >= 50) return '';
+        return 'exception';
+      }
+      return 'success';
+    },
+
     allChecked: {
       get() {
         return this.textFiles.length > 0 && this.selectedFiles.length === this.textFiles.length;

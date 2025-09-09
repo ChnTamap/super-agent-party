@@ -6980,16 +6980,40 @@ if ('serviceWorker' in navigator) {
                                 </template>
                               </el-button>
                             </el-tooltip>
-                            
-                            <!-- 停止按钮 -->
-                            <el-tooltip :content="t('stop_read')" placement="top">
+                            <!-- 转换音频按钮 -->
+                            <el-tooltip :content="t('convertAudioOnly')" placement="top">
+                              <el-button 
+                                type="success" 
+                                @click="convertAudioOnly" 
+                                circle
+                                :disabled="!readConfig.longText || isConvertingAudio"
+                              >
+                                <i v-if="isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
+                                <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                              </el-button>
+                            </el-tooltip>
+                            <!-- 下载音频按钮 -->
+                            <el-tooltip :content="t('downloadAudio')" placement="top">
+                              <el-button 
+                                type="default" 
+                                @click="downloadAudio" 
+                                circle
+                                :disabled="(isAudioSynthesizing && isConvertingAudio) || audioChunksCount === 0"
+                              >
+                                <i v-if="isAudioSynthesizing && isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
+                                <i v-else class="fa-solid fa-download"></i>
+                              </el-button>
+                            </el-tooltip>
+
+                            <!-- 停止按钮（更新为通用停止功能） -->
+                            <el-tooltip :content="t('stop_all_tts')" placement="top">
                               <el-button 
                                 type="danger" 
-                                @click="stopRead" 
-                                :disabled="!isReadRunning || isReadStopping"
+                                @click="stopTTSActivities" 
+                                :disabled="(!isReadRunning && !isConvertingAudio) || isReadStopping || isConvertStopping"
                                 circle
                               >
-                                <template v-if="isReadStopping">
+                                <template v-if="isReadStopping || isConvertStopping">
                                   <i class="fa-solid fa-spinner fa-spin"></i>
                                 </template>
                                 <template v-else>
@@ -6999,9 +7023,21 @@ if ('serviceWorker' in navigator) {
                             </el-tooltip>
                           </div>
                         </div>
-
                         <div class="tool-item">
                           <div class="tool-content">
+                            <!-- 新增：进度条区域 -->
+                            <div class="progress-container" style="margin-top: 15px;">
+                              <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>{{ t('processingProgress') }}</span>
+                                <span>{{ processingProgressText }}</span>
+                              </div>
+                              <el-progress 
+                                :percentage="processingPercentage" 
+                                :status="progressStatus"
+                                :stroke-width="20"
+                                :text-inside="true"
+                              />
+                            </div>
                             <!-- 文件选择区域 -->
                             <el-form-item>
                               <!-- 选择textFiles中的文件 -->

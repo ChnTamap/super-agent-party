@@ -14,13 +14,14 @@ from odf.opendocument import load  # ODF 处理移动到这里避免重复导入
 from pptx import Presentation
 from urllib.parse import urlparse, urlunparse
 from py.get_setting  import get_host,get_port
-
+import zipfile
+import xml.etree.ElementTree as ET
 # 平台检测
 IS_WINDOWS = sys.platform == 'win32'
 IS_MAC = sys.platform == 'darwin'
 
 # 动态文件类型配置
-BASE_OFFICE_EXTS = ['doc', 'docx', 'pptx', 'xls', 'xlsx', 'pdf', 'rtf', 'odt']
+BASE_OFFICE_EXTS = ['doc', 'docx', 'pptx', 'xls', 'xlsx', 'pdf', 'rtf', 'odt', 'epub']
 PLATFORM_SPECIFIC_EXTS = {
     'win32': ['ppt'],
     'darwin': ['pages', 'numbers', 'key']
@@ -122,6 +123,7 @@ async def handle_office_document(content, ext):
         'rtf': handle_rtf,
         'odt': handle_odt,
         'pptx': handle_pptx,
+        'epub': handle_epub,  # 添加epub处理
     }
     
     # Windows平台扩展
@@ -138,6 +140,101 @@ async def handle_office_document(content, ext):
         raise NotImplementedError(f"iWork格式暂不支持自动解析，请手动导出为通用格式")
     
     raise NotImplementedError(f"暂不支持处理 {ext.upper()} 格式文件")
+
+# 添加EPUB处理函数
+async def handle_epub(content):
+    """异步处理EPUB文件"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _process_epub, content)
+
+def _process_epub(content):
+    """同步处理EPUB内容"""
+    try:
+        text_content = []
+        
+        # 使用BytesIO将字节内容转换为类文件对象
+        with BytesIO(content) as epub_file:
+            with zipfile.ZipFile(epub_file, 'r') as epub_zip:
+                # 查找并解析容器文件以获取OPF文件路径
+                container_data = epub_zip.read('META-INF/container.xml')
+                container_root = ET.fromstring(container_data)
+                
+                # 获取OPF文件路径
+                opf_path = None
+                for rootfile in container_root.findall('.//{*}rootfile'):
+                    opf_path = rootfile.get('full-path')
+                    break
+                
+                if not opf_path:
+                    raise RuntimeError("无法找到OPF文件")
+                
+                # 解析OPF文件获取所有HTML文件路径
+                opf_data = epub_zip.read(opf_path)
+                opf_root = ET.fromstring(opf_data)
+                
+                # 获取OPF文件所在目录
+                opf_dir = os.path.dirname(opf_path)
+                
+                # 收集所有HTML/XML文件
+                html_files = []
+                for item in opf_root.findall('.//{*}item'):
+                    media_type = item.get('media-type')
+                    href = item.get('href')
+                    
+                    if media_type in ['application/xhtml+xml', 'text/html']:
+                        # 构建完整路径
+                        full_path = os.path.join(opf_dir, href) if opf_dir else href
+                        html_files.append(full_path)
+                
+                # 提取每个HTML文件中的文本
+                for html_file in html_files:
+                    try:
+                        html_data = epub_zip.read(html_file)
+                        html_text = _extract_text_from_html(html_data)
+                        text_content.append(html_text)
+                    except Exception as e:
+                        print(f"处理HTML文件 {html_file} 时出错: {e}")
+                        continue
+        
+        return '\n'.join(text_content)
+    except Exception as e:
+        raise RuntimeError(f"EPUB解析失败: {str(e)}")
+
+def _extract_text_from_html(html_data):
+    """从HTML/XML内容中提取文本"""
+    try:
+        # 尝试解析XML
+        root = ET.fromstring(html_data)
+        return _extract_text_from_xml_element(root)
+    except ET.ParseError:
+        # 如果不是有效的XML，尝试简单的文本提取
+        try:
+            text = html_data.decode('utf-8')
+            # 简单的HTML标签去除
+            import re
+            text = re.sub(r'<[^>]+>', '', text)
+            return text
+        except:
+            return "无法提取文本内容"
+
+def _extract_text_from_xml_element(element):
+    """递归提取XML元素中的文本"""
+    text_parts = []
+    
+    # 添加元素的文本内容
+    if element.text and element.text.strip():
+        text_parts.append(element.text.strip())
+    
+    # 递归处理子元素
+    for child in element:
+        text_parts.append(_extract_text_from_xml_element(child))
+    
+    # 添加元素的尾部文本
+    if element.tail and element.tail.strip():
+        text_parts.append(element.tail.strip())
+    
+    return ' '.join(text_parts)
+
 
 async def handle_odt(content):
     """异步处理ODT文件"""
@@ -325,8 +422,8 @@ async def get_files_json(files_list):
 
 ALLOWED_EXTENSIONS = [
   # 办公文档
-  'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
-  'numbers', 'key', 'rtf', 'odt',
+    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
+    'numbers', 'key', 'rtf', 'odt', 'epub',
   
   # 编程开发
   'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',

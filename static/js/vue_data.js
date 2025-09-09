@@ -936,6 +936,11 @@ let vue_data = {
       quickRestart: true,
       is_sandbox: false,
     },
+    isAudioSynthesizing: false, // 音频合成状态
+    audioChunksCount: 0,        // 已生成的音频片段数
+    totalChunksCount: 0,        // 总音频片段数
+    isConvertingAudio: false,    // 音频转换状态
+    isConvertStopping: false, // 新增状态
     ttsWebSocket: null,
     wsConnected: false,
     isVRMRunning: false,

@@ -43,8 +43,8 @@ let latexPlaceholderCounter = 0;
 
 const ALLOWED_EXTENSIONS = [
 // 办公文档
-'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
-'numbers', 'key', 'rtf', 'odt',
+    'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'pdf', 'pages', 
+    'numbers', 'key', 'rtf', 'odt', 'epub',
 
 // 编程开发
 'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'go', 'rs',
@@ -6475,70 +6475,285 @@ let vue_methods = {
     }
   },
     /* ===============  朗读主流程  =============== */
-  async startRead() {
-    if (!this.ttsSettings.enabled) {
+    // 修改 startRead 方法
+    async startRead() {
+      if (!this.ttsSettings.enabled) {
         this.ttsSettings.enabled = true;
         this.changeTTSstatus();
         showNotification(this.t('ttsAutoEnabled'))
-    }
-    if (!this.readConfig.longText.trim()) return;
+      }
+      if (!this.readConfig.longText.trim()) return;
 
-    this.isReadStarting = true;
-    this.isReadRunning  = true;
-    this.isReadStopping = false;
+      this.isReadStarting = true;
+      this.isReadRunning  = true;
+      this.isReadStopping = false;
 
-    /* 1. 清空上一次的残留 */
-    this.readState.ttsChunks  = [];
-    this.readState.audioChunks = [];
-    this.readState.currentChunk = 0;
-    this.readState.isPlaying = false;
-    this.readState.chunks_voice = [];
-    this.cur_voice = 'default';   // 全局变量
-    /* 2. 分段 */
-    const {
-      chunks,
-      chunks_voice,
-      remaining,
-      remaining_voice
-    } = this.splitTTSBuffer(this.readConfig.longText);
-    // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
-    if (remaining) {
-      chunks.push(remaining);
-      chunks_voice.push(remaining_voice);
-    }
-    if (!chunks.length) {
-      this.isReadRunning  = false;
+      /* 1. 清空上一次的残留 */
+      this.readState.ttsChunks  = [];
+      this.readState.audioChunks = [];
+      this.readState.currentChunk = 0;
+      this.readState.isPlaying = false;
+      this.readState.chunks_voice = [];
+      this.cur_voice = 'default';
+      
+      /* 新增: 重置音频计数状态 */
+      this.audioChunksCount = 0; // 重置计数
+      this.totalChunksCount = 0; // 先设置为0
+
+      /* 2. 分段 */
+      const {
+        chunks,
+        chunks_voice,
+        remaining,
+        remaining_voice
+      } = this.splitTTSBuffer(this.readConfig.longText);
+      
+      // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
+      if (remaining) {
+        chunks.push(remaining);
+        chunks_voice.push(remaining_voice);
+      }
+      
+      if (!chunks.length) {
+        this.isReadRunning  = false;
+        this.isReadStarting = false;
+        return;
+      }
+      
+      this.readState.ttsChunks = chunks;
+      this.readState.chunks_voice = chunks_voice;
+      
+      /* 新增: 设置总片段数 */
+      this.totalChunksCount = chunks.length; // 设置总片段数
+
+      /* 3. 通知 VRM 开始朗读 */
+      this.sendTTSStatusToVRM('ttsStarted', {
+        totalChunks: this.readState.ttsChunks.length
+      });
+
       this.isReadStarting = false;
-      return;
-    }
-    this.readState.ttsChunks = chunks;
-    this.readState.chunks_voice = chunks_voice;
 
-    /* 3. 通知 VRM 开始朗读 */
-    this.sendTTSStatusToVRM('ttsStarted', {
-      totalChunks: this.readState.ttsChunks.length
-    });
+      /* 4. 并发 TTS */
+      this.isAudioSynthesizing = true; // 开始合成
+      await this.startReadTTSProcess();
+    },
 
-    this.isReadStarting = false;
+    // 修改 processReadTTSChunk 方法
+    async processReadTTSChunk(index) {
+      const chunk = this.readState.ttsChunks[index];
+      const voice = this.readState.chunks_voice[index];
+      
+      /* —— 与对话版完全一致的文本清洗 —— */
+      let chunk_text = chunk;
+      const exps = [];
+      if (chunk.indexOf('<') !== -1) {
+        for (const exp of this.expressionMap) {
+          const regex = new RegExp(exp, 'g');
+          if (chunk.includes(exp)) {
+            exps.push(exp);
+            chunk_text = chunk_text.replace(regex, '').trim();
+          }
+        }
+      }
 
-    /* 4. 并发 TTS（复用对话逻辑，只是把对象换成 readState） */
-    await this.startReadTTSProcess();
-  },
+      try {
+        const res = await fetch('/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ttsSettings: this.ttsSettings,
+            text: chunk_text,
+            index,
+            voice
+          })
+        });
 
-  stopRead() {
-    if (!this.isReadRunning) return;
-    this.isReadStopping = true;
-    this.isReadRunning  = false;
+        if (!res.ok) throw new Error('TTS failed');
 
-    /* 停掉当前音频 */
-    if (this.currentAudio) {
-      this.currentAudio.pause();
-      this.currentAudio = null;
-    }
-    this.sendTTSStatusToVRM('stopSpeaking', {});
-    this.isReadStopping = false;
-  },
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
 
+        /* 缓存到 readState */
+        this.readState.audioChunks[index] = {
+          url,
+          expressions: exps,
+          text: chunk_text,
+          index
+        };
+
+        /* Base64 给 VRM */
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        this.cur_audioDatas[index] = `data:${blob.type};base64,${base64}`;
+
+        /* 新增: 增加已生成片段计数 */
+        this.audioChunksCount++;
+        
+        /* 新增: 检查是否全部合成完成 */
+        if (this.audioChunksCount === this.totalChunksCount) {
+          this.isAudioSynthesizing = false;
+        }
+
+        /* 立刻尝试播放 */
+        this.checkReadAudioPlayback();
+      } catch (e) {
+        console.error(`Read TTS chunk ${index} error`, e);
+        this.readState.audioChunks[index] = { url: null, expressions: exps, text: chunk_text, index };
+        this.cur_audioDatas[index] = null;
+        
+        /* 新增: 处理错误时也增加计数 */
+        this.audioChunksCount++;
+        
+        /* 新增: 检查是否全部合成完成 */
+        if (this.audioChunksCount === this.totalChunksCount) {
+          this.isAudioSynthesizing = false;
+        }
+        
+        this.checkReadAudioPlayback();
+      }
+    },
+
+    // 添加下载方法
+    downloadAudio() {
+      // 确保有音频片段可以下载
+      if (this.audioChunksCount === 0) {
+        showNotification(this.t('noAudioToDownload'));
+        return;
+      }
+
+      // 检查是否有有效的音频片段
+      const validChunks = this.readState.audioChunks.filter(chunk => chunk && chunk.url);
+      if (validChunks.length === 0) {
+        showNotification(this.t('noValidAudioChunks'));
+        return;
+      }
+
+      try {
+        // 创建合并的音频文件，只包含有效的片段
+        this.createCombinedAudio(validChunks, this.getAudioMimeType());
+      } catch (error) {
+        console.error('Audio download failed:', error);
+        showNotification(this.t('audioDownloadFailed'));
+      }
+    },
+
+
+    // 获取音频MIME类型
+    getAudioMimeType() {
+      return this.ttsSettings.audioFormat === 'wav' 
+        ? 'audio/wav' 
+        : 'audio/mpeg';
+    },
+
+    // 创建并下载合并后的音频
+    async createCombinedAudio(chunks, mimeType) {
+      try {
+        // 1. 获取所有音频的ArrayBuffer
+        const arrayBuffers = await Promise.all(
+          chunks.map(async (chunk) => {
+            const response = await fetch(chunk.url);
+            return response.arrayBuffer();
+          })
+        );
+
+        // 2. 合并ArrayBuffer
+        const totalLength = arrayBuffers.reduce((acc, buffer) => acc + buffer.byteLength, 0);
+        const combinedBuffer = new Uint8Array(totalLength);
+        
+        let offset = 0;
+        arrayBuffers.forEach(buffer => {
+          combinedBuffer.set(new Uint8Array(buffer), offset);
+          offset += buffer.byteLength;
+        });
+
+        // 3. 创建Blob并提供下载
+        const blob = new Blob([combinedBuffer], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        a.href = url;
+        a.download = `tts-audio-${new Date().toISOString().slice(0, 19)}.${
+          mimeType === 'audio/wav' ? 'wav' : 'mp3'
+        }`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        // 清理
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        showNotification(this.t('audioDownloadStarted'));
+      } catch (error) {
+        console.error('Audio merging failed:', error);
+        showNotification(this.t('audioMergeFailed'));
+      }
+    },
+
+    // 在 stopRead 中重置状态
+    stopRead() {
+      if (!this.isReadRunning) return;
+      this.isReadStopping = true;
+      this.isReadRunning  = false;
+
+      /* 停掉当前音频 */
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio = null;
+      }
+      this.sendTTSStatusToVRM('stopSpeaking', {});
+      
+      /* 新增: 重置音频计数状态 */
+      this.isAudioSynthesizing = false;
+      this.audioChunksCount = 0;
+      this.totalChunksCount = 0;
+      
+      this.isReadStopping = false;
+    },
+
+    stopTTSActivities() {
+      // 停止朗读流程
+      if (this.isReadRunning) {
+        this.isReadStopping = true;
+        this.isReadRunning = false;
+
+        /* 停掉当前音频 */
+        if (this.currentAudio) {
+          this.currentAudio.pause();
+          this.currentAudio = null;
+        }
+        this.sendTTSStatusToVRM('stopSpeaking', {});
+        
+        /* 重置音频计数状态 - 只重置运行状态，保留计数 */
+        this.isAudioSynthesizing = false;
+        // 不要重置计数，这样用户可以下载已生成的部分
+        // this.audioChunksCount = 0;
+        // this.totalChunksCount = 0;
+        
+        this.isReadStopping = false;
+      }
+      
+      // 停止音频转换流程
+      if (this.isConvertingAudio) {
+        this.isConvertStopping = true;
+        this.isConvertingAudio = false;
+        
+        /* 重置转换状态 - 只重置运行状态，保留计数 */
+        this.isAudioSynthesizing = false;
+        
+        /* 新增：显示停止通知 */
+        showNotification(this.t('audioConversionStopped'));
+        
+        this.isConvertStopping = false;
+      }
+      this.processingProgressText = this.t('processStopped');
+    },
   /* ===============  复用 / 微调 TTS 流程  =============== */
   async startReadTTSProcess() {
     let max_concurrency = this.ttsSettings.maxConcurrency || 1;
@@ -6567,65 +6782,157 @@ let vue_methods = {
     console.log('Read TTS queue processing completed');
   },
 
-  async processReadTTSChunk(index) {
-    const chunk = this.readState.ttsChunks[index];
-    const voice = this.readState.chunks_voice[index];
-    /* —— 与对话版完全一致的文本清洗 —— */
-    let chunk_text = chunk;
-    const exps = [];
-    if (chunk.indexOf('<') !== -1) {
-      for (const exp of this.expressionMap) {
-        const regex = new RegExp(exp, 'g');
-        if (chunk.includes(exp)) {
-          exps.push(exp);
-          chunk_text = chunk_text.replace(regex, '').trim();
-        }
-      }
+  // 修改后的 convertAudioOnly 方法
+  async convertAudioOnly() {
+    if (!this.readConfig.longText.trim()) {
+      showNotification(this.t('noTextToConvert'));
+      return;
     }
 
+    this.isConvertingAudio = true;
+    
     try {
-      const res = await fetch('/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ttsSettings: this.ttsSettings,
-          text: chunk_text,
-          index,
-          voice
-        })
+      // 1. 清空上一次的残留
+      this.readState.ttsChunks = [];
+      this.readState.audioChunks = [];
+      this.readState.chunks_voice = [];
+      this.audioChunksCount = 0;
+      this.totalChunksCount = 0;
+
+      // 2. 分段
+      const {
+        chunks,
+        chunks_voice,
+        remaining,
+        remaining_voice
+      } = this.splitTTSBuffer(this.readConfig.longText);
+      
+      if (remaining) {
+        chunks.push(remaining);
+        chunks_voice.push(remaining_voice);
+      }
+      
+      if (!chunks.length) {
+        this.isConvertingAudio = false;
+        return;
+      }
+      
+      this.readState.ttsChunks = chunks;
+      this.readState.chunks_voice = chunks_voice;
+      this.totalChunksCount = chunks.length;
+
+      // 3. 开始转换（复用 processReadTTSChunk 但禁用播放）
+      this.isAudioSynthesizing = true;
+      
+      // 使用并发控制处理所有片段
+      const maxConcurrency = this.ttsSettings.maxConcurrency || 1;
+      let nextIndex = 0;
+      const activeTasks = new Set();
+      
+      // 使用 Promise 来等待所有任务完成
+      await new Promise((resolve) => {
+        const processNext = async () => {
+          // 检查是否被用户停止
+          if (!this.isConvertingAudio) {
+            resolve();
+            return;
+          }
+          
+          // 所有任务完成
+          if (nextIndex >= chunks.length && activeTasks.size === 0) {
+            resolve();
+            return;
+          }
+          
+          // 添加新任务（如果有空位且还有任务）
+          while (activeTasks.size < maxConcurrency && nextIndex < chunks.length) {
+            const index = nextIndex++;
+            activeTasks.add(index);
+            
+            this.processTTSChunkWithoutPlayback(index)
+              .finally(() => {
+                activeTasks.delete(index);
+                processNext(); // 检查是否可添加新任务
+              });
+          }
+        };
+        
+        processNext();
       });
-
-      if (!res.ok) throw new Error('TTS failed');
-
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-
-      /* 缓存到 readState */
-      this.readState.audioChunks[index] = {
-        url,
-        expressions: exps,
-        text: chunk_text,
-        index
-      };
-
-      /* Base64 给 VRM */
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      this.cur_audioDatas[index] = `data:${blob.type};base64,${base64}`;
-
-      /* 立刻尝试播放 */
-      this.checkReadAudioPlayback();
-    } catch (e) {
-      console.error(`Read TTS chunk ${index} error`, e);
-      this.readState.audioChunks[index] = { url: null, expressions: exps, text: chunk_text, index };
-      this.cur_audioDatas[index] = null;
-      this.checkReadAudioPlayback();
+      
+      // 只有在没有被停止的情况下才显示完成通知
+      if (this.isConvertingAudio) {
+        this.isAudioSynthesizing = false;
+        showNotification(this.t('audioConversionCompleted', { count: chunks.length }));
+      }
+      
+    } catch (error) {
+      console.error('Audio conversion failed:', error);
+      showNotification(this.t('audioConversionFailed'));
+    } finally {
+      this.isConvertingAudio = false;
     }
   },
+
+    // 处理TTS片段但不播放
+    async processTTSChunkWithoutPlayback(index) {
+      const chunk = this.readState.ttsChunks[index];
+      const voice = this.readState.chunks_voice[index];
+      console.log(`Processing TTS chunk ${index}`);
+      // 文本清洗
+      let chunk_text = chunk;
+      const exps = [];
+      if (chunk.indexOf('<') !== -1) {
+        for (const exp of this.expressionMap) {
+          const regex = new RegExp(exp, 'g');
+          if (chunk.includes(exp)) {
+            exps.push(exp);
+            chunk_text = chunk_text.replace(regex, '').trim();
+          }
+        }
+      }
+
+      try {
+        const res = await fetch('/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ttsSettings: this.ttsSettings,
+            text: chunk_text,
+            index,
+            voice
+          })
+        });
+
+        if (!res.ok) throw new Error('TTS failed');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        // 缓存到 readState
+        this.readState.audioChunks[index] = {
+          url,
+          expressions: exps,
+          text: chunk_text,
+          index
+        };
+
+        // 增加计数
+        this.audioChunksCount++;
+        
+      } catch (e) {
+        console.error(`TTS chunk ${index} error`, e);
+        this.readState.audioChunks[index] = { 
+          url: null, 
+          expressions: exps, 
+          text: chunk_text, 
+          index 
+        };
+        
+        // 错误时也增加计数
+        this.audioChunksCount++;
+      }
+    },
 
   /* ===============  播放监控  =============== */
   async startReadAudioPlayProcess() {
@@ -6700,6 +7007,11 @@ let vue_methods = {
             });
             const data = await response.json();
             this.readConfig.longText = data.content;
+            // 如果this.readConfig.longText太长了，就只取前100000个
+            // if (this.readConfig.longText.length > 100000) {
+            //   this.readConfig.longText = this.readConfig.longText.substring(0, 100000);
+            //   showNotification(this.t('contentTooLong'))
+            // }
           }
         }
         catch (error) {
