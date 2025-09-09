@@ -3240,10 +3240,11 @@ body {
 
 /* 进度条容器样式 */
 .progress-container {
-  background-color: #f8f8f8;
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
   border-radius: 8px;
   padding: 12px 15px;
-  border: 1px solid #ebeef5;
+  border: 1px solid var(--el-border-color);
   transition: all 0.3s ease;
   margin-bottom: 12px;
 }
@@ -3258,4 +3259,11 @@ body {
 /* 进度条统计信息样式 */
 .progress-stats {
   text-align: center;
+}
+
+.model-info {
+  border-radius: 16px!important;
+  margin: 1px!important;
+  background-color: var(--el-bg-color-page);
+  color: var(--el-text-color);
 }

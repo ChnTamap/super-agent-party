@@ -119,6 +119,11 @@ if ('serviceWorker' in navigator) {
             <i :class="!sidebarVisible ? 'fa-solid fa-bars' : 'fa-solid fa-bars-staggered'"></i>
           </el-icon>
       </el-button>
+      <div class="model-info">
+        <el-alert type="info" :closable="false" class="model-info">
+          <span>{{settings.model}}</span>  
+        </el-alert>
+      </div>
         <!-- 新增展开/收起按钮 -->
         <el-button 
           v-if="!isMobile"
