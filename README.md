@@ -32,7 +32,13 @@
 
 ## Quick Start
 
-### Windows integration package (Recommended! Installation-free source version, support one-click synchronization to the latest version of the warehouse, no need to wait for the desktop version to be packaged)
+### Cloud disk download
+
+  👉 [Click Baidu Cloud to download](https://pan.baidu.com/share/init?surl=VBSnq4Ga3fRX_NcyPwsV7Q&pwd=2333)
+  
+  👉 [Click Google Cloud to download](https://drive.google.com/drive/folders/1xu8U1FCIZ5iqWpmf1w3TLX8AqGWft3zg?usp=sharing)
+
+### Windows portable package (Recommended! Installation-free source version, support one-click synchronization to the latest version of the warehouse, no need to wait for the desktop version to be packaged)
 
   👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.8/super-agent-party-v0.2.8.zip)
 
