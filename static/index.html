@@ -5887,6 +5887,7 @@ if ('serviceWorker' in navigator) {
                   </el-icon>
                   {{ t('proxySettings') }}
                 </span>
+                <el-switch v-model="systemSettings.proxyEnabled" @change="updateProxy"></el-switch>
               </div>
               <div class="tool-content">
                 <el-form-item class="form-item-align">
