@@ -7050,6 +7050,14 @@ if ('serviceWorker' in navigator) {
                                 ></el-option>
                               </el-select>
                             </el-form-item>
+                            <el-form-item :label="t('maxConcurrency')" class="form-item-align">
+                              <el-slider
+                                v-model="ttsSettings.maxConcurrency"
+                                :min="1"
+                                :max="16"
+                                :step="1"
+                                @change="autoSaveSettings">
+                            </el-form-item>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
                               <!-- 新增上传文件按钮 -->
                               <el-tooltip :content="t('uploadFile')" placement="top">
