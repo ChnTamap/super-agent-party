@@ -83,7 +83,7 @@
     },
     "webSearch": {
       "enabled": false,
-      "engine": "duckduckgo",
+      "engine": "tavily",
       "crawler": "jina",
       "when": "before_thinking",
       "duckduckgo_max_results": 10,

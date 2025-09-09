@@ -1817,6 +1817,15 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         modified_data = '[' + response_content.arguments.replace('}{', '},{') + ']'
                         # 使用json.loads来解析修改后的字符串为列表
                         data_list = json.loads(modified_data)
+                        modified_tool = {"name": response_content.name, "arguments": data_list}
+                        tool_call_chunk = {
+                            "choices": [{
+                                "delta": {
+                                    "tool_content": f'\n\n<div class="highlight-block">\n{json.dumps(modified_tool, ensure_ascii=False,indent=2)}\n</div>\n\n',
+                                }
+                            }]
+                        }
+                        yield f"data: {json.dumps(tool_call_chunk)}\n\n"
                         if settings['tools']['asyncTools']['enabled']:
                             tool_id = uuid.uuid4()
                             async_tool_id = f"{response_content.name}_{tool_id}"
@@ -1903,31 +1912,8 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         if (settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both') and settings['tools']['asyncTools']['enabled'] is False:
                             request.messages[-1]['content'] += f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。"
                         if settings['tools']['asyncTools']['enabled']:
-                            reasoner_messages.append(
-                                {
-                                    "role": "assistant",
-                                    "content": str(response_content),
-                                }
-                            )
-                            reasoner_messages.append(
-                                {
-                                    "role": "system",
-                                    "content": f"{response_content.name}工具已成功启动，获取结果需要花费很久的时间。请不要再次调用该工具，因为工具结果将生成后自动发送，再次调用也不能更快的获取到结果。请直接告诉用户，你会在获得结果后回答他的问题。",
-                                }
-                            )
+                            pass
                         else:
-                            reasoner_messages.append(
-                                {
-                                    "role": "assistant",
-                                    "content": str(response_content),
-                                }
-                            )
-                            reasoner_messages.append(
-                                {
-                                    "role": "system",
-                                    "content": f"{response_content.name}工具结果："+str(results),
-                                }
-                            )
                             # 获取时间戳和uuid
                             timestamp = time.time()
                             uid = str(uuid.uuid4())

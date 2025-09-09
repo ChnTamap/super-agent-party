@@ -53,6 +53,8 @@ def get_history(prompt_id,server_address):
     
 def get_all(prompt,server_address,settings):
     HOST = get_host()
+    if HOST == '0.0.0.0':
+        HOST = '127.0.0.1'
     PORT = get_port()
     prompt_id = queue_prompt(prompt,server_address,settings)["prompt_id"]
     image_path_list = []

@@ -243,7 +243,7 @@ let vue_data = {
     activeKbTab: 'settings', // 默认激活的标签页
     webSearchSettings: {
       enabled: false,
-      engine: 'duckduckgo',
+      engine: 'tavily',
       crawler: 'jina',
       when: 'before_thinking',
       duckduckgo_max_results: 10, // 默认值
