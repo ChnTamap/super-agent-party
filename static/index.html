@@ -6560,26 +6560,50 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <div class="tool-content">
-                            <!-- 主智能体选择 -->
-                            <el-form-item :label="t('mainAgent')" required>
+                            <!-- 角色卡选择 -->
+                            <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
+                              <el-switch 
+                              v-model="memorySettings.is_memory" 
+                              @click.stop @change="changeMemory" 
+                              ></el-switch>
+                            </el-form-item>
+                            <el-form-item :label="t('selectMemory')">
                               <el-select 
-                                v-model="qqBotConfig.QQAgent"
-                                @change="changeQQAgent">
-                                <el-option
-                                  :label="t('defaultAgent')"
-                                  value="super-model"
+                                v-model="memorySettings.selectedMemory" 
+                                :placeholder="t('selectMemoryPlaceholder')"
+                                class="full-width-input"
+                                @change ="changeMemory"
                                 >
-                                </el-option>
                                 <el-option
-                                  v-for="(agent, id) in agents"
-                                  :key="id"
-                                  :label="agent.name"
-                                  :value="id"
-                                >
-                                </el-option>
+                                  v-for="memory in memories"
+                                  :key="memory.id"
+                                  :label="memory.name"
+                                  :value="memory.id"
+                                />
                               </el-select>
                             </el-form-item>
-                            <el-form-item :label="t('separators')" required>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMemoryNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMemory"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('memoryInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
+                            <el-form-item :label="t('separators')">
                               <el-select
                                 v-model="qqBotConfig.separators"
                                 multiple
@@ -6710,26 +6734,49 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <div class="tool-content">
-                            <!-- 主智能体选择 -->
-                            <el-form-item :label="t('mainAgent')" required>
+                            <!-- 角色卡选择 -->
+                            <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
+                              <el-switch 
+                              v-model="memorySettings.is_memory" 
+                              @click.stop @change="changeMemory" 
+                              />
+                            </el-form-item>
+                            <el-form-item :label="t('selectMemory')">
                               <el-select 
-                                v-model="mainAgent"
-                                @change="autoSaveSettings">
-                                <el-option
-                                  :label="t('defaultAgent')"
-                                  value="super-model"
+                                v-model="memorySettings.selectedMemory" 
+                                :placeholder="t('selectMemoryPlaceholder')"
+                                class="full-width-input"
+                                @change ="changeMemory"
                                 >
-                                </el-option>
                                 <el-option
-                                  v-for="(agent, id) in agents"
-                                  :key="id"
-                                  :label="agent.name"
-                                  :value="id"
-                                >
-                                </el-option>
+                                  v-for="memory in memories"
+                                  :key="memory.id"
+                                  :label="memory.name"
+                                  :value="memory.id"
+                                />
                               </el-select>
                             </el-form-item>
-
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMemoryNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMemory"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('memoryInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <el-form-item :label="t('windowWidth')" class="form-item-align">
                               <el-slider
                                 v-model="VRMConfig.windowWidth"

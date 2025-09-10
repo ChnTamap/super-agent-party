@@ -349,6 +349,7 @@ const translations = {
         'selectMemoryPlaceholder': '请选择角色卡',
         'selectMemory': '当前角色卡',
         'memoryEnable': '启用角色卡',
+        'memoryInterface':'角色卡页面',
         'memoryName': '角色卡名称',
         'worldviewSetting': '世界观设定',
         'settingName': '设定名称',
@@ -775,6 +776,7 @@ key3`,
         'stop_all_tts':'停止所有语音合成',
         "processingProgress": "处理进度",
         "waiting": "准备中...",
+        'goToMemoryNotice1':"角色卡是可选项，如果需要使用角色卡，请点击跳转到"
     },
     'en-US': {
         'chat': 'Chat',
@@ -1125,6 +1127,7 @@ key3`,
         'selectMemoryPlaceholder': 'Please select a Character Cards',
         'selectMemory': 'Current Character Cards',
         'memoryEnable': 'Enable Character Cards',
+        'memoryInterface':'Character Cards Interface',
         'memoryName': 'Character Cards Name',
         'worldviewSetting': 'Worldview Setting',
         'settingName': 'Setting Name',
@@ -1550,5 +1553,6 @@ Key3`,
         'stop_all_tts':'Stop All TTS',
         "processingProgress": "Processing progress",
         "waiting": "Waiting...",
+        'goToMemoryNotice1':"Character cards are optional. If you need to use a character card, please click to jump to"
     }
   };
