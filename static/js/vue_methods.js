@@ -2243,6 +2243,7 @@ let vue_methods = {
         'qianfan': 'https://qianfan.baidubce.com/v2',
         'hunyuan': 'https://api.hunyuan.cloud.tencent.com/v1',
         'siliconflow': 'https://api.siliconflow.cn/v1',
+        '302.AI': 'https://api.302.ai/v1',
         'stepfun': 'https://api.stepfun.com/v1',
         'o3': 'https://api.o3.fan/v1',
         'aihubmix': 'https://aihubmix.com/v1',
