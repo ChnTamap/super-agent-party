@@ -3267,3 +3267,7 @@ body {
   background-color: var(--el-bg-color-page);
   color: var(--el-text-color);
 }
+
+.model-info:hover {
+  transform: scale(1.01);
+}

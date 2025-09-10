@@ -94,7 +94,7 @@ if ('serviceWorker' in navigator) {
     <!-- 顶部栏 -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
-        <div class="model-info">
+        <div class="model-info" @click="showModelDialog = true">
           <el-alert type="info" :closable="false" class="model-info">
             <span>{{settings.model}}</span>  
           </el-alert>
