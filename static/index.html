@@ -2299,6 +2299,16 @@ if ('serviceWorker' in navigator) {
                         class="mini-vendor-logo"
                       />
                       <div class="card-actions">
+                        <el-tooltip :content="t('copy')" placement="top">
+                          <el-button
+                            @click="copyProvider(provider)"
+                            type="default"
+                            circle
+                            size="small"
+                          >
+                          <i class="fa-solid fa-copy"></i>
+                          </el-button>
+                        </el-tooltip>
                         <el-tooltip :content="t('getAPIkey')" placement="top">
                           <el-button
                             @click="goToURL(provider)"
@@ -2344,7 +2354,21 @@ if ('serviceWorker' in navigator) {
                       </div>
 
                       <div class="input-item">
-                        <label>{{ t('apiKey') }}</label>
+                        <label>
+                          {{ t('apiKey') }}
+                          <el-tooltip :content="t('copy')" placement="top">
+                            <el-button
+                              @click="copyApiKey(provider.apiKey)"
+                              type="default"
+                              circle
+                              size="small"
+                              style="margin-bottom: 2px;"
+                            >
+                              <i class="fa-solid fa-copy"></i>
+                            </el-button>
+                          </el-tooltip>
+                        </label>
+
                         <el-input
                           v-model="provider.apiKey"
                           :placeholder="t('apiKeyPlaceholder')"

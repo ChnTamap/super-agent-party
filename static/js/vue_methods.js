@@ -558,7 +558,19 @@ let vue_methods = {
           showNotification(this.t('copy_failed'), 'error')
         })
     },
-    
+    copyApiKey(apiKey){
+      navigator.clipboard.writeText(apiKey)
+        .then(() => {
+          showNotification(this.t('copy_success'))
+        })
+        .catch(() => {
+          showNotification(this.t('copy_failed'), 'error')
+        })
+    },
+    copyProvider(provider){
+      this.modelProviders.push(provider);
+      this.autoSaveSettings();
+    },
     previewImage(img) {
       this.previewImageUrl = `${this.partyURL}/uploaded_files/${img.unique_filename}`
       this.previewVisible = true
