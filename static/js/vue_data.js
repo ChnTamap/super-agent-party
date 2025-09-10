@@ -321,6 +321,7 @@ let vue_data = {
       theme: 'light',
       network:"local",
       proxy: '',
+      proxyEnabled: false,
     },
     networkOptions:[
       { value: 'local', label: 'local' }, 

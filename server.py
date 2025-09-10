@@ -162,10 +162,13 @@ async def lifespan(app: FastAPI):
     if settings:
         client = client_class(api_key=settings['api_key'], base_url=settings['base_url'])
         reasoner_client = reasoner_client_class(api_key=settings['reasoner']['api_key'], base_url=settings['reasoner']['base_url'])
-        if settings["systemSettings"]["proxy"]:
+        if settings["systemSettings"]["proxy"] and settings["systemSettings"]["proxyEnabled"]:
             # 设置代理环境变量
             os.environ['http_proxy'] = settings["systemSettings"]["proxy"].strip()
             os.environ['https_proxy'] = settings["systemSettings"]["proxy"].strip()
+        else:
+            os.environ['http_proxy'] = ''
+            os.environ['https_proxy'] = ''
     else:
         client = client_class()
         reasoner_client = reasoner_client_class()
@@ -5874,10 +5877,14 @@ async def update_proxy():
     try:
         settings = await load_settings()
         if settings:
-            if settings["systemSettings"]["proxy"]:
+            if settings["systemSettings"]["proxy"] and settings["systemSettings"]["proxyEnabled"]:
                 # 设置代理环境变量
                 os.environ['http_proxy'] = settings["systemSettings"]["proxy"].strip()
                 os.environ['https_proxy'] = settings["systemSettings"]["proxy"].strip()
+            else:
+                # 清除代理环境变量
+                os.environ.pop('http_proxy', None)
+                os.environ.pop('https_proxy', None)
         return {"message": "Proxy updated successfully", "success": True}
     except Exception as e:
         return {"message": str(e), "success": False}
