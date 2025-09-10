@@ -1820,11 +1820,11 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         modified_data = '[' + response_content.arguments.replace('}{', '},{') + ']'
                         # 使用json.loads来解析修改后的字符串为列表
                         data_list = json.loads(modified_data)
-                        modified_tool = {"name": response_content.name, "arguments": data_list[0]}
+                        modified_tool = f"{await t("sendArg")}{data_list[0]}"
                         tool_call_chunk = {
                             "choices": [{
                                 "delta": {
-                                    "tool_content": f'\n\n<div class="highlight-block">\n{json.dumps(modified_tool, ensure_ascii=False,indent=2)}\n</div>\n\n',
+                                    "tool_content": f'\n\n<div class="highlight-block">\n{modified_tool}\n</div>\n\n',
                                 }
                             }]
                         }
