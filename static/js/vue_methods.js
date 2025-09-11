@@ -2065,7 +2065,9 @@ let vue_methods = {
           if (data.success) {      
             // 将新的文件信息添加到 this.textFiles
             this.textFiles = [...data.textFiles,...this.textFiles];
+            this.selectedFile = data.textFiles[0].unique_filename;
             this.autoSaveSettings();
+            this.parseSelectedFile();
           } else {
             showNotification(this.t('file_upload_failed'), 'error');
           }
