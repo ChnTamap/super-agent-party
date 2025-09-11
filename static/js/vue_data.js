@@ -1199,7 +1199,7 @@ let vue_data = {
       'Deepseek': 'https://platform.deepseek.com/api_keys',
       'Volcano': 'https://www.volcengine.com/experience/ark',
       'siliconflow': 'https://cloud.siliconflow.cn/i/yGxrNlGb',
-      '302.AI': 'https://302.ai/apis/list',
+      '302.AI': 'https://share.302.ai/Mtahd4',
       'aliyun': 'https://bailian.console.aliyun.com/?tab=model#/api-key',
       'ZhipuAI': 'https://open.bigmodel.cn/usercenter/apikeys',
       'moonshot': 'https://platform.moonshot.cn/console/api-keys',
