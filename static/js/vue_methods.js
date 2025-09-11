@@ -2723,6 +2723,10 @@ let vue_methods = {
       this.activeMenu = 'toolkit';  // 根据你的菜单项配置的实际值设置
       this.subMenu = 'document';   // 根据你的子菜单项配置的实际值设置
     },
+    switchToMemory(){
+      this.activeMenu = 'role';
+      this.subMenu = 'memory'; 
+    },
     // 在 methods 中添加
     t(key) {
       return this.translations[this.currentLanguage][key] || key;

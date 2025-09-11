@@ -770,7 +770,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
     ) 
     m0 = None
     memoryId = None
-    if settings["memorySettings"]["is_memory"]:
+    if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
         memoryId = settings["memorySettings"]["selectedMemory"]
         cur_memory = None
         for memory in settings["memories"]:
@@ -937,7 +937,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 request.messages.insert(0, {'role': 'system', 'content': fileLinks_message})
             source_prompt += fileLinks_message
         user_prompt = request.messages[-1]['content']
-        if settings["memorySettings"]["is_memory"]:
+        if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
                 if request.messages and request.messages[0]['role'] == 'system':
@@ -2416,7 +2416,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         arxiv_tool
     ) 
     m0 = None
-    if settings["memorySettings"]["is_memory"]:
+    if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
         memoryId = settings["memorySettings"]["selectedMemory"]
         cur_memory = None
         for memory in settings["memories"]:
@@ -2596,7 +2596,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 request.messages.insert(0, {'role': 'system', 'content': system_message})
         kb_list = []
         user_prompt = request.messages[-1]['content']
-        if settings["memorySettings"]["is_memory"]:
+        if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
                 if request.messages and request.messages[0]['role'] == 'system':
