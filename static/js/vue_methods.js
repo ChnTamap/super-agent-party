@@ -567,8 +567,9 @@ let vue_methods = {
           showNotification(this.t('copy_failed'), 'error')
         })
     },
-    copyProvider(provider){
-      this.modelProviders.push(provider);
+    copyProvider(provider,index){
+      // 在this.modelProviders的index之后插入一个复制版本
+      this.modelProviders.splice(index + 1, 0, { ...provider, id: Date.now() });
       this.autoSaveSettings();
     },
     previewImage(img) {
