@@ -178,6 +178,21 @@ Please refer to the following document for the main functions:
   - 👉 [Chinese document](https://gcnij7egmcww.feishu.cn/wiki/DPRKwdetCiYBhPkPpXWcugujnRc)
   - 👉 [English document](https://temporal-lantern-7e8.notion.site/super-agent-party-211b2b2cb6f180c899d1c27a98c4965d)
 
+| Feature | Details |
+| --- | --- |
+| Supported Model Service Providers | Supports common local deployment engine interfaces and cloud service provider interfaces, such as: openai/ollama/dify, etc. |
+| Multimodal Model Integration | Integrates various types of models including role-playing, reasoning, vision, image generation, speech recognition, and speech synthesis for combined use. |
+| VRM Desktop Pet Robot | Highly customizable with support for custom avatars, custom animations, voice interaction, and dialogue interruption. |
+| Messaging Platform Bots | Currently supports QQ; more platforms will be supported in the future. |
+| Live Streaming Bots | Currently supports Bilibili; more platforms will be supported in the future. |
+| Announcer Bot | Supports long text narration, multi-voice narration, digital human video narration, batch conversion of ultra-long texts to speech (with download capability), and parsing of common ebook formats like EPUB. Chapter-based conversion will be developed later. |
+| Chat Interface | The chat interface supports front-end rendering features such as mathematical formulas, mermaid diagrams, and HTML code graphics. Images can be downloaded or copied. |
+| Role-Playing | Supports uploading, editing, and downloading tavern character cards. Allows configuring different voices and avatars for different characters. Features long-term memory, multi-voice support when using character cards, narrator voice for non-character text, and supports emojis and memes. |
+| Extensive Native Tools | Tool calling supports asynchronous execution, including web search, knowledge base access, smart home control, browser control, code execution in sandbox environments, and controlling ComfyUI for image generation. |
+| Custom Tool Interfaces | Supports MCP, A2A, HTTP requests, and any LLM interface as tools for the main agent, enabling users to freely customize their agent's toolchain. |
+| Open External APIs | Developer-friendly with open APIs simulating OpenAI and MCP, as well as desktop pet APIs. |
+| Storage Space | All files and data are stored in the user's local data folder. When deployed with NAS, it can also serve as a personal image or file host within the local network. |
+
 ## Disclaimer:
 This open-source project and its content (hereinafter referred to as the "project") are for reference only and do not imply any explicit or implicit warranties. The project contributors do not assume any responsibility for the completeness, accuracy, reliability, or applicability of the project. Any behavior that relies on the project content shall be at the user's own risk. In any case, the project contributors shall not be liable for any indirect, special, or incidental losses or damages arising from the use of the project content.
 
