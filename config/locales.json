@@ -17,7 +17,8 @@
         "enter_answer_stage":"进入回答阶段",
         "need_more_search":"需要更多搜索",
         "asyncToolsSetUP" : "异步工具已启动，ID为",
-        "sendArg":"发送参数："
+        "sendArg":"发送参数：",
+        "NoModelProvidersConfigured": "没有配置模型服务商"
     },
     "en-US":{
         "web_search":"Searching the Internet, please wait...",
@@ -37,6 +38,7 @@
         "enter_answer_stage":"Enter the answer stage",
         "need_more_search":"Need more search",
         "asyncToolsSetUP" : "The asynchronous tool has started, with the ID",
-        "sendArg":"Send parameters:"
+        "sendArg":"Send parameters:",
+        "NoModelProvidersConfigured": "No model providers configured"
     }
 }

@@ -3404,6 +3404,11 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
     async_tools_id = request.asyncToolsID or None
     if model == 'super-model':
         current_settings = await load_settings()
+        if len(current_settings['modelProviders']) <= 0:
+            return JSONResponse(
+                status_code=500,
+                content={"error": {"message": await t("NoModelProvidersConfigured"), "type": "server_error", "code": 500}}
+            )
         vendor = 'OpenAI'
         for modelProvider in current_settings['modelProviders']: 
             if modelProvider['id'] == current_settings['selectedProvider']:
