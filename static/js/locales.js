@@ -776,7 +776,8 @@ key3`,
         'stop_all_tts':'停止所有语音合成',
         "processingProgress": "处理进度",
         "waiting": "准备中...",
-        'goToMemoryNotice1':"角色卡是可选项，如果需要使用角色卡，请点击跳转到"
+        'goToMemoryNotice1':"角色卡是可选项，如果需要使用角色卡，请点击跳转到",
+        'copyProvider': '复制供应商',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1553,6 +1554,7 @@ Key3`,
         'stop_all_tts':'Stop All TTS',
         "processingProgress": "Processing progress",
         "waiting": "Waiting...",
-        'goToMemoryNotice1':"Character cards are optional. If you need to use a character card, please click to jump to"
+        'goToMemoryNotice1':"Character cards are optional. If you need to use a character card, please click to jump to",
+        'copyProvider':'Copy Provider'
     }
   };
