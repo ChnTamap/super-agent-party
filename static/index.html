@@ -2299,9 +2299,9 @@ if ('serviceWorker' in navigator) {
                         class="mini-vendor-logo"
                       />
                       <div class="card-actions">
-                        <el-tooltip :content="t('copy')" placement="top">
+                        <el-tooltip :content="t('copyProvider')" placement="top">
                           <el-button
-                            @click="copyProvider(provider)"
+                            @click="copyProvider(provider,index)"
                             type="default"
                             circle
                             size="small"

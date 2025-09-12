@@ -567,8 +567,9 @@ let vue_methods = {
           showNotification(this.t('copy_failed'), 'error')
         })
     },
-    copyProvider(provider){
-      this.modelProviders.push(provider);
+    copyProvider(provider,index){
+      // 在this.modelProviders的index之后插入一个复制版本
+      this.modelProviders.splice(index + 1, 0, { ...provider, id: Date.now() });
       this.autoSaveSettings();
     },
     previewImage(img) {
@@ -2064,7 +2065,9 @@ let vue_methods = {
           if (data.success) {      
             // 将新的文件信息添加到 this.textFiles
             this.textFiles = [...data.textFiles,...this.textFiles];
+            this.selectedFile = data.textFiles[0].unique_filename;
             this.autoSaveSettings();
+            this.parseSelectedFile();
           } else {
             showNotification(this.t('file_upload_failed'), 'error');
           }
