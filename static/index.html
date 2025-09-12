@@ -731,9 +731,19 @@ if ('serviceWorker' in navigator) {
               <el-button
                 @click="showModelDialog = true"
                 class="icon-btn knowledge-base-btn"
-                type='default'
+                type='info'
                 circle>
                 <i class="fa-solid fa-microchip"></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('chatHistory')" placement="top">
+              <el-button
+                @click="showHistoryDialog = true"
+                class="icon-btn history-btn"
+                :type="'info'"
+                circle>
+                <i class="fa-solid fa-clock-rotate-left"></i>
               </el-button>
             </el-tooltip>
 
@@ -746,16 +756,6 @@ if ('serviceWorker' in navigator) {
                     circle>
                     <i :class="isInputExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center'"></i>
                 </el-button>
-            </el-tooltip>
-
-            <el-tooltip :content="t('chatHistory')" placement="top">
-              <el-button
-                @click="showHistoryDialog = true"
-                class="icon-btn history-btn"
-                :type="'default'"
-                circle>
-                <i class="fa-solid fa-clock-rotate-left"></i>
-              </el-button>
             </el-tooltip>
 
             <el-tooltip :content="t('uploadFile')" placement="top">
