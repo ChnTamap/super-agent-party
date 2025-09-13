@@ -158,6 +158,9 @@
       "reasoningVisible": true,
       "quickRestart": true
     },
+    "behaviorSettings": {
+      "enabled": false
+    },
     "text2imgSettings": {
       "enabled": false,
       "engine": "pollinations",

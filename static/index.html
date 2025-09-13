@@ -1099,6 +1099,13 @@ if ('serviceWorker' in navigator) {
                               @input="autoSaveSettings"
                             />
                           </el-form-item>
+                          <el-alert type="info" :closable="false" class="mb-2">
+                            <template #default>
+                              <div class="alert-content">
+                                {{ t('longTermMemoryNote') }}
+                              </div>
+                            </template>
+                          </el-alert>
                           <el-form-item :label="t('selectMemory')">
                             <el-select 
                               v-model="memorySettings.selectedMemory" 
@@ -2250,6 +2257,43 @@ if ('serviceWorker' in navigator) {
                   </template>
                 </el-dialog>
                 </div>
+              </div>
+              <!-- 角色行为 -->
+              <div v-show="subMenu === 'behavior'" class="page">
+                <el-tabs v-model="activeMemoryTab">
+                  <!-- 记忆配置标签页 -->
+                  <el-tab-pane :label="t('behaviorConfig')" name="config">
+                    <el-form :model="behaviorSettings" class="settings-form"  label-position="top">
+                      <div class="tool-item">
+                        <div class="tool-header">
+                          <div class="header-left">
+                            <span>
+                              <el-icon>
+                                <i class="fa-solid fa-person-running"></i>
+                              </el-icon>
+                              {{ t('AutoBehavior') }}
+                            </span>
+                          </div>
+                          <el-switch v-model="behaviorSettings.enabled" @click.stop @change="autoSaveSettings" />
+                        </div>
+                        <div class="tool-content">
+
+                        </div>
+                      </div>
+                    </el-form>
+                  </el-tab-pane>
+                  <!-- 添加新记忆标签页 -->
+                  <el-tab-pane :label="t('addNewBehavior')" name="add">
+                    <div class="provider-grid">
+                      
+                      <!-- 添加新记忆磁贴 -->
+                      <div class="provider-card add-tile">
+                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewBehavior') }}</div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+                </el-tabs>
               </div>
             </div>
           </div>
