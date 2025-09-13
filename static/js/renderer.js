@@ -397,7 +397,24 @@ const app = Vue.createApp({
         voice.language === this.edgettsLanguage && 
         voice.gender === this.edgettsGender
       );
-    }
+    },
+    uniqueNewLanguages() {
+      const languages = [...new Set(this.edgettsvoices.map(voice => voice.language))];
+      return languages.sort();
+    },
+    uniqueNewGenders() {
+      const voicesForLanguage = this.edgettsvoices.filter(voice => 
+        voice.language === this.newTTSConfig.edgettsLanguage
+      );
+      const genders = [...new Set(voicesForLanguage.map(voice => voice.gender))];
+      return genders.sort();
+    },
+    filteredNewVoices() {
+      return this.edgettsvoices.filter(voice => 
+        voice.language === this.newTTSConfig.edgettsLanguage && 
+        voice.gender === this.newTTSConfig.edgettsGender
+      );
+    },
   },
   methods: vue_methods
 });
