@@ -5332,10 +5332,21 @@ let vue_methods = {
       this.updateVoices();
       this.autoSaveSettings();
     },
-    
+
+
     // 当性别改变时更新语音
     updateVoices() {
       this.autoSaveSettings();
+    },
+
+    updateNewLanguages() {
+      // 更新 ttsSettings 中的语言
+      this.newTTSConfig.edgettsVoice = this.filteredNewVoices[0].name;
+    },
+    // 当语言改变时更新性别和语音
+    updateNewGenders() {
+      // 更新 ttsSettings 中的性别
+      this.newTTSConfig.edgettsVoice = this.filteredNewVoices[0].name;
     },
       // 浏览参考音频文件
   browseGsvRefAudioFile() {
