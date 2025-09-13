@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 from urllib.parse import urlparse
 import aiohttp
@@ -147,58 +148,112 @@ async def handle_epub(content):
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _process_epub, content)
 
+import posixpath  # 新增导入
+
 def _process_epub(content):
-    """同步处理EPUB内容"""
+    """同步处理EPUB内容，返回JSON格式的章节结构"""
     try:
-        text_content = []
+        chapters = []
         
-        # 使用BytesIO将字节内容转换为类文件对象
         with BytesIO(content) as epub_file:
             with zipfile.ZipFile(epub_file, 'r') as epub_zip:
-                # 查找并解析容器文件以获取OPF文件路径
+                # 解析容器文件获取OPF路径
                 container_data = epub_zip.read('META-INF/container.xml')
                 container_root = ET.fromstring(container_data)
-                
-                # 获取OPF文件路径
-                opf_path = None
-                for rootfile in container_root.findall('.//{*}rootfile'):
-                    opf_path = rootfile.get('full-path')
-                    break
-                
-                if not opf_path:
-                    raise RuntimeError("无法找到OPF文件")
-                
-                # 解析OPF文件获取所有HTML文件路径
+                opf_path_element = container_root.find('.//{*}rootfile')
+                if opf_path_element is None:
+                    raise ValueError("OPF文件路径未找到")
+                opf_path = opf_path_element.get('full-path')
+
+                # 解析OPF文件
                 opf_data = epub_zip.read(opf_path)
                 opf_root = ET.fromstring(opf_data)
+                opf_namespace = {'opf': 'http://www.idpf.org/2007/opf'}
                 
-                # 获取OPF文件所在目录
-                opf_dir = os.path.dirname(opf_path)
+                # 获取spine顺序（章节阅读顺序）
+                spine = opf_root.find('.//opf:spine', opf_namespace)
+                if spine is None:
+                    raise ValueError("spine元素未找到")
+                itemrefs = [item.get('idref') for item in spine.findall('opf:itemref', opf_namespace)]
                 
-                # 收集所有HTML/XML文件
-                html_files = []
-                for item in opf_root.findall('.//{*}item'):
-                    media_type = item.get('media-type')
+                # 构建manifest映射 (id -> file路径)
+                manifest = {}
+                for item in opf_root.findall('.//opf:item', opf_namespace):
+                    item_id = item.get('id')
                     href = item.get('href')
-                    
-                    if media_type in ['application/xhtml+xml', 'text/html']:
-                        # 构建完整路径
-                        full_path = os.path.join(opf_dir, href) if opf_dir else href
-                        html_files.append(full_path)
+                    if item_id and href:
+                        # 使用posixpath处理路径
+                        manifest[item_id] = posixpath.normpath(href)
                 
-                # 提取每个HTML文件中的文本
-                for html_file in html_files:
-                    try:
-                        html_data = epub_zip.read(html_file)
-                        html_text = _extract_text_from_html(html_data)
-                        text_content.append(html_text)
-                    except Exception as e:
-                        print(f"处理HTML文件 {html_file} 时出错: {e}")
+                # OPF文件所在目录
+                opf_dir = posixpath.dirname(opf_path)
+                
+                # 按spine顺序处理每个章节
+                for item_id in itemrefs:
+                    if item_id not in manifest:
                         continue
+                    
+                    # 使用posixpath拼接路径
+                    rel_path = manifest[item_id]
+                    abs_path = posixpath.join(opf_dir, rel_path) if opf_dir else rel_path
+                    abs_path = posixpath.normpath(abs_path)
+
+                    # 查找实际存在的文件名（解决大小写敏感问题）
+                    actual_path = None
+                    for name in epub_zip.namelist():
+                        if name.replace('\\', '/').lower() == abs_path.lower().replace('\\', '/'):
+                            actual_path = name
+                            break
+                    
+                    if actual_path and actual_path in epub_zip.namelist():
+                        with epub_zip.open(actual_path) as chapter_file:
+                            html_data = chapter_file.read()
+                            chapter_title, chapter_text = _parse_epub_chapter(html_data)
+                            chapter_content = f"{chapter_title}\n\n{chapter_text}" if chapter_title else chapter_text
+                            if chapter_content.strip():
+                                chapters.append(chapter_content)
         
-        return '\n'.join(text_content)
+        return json.dumps({"chapters": chapters}, ensure_ascii=False)
+    
     except Exception as e:
         raise RuntimeError(f"EPUB解析失败: {str(e)}")
+
+
+def _parse_epub_chapter(html_data):
+    """解析单个章节内容，返回(标题, 正文)"""
+    try:
+        root = ET.fromstring(html_data)
+        ns = {'xhtml': 'http://www.w3.org/1999/xhtml'}
+        
+        # 查找第一个h1-h6标签作为标题
+        for level in range(1, 7):
+            title_elem = root.find(f'.//xhtml:h{level}', ns)
+            if title_elem is not None and title_elem.text:
+                title = title_elem.text.strip()
+                break
+        else:
+            title = ""
+        
+        # 提取正文文本（排除标题标签）
+        body_text = []
+        for elem in root.iter():
+            if elem.tag.endswith(('body', 'p', 'div')):
+                text = ''.join(elem.itertext()).strip()
+                if text and not elem.tag.endswith('h'+str(level)):
+                    body_text.append(text)
+        
+        return title, '\n'.join(body_text)
+    
+    except ET.ParseError:
+        # 简单HTML处理作为备选方案
+        html_str = html_data.decode('utf-8', errors='replace')
+        title_match = re.search(r'<h[1-6][^>]*>(.*?)</h[1-6]>', html_str, re.IGNORECASE)
+        title = title_match.group(1).strip() if title_match else "无标题章节"
+        
+        # 去除所有HTML标签
+        text = re.sub(r'<[^>]+>', '', html_str).strip()
+        return title, text
+
 
 def _extract_text_from_html(html_data):
     """从HTML/XML内容中提取文本"""

@@ -198,6 +198,10 @@ let vue_methods = {
       this.activeMenu = 'toolkit';
       this.subMenu = 'sticker';
     },
+    switchToMainAgent() {
+      this.activeMenu = 'api-group';
+      this.subMenu = 'agents';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()
@@ -2081,6 +2085,8 @@ let vue_methods = {
     },
     clearLongText() {
       this.selectedFile = null;
+      this.readConfig.longTextList = [];
+      this.longTextListIndex = 0;
       this.readConfig.longText = '';
     },
     removeItem(index, type) {
@@ -7013,6 +7019,9 @@ let vue_methods = {
     }
   },
     async parseSelectedFile() {
+        this.readConfig.longText = '';
+        this.readConfig.longTextList = [];
+        this.longTextListIndex = 0;
         // 根据选择的文件unique_filename在textFiles中查找对应的文件信息
         const selectedFile = this.textFiles.find(file => file.unique_filename === this.selectedFile);
         try {
@@ -7026,7 +7035,19 @@ let vue_methods = {
               headers: { 'Content-Type': 'application/json' }
             });
             const data = await response.json();
-            this.readConfig.longText = data.content;
+            if (selectedFile.unique_filename.toLowerCase().endsWith('.epub')){
+              // data.content转成字典
+              let data_json = JSON.parse(data.content);
+              this.readConfig.longTextList = data_json.chapters || [];
+              if (this.readConfig.longTextList.length > 0){
+                this.longTextListIndex = 0;
+                this.readConfig.longText = this.readConfig.longTextList[0];
+              }else{
+                this.readConfig.longText = data.content;
+              }
+            }else{
+              this.readConfig.longText = data.content;
+            }
             // 如果this.readConfig.longText太长了，就只取前100000个
             // if (this.readConfig.longText.length > 100000) {
             //   this.readConfig.longText = this.readConfig.longText.substring(0, 100000);
@@ -7038,7 +7059,18 @@ let vue_methods = {
           console.error('Error:', error);
         }
     },
-
+  NextPage() {
+    if (this.longTextListIndex < this.readConfig.longTextList.length - 1) {
+      this.longTextListIndex++;
+      this.readConfig.longText = this.readConfig.longTextList[this.longTextListIndex];
+    }
+  },
+  PrevPage() {
+    if (this.longTextListIndex > 0) {
+      this.longTextListIndex--;
+      this.readConfig.longText = this.readConfig.longTextList[this.longTextListIndex];
+    }
+  },
   openAddTTSDialog() {
     this.newTTSConfig = {
       name: '',

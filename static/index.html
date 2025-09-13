@@ -731,9 +731,19 @@ if ('serviceWorker' in navigator) {
               <el-button
                 @click="showModelDialog = true"
                 class="icon-btn knowledge-base-btn"
-                type='default'
+                type='info'
                 circle>
                 <i class="fa-solid fa-microchip"></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('chatHistory')" placement="top">
+              <el-button
+                @click="showHistoryDialog = true"
+                class="icon-btn history-btn"
+                :type="'info'"
+                circle>
+                <i class="fa-solid fa-clock-rotate-left"></i>
               </el-button>
             </el-tooltip>
 
@@ -746,16 +756,6 @@ if ('serviceWorker' in navigator) {
                     circle>
                     <i :class="isInputExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center'"></i>
                 </el-button>
-            </el-tooltip>
-
-            <el-tooltip :content="t('chatHistory')" placement="top">
-              <el-button
-                @click="showHistoryDialog = true"
-                class="icon-btn history-btn"
-                :type="'default'"
-                circle>
-                <i class="fa-solid fa-clock-rotate-left"></i>
-              </el-button>
             </el-tooltip>
 
             <el-tooltip :content="t('uploadFile')" placement="top">
@@ -6560,6 +6560,46 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <div class="tool-content">
+                            <!-- 主智能体选择 -->
+                            <el-form-item :label="t('mainAgent')" required>
+                              <el-select 
+                                v-model="qqBotConfig.QQAgent"
+                                @change="changeQQAgent">
+                                <el-option
+                                  :label="t('defaultAgent')"
+                                  value="super-model"
+                                >
+                                </el-option>
+                                <el-option
+                                  v-for="(agent, id) in agents"
+                                  :key="id"
+                                  :label="agent.name"
+                                  :value="id"
+                                >
+                                </el-option>
+                              </el-select>
+                            </el-form-item>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMainAgentNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMainAgent"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('MainAgentInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <!-- 角色卡选择 -->
                             <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
                               <el-switch 
@@ -6734,6 +6774,46 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </div>
                         <div class="tool-content">
+                            <!-- 主智能体选择 -->
+                            <el-form-item :label="t('mainAgent')" required>
+                              <el-select 
+                                v-model="mainAgent"
+                                @change="autoSaveSettings">
+                                <el-option
+                                  :label="t('defaultAgent')"
+                                  value="super-model"
+                                >
+                                </el-option>
+                                <el-option
+                                  v-for="(agent, id) in agents"
+                                  :key="id"
+                                  :label="agent.name"
+                                  :value="id"
+                                >
+                                </el-option>
+                              </el-select>
+                            </el-form-item>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMainAgentNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMainAgent"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('MainAgentInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <!-- 角色卡选择 -->
                             <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
                               <el-switch 
@@ -7136,6 +7216,26 @@ if ('serviceWorker' in navigator) {
                                 @change="autoSaveSettings">
                             </el-form-item>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <el-tooltip :content="t('prevPage')" placement="top">
+                                <el-button 
+                                  v-show="this.readConfig.longTextList?.length > 0"
+                                  type="info" 
+                                  @click="PrevPage" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-arrow-left"></i>
+                                </el-button>
+                              </el-tooltip>
+                              <el-tooltip :content="t('nextPage')" placement="top">
+                                <el-button 
+                                  v-show="this.readConfig.longTextList?.length > 0"
+                                  type="info" 
+                                  @click="NextPage" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-arrow-right"></i>
+                                </el-button>
+                              </el-tooltip>
                               <!-- 新增上传文件按钮 -->
                               <el-tooltip :content="t('uploadFile')" placement="top">
                                 <el-button 
