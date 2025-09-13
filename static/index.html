@@ -7216,6 +7216,26 @@ if ('serviceWorker' in navigator) {
                                 @change="autoSaveSettings">
                             </el-form-item>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <el-tooltip :content="t('prevPage')" placement="top">
+                                <el-button 
+                                  v-show="this.readConfig.longTextList?.length > 0"
+                                  type="info" 
+                                  @click="PrevPage" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-arrow-left"></i>
+                                </el-button>
+                              </el-tooltip>
+                              <el-tooltip :content="t('nextPage')" placement="top">
+                                <el-button 
+                                  v-show="this.readConfig.longTextList?.length > 0"
+                                  type="info" 
+                                  @click="NextPage" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-arrow-right"></i>
+                                </el-button>
+                              </el-tooltip>
                               <!-- 新增上传文件按钮 -->
                               <el-tooltip :content="t('uploadFile')" placement="top">
                                 <el-button 
