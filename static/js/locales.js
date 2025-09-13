@@ -791,6 +791,7 @@ key3`,
         'noAudioToDownload': '没有音频可以下载',
         'TTSInterface': '语音合成界面',
         'SeparatorNotice1': '如果你想要快速转换音频，请选择较少的分割符，例如仅选择换行符，如果你想要让数字人口播或者多语音朗读，请选择更多的分割符，例如逗号和句号。如果想要调整语音合成配置，点击跳转',
+        'audioConversionCompleted': '音频转换已完成',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1583,5 +1584,6 @@ Key3`,
         'noAudioToDownload': 'No audio to download',
         'TTSInterface': 'TTS Interface',
         'SeparatorNotice1':'If you want to convert audio quickly, choose fewer separators, such as only line breaks. If you want to have digital demographics or multi-voice reading, choose more separators, such as commas and periods. If you want to adjust the Text To Speech configuration, click Jump',
+        'audioConversionCompleted': 'Audio conversion completed',
     }
   };
