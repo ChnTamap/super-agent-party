@@ -781,7 +781,8 @@ key3`,
         'goToMainAgentNotice1':"当你选择某一个智能体快照时，所有的配置将锁定到创建智能体快照时的配置，直到你切换回默认智能体，如需创建智能体快照，请点击跳转到",
         'MainAgentInterface':'智能体快照界面',
         'prevPage': '上一页',
-        'nextPage': '下一页',
+        'nextChapter': '下一章',
+        'prevChapter': '上一章',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1564,5 +1565,7 @@ Key3`,
         'MainAgentInterface':'Agent snapshot interface',
         'prevPage': 'Previous Page',
         'nextPage': 'Next Page',
+        'nextChapter': 'Next Chapter',
+        'prevChapter': 'Previous Chapter',
     }
   };

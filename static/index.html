@@ -7216,7 +7216,7 @@ if ('serviceWorker' in navigator) {
                                 @change="autoSaveSettings">
                             </el-form-item>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
-                              <el-tooltip :content="t('prevPage')" placement="top">
+                              <el-tooltip :content="t('prevChapter')" placement="top">
                                 <el-button 
                                   v-show="this.readConfig.longTextList?.length > 0"
                                   type="info" 
@@ -7226,7 +7226,7 @@ if ('serviceWorker' in navigator) {
                                   <i class="fa-solid fa-arrow-left"></i>
                                 </el-button>
                               </el-tooltip>
-                              <el-tooltip :content="t('nextPage')" placement="top">
+                              <el-tooltip :content="t('nextChapter')" placement="top">
                                 <el-button 
                                   v-show="this.readConfig.longTextList?.length > 0"
                                   type="info" 
