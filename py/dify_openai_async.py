@@ -125,7 +125,7 @@ class DifyOpenAIAsync:
                             continue
 
                         # 我们只关心 event == "message"
-                        if event.get("event") != "message":
+                        if event.get("event") not in ["message", "agent_message"]:
                             continue
 
                         delta = event.get("answer") or ""
