@@ -7207,6 +7207,44 @@ if ('serviceWorker' in navigator) {
                                 ></el-option>
                               </el-select>
                             </el-form-item>
+                            <el-form-item :label="t('separators')">
+                              <el-select
+                                v-model="ttsSettings.separators"
+                                multiple
+                                filterable
+                                allow-create
+                                @keyup.enter.native="handleEnter"
+                                @create="handleCreateSeparator"
+                              >
+                                <el-option
+                                  v-for="sep in filteredSeparators"
+                                  :key="sep.value"
+                                  :label="sep.label"
+                                  :value="sep.value"
+                                />
+                              </el-select>
+                            </el-form-item>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('SeparatorNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToTTS"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('TTSInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <el-form-item :label="t('maxConcurrency')" class="form-item-align">
                               <el-slider
                                 v-model="ttsSettings.maxConcurrency"

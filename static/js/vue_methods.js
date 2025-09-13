@@ -202,6 +202,10 @@ let vue_methods = {
       this.activeMenu = 'api-group';
       this.subMenu = 'agents';
     },
+    switchToTTS() {
+      this.activeMenu = 'model-config';
+      this.subMenu = 'tts';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()
