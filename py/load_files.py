@@ -154,7 +154,8 @@ def _process_epub(content):
     """同步处理EPUB内容，返回JSON格式的章节结构"""
     try:
         chapters = []
-        
+        processed_files = set()  # 用于记录已处理的文件路径
+
         with BytesIO(content) as epub_file:
             with zipfile.ZipFile(epub_file, 'r') as epub_zip:
                 # 解析容器文件获取OPF路径
@@ -205,6 +206,10 @@ def _process_epub(content):
                             actual_path = name
                             break
                     
+                    # 如果文件已处理过，跳过
+                    if actual_path in processed_files:
+                        continue
+                    
                     if actual_path and actual_path in epub_zip.namelist():
                         with epub_zip.open(actual_path) as chapter_file:
                             html_data = chapter_file.read()
@@ -212,11 +217,13 @@ def _process_epub(content):
                             chapter_content = f"{chapter_title}\n\n{chapter_text}" if chapter_title else chapter_text
                             if chapter_content.strip():
                                 chapters.append(chapter_content)
+                            processed_files.add(actual_path)  # 标记为已处理
         
         return json.dumps({"chapters": chapters}, ensure_ascii=False)
     
     except Exception as e:
         raise RuntimeError(f"EPUB解析失败: {str(e)}")
+
 
 
 def _parse_epub_chapter(html_data):
@@ -225,52 +232,51 @@ def _parse_epub_chapter(html_data):
         root = ET.fromstring(html_data)
         ns = {'xhtml': 'http://www.w3.org/1999/xhtml'}
         
-        # 查找第一个h1-h6标签作为标题
+        # 1. 提取标题
+        title = ""
         for level in range(1, 7):
             title_elem = root.find(f'.//xhtml:h{level}', ns)
             if title_elem is not None and title_elem.text:
                 title = title_elem.text.strip()
+                found_level = level  # 记录实际找到的标题级别
                 break
         else:
-            title = ""
+            found_level = 0  # 未找到标题
         
-        # 提取正文文本（排除标题标签）
+        # 2. 提取正文（精确控制提取范围）
         body_text = []
-        for elem in root.iter():
-            if elem.tag.endswith(('body', 'p', 'div')):
-                text = ''.join(elem.itertext()).strip()
-                if text and not elem.tag.endswith('h'+str(level)):
-                    body_text.append(text)
         
-        return title, '\n'.join(body_text)
-    
+        # 方案一：直接提取整个 body 内容（推荐）
+        body_elem = root.find('.//xhtml:body', ns)
+        if body_elem is not None:
+            # 提取所有文本（自动合并子元素）
+            full_text = ''.join(body_elem.itertext()).strip()
+            if full_text:
+                body_text.append(full_text)
+        
+        # 3. 过滤标题内容（如果标题在 body 中）
+        final_text = []
+        for text in body_text:
+            # 移除标题行（如果有）
+            cleaned = text.replace(title, '', 1).strip()
+            final_text.append(cleaned if cleaned else text)
+        
+        return title, '\n'.join(final_text).strip()
+
     except ET.ParseError:
-        # 简单HTML处理作为备选方案
+        # 备选方案：正则表达式处理
         html_str = html_data.decode('utf-8', errors='replace')
         title_match = re.search(r'<h[1-6][^>]*>(.*?)</h[1-6]>', html_str, re.IGNORECASE)
-        title = title_match.group(1).strip() if title_match else "无标题章节"
+        title = title_match.group(1).strip() if title_match else ""
         
-        # 去除所有HTML标签
-        text = re.sub(r'<[^>]+>', '', html_str).strip()
+        # 提取 body 内容
+        body_match = re.search(r'<body[^>]*>(.*?)</body>', html_str, re.DOTALL | re.IGNORECASE)
+        body_content = body_match.group(1) if body_match else html_str
+        
+        # 去除所有标签
+        text = re.sub(r'<[^>]+>', '', body_content).strip()
         return title, text
 
-
-def _extract_text_from_html(html_data):
-    """从HTML/XML内容中提取文本"""
-    try:
-        # 尝试解析XML
-        root = ET.fromstring(html_data)
-        return _extract_text_from_xml_element(root)
-    except ET.ParseError:
-        # 如果不是有效的XML，尝试简单的文本提取
-        try:
-            text = html_data.decode('utf-8')
-            # 简单的HTML标签去除
-            import re
-            text = re.sub(r'<[^>]+>', '', text)
-            return text
-        except:
-            return "无法提取文本内容"
 
 def _extract_text_from_xml_element(element):
     """递归提取XML元素中的文本"""
