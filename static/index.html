@@ -6579,6 +6579,27 @@ if ('serviceWorker' in navigator) {
                                 </el-option>
                               </el-select>
                             </el-form-item>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMainAgentNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMainAgent"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('MainAgentInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <!-- 角色卡选择 -->
                             <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
                               <el-switch 
@@ -6772,6 +6793,27 @@ if ('serviceWorker' in navigator) {
                                 </el-option>
                               </el-select>
                             </el-form-item>
+                            <el-alert
+                              type="info"
+                              :closable="false"
+                              class="mb-2"
+                            >
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('goToMainAgentNotice1') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToMainAgent"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('MainAgentInterface') }}
+                                  </el-link>
+                                </div>
+                              </template>
+                            </el-alert>
                             <!-- 角色卡选择 -->
                             <el-form-item :label="t('memoryEnable')" class="form-item-align" label-position="left">
                               <el-switch 

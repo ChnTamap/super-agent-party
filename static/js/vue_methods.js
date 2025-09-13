@@ -198,6 +198,10 @@ let vue_methods = {
       this.activeMenu = 'toolkit';
       this.subMenu = 'sticker';
     },
+    switchToMainAgent() {
+      this.activeMenu = 'api-group';
+      this.subMenu = 'agents';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()

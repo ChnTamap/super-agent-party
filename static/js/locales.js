@@ -778,6 +778,8 @@ key3`,
         "waiting": "准备中...",
         'goToMemoryNotice1':"角色卡是可选项，如果需要使用角色卡，请点击跳转到",
         'copyProvider': '复制供应商',
+        'goToMainAgentNotice1':"当你选择某一个智能体快照时，所有的配置将锁定到创建智能体快照时的配置，直到你切换回默认智能体，如需创建智能体快照，请点击跳转到",
+        'MainAgentInterface':'智能体快照界面',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1555,6 +1557,8 @@ Key3`,
         "processingProgress": "Processing progress",
         "waiting": "Waiting...",
         'goToMemoryNotice1':"Character cards are optional. If you need to use a character card, please click to jump to",
-        'copyProvider':'Copy Provider'
+        'copyProvider':'Copy Provider',
+        'goToMainAgentNotice1':"When you select an agent snapshot, all configurations will be locked to the configuration when the agent snapshot was created until you switch back to the default agent. To create an agent snapshot, click Jump to",
+        'MainAgentInterface':'Agent snapshot interface',
     }
   };
