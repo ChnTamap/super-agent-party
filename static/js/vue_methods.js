@@ -1059,6 +1059,7 @@ let vue_methods = {
           this.text2imgSettings = data.data.text2imgSettings || this.text2imgSettings;
           this.asrSettings = data.data.asrSettings || this.asrSettings;
           this.ttsSettings = data.data.ttsSettings || this.ttsSettings;
+          this.behaviorSettings = data.data.behaviorSettings || this.behaviorSettings;
           this.VRMConfig = data.data.VRMConfig || this.VRMConfig;
           this.comfyuiServers = data.data.comfyuiServers || this.comfyuiServers;
           this.comfyuiAPIkey = data.data.comfyuiAPIkey || this.comfyuiAPIkey;
@@ -1753,6 +1754,7 @@ let vue_methods = {
           text2imgSettings: this.text2imgSettings,
           asrSettings: this.asrSettings,
           ttsSettings: this.ttsSettings,
+          behaviorSettings: this.behaviorSettings,
           VRMConfig: this.VRMConfig,
           comfyuiServers: this.comfyuiServers,
           comfyuiAPIkey: this.comfyuiAPIkey,

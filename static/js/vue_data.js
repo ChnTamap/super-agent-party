@@ -855,6 +855,7 @@ let vue_data = {
         { id: 'memory', title: 'CharacterMemory', icon: 'fa-solid fa-brain' },
         { id: 'voice', title: 'CharacterVoice', icon: 'fa-solid fa-volume-high' },
         { id: 'appearance', title: 'CharacterAppearance', icon: 'fa-solid fa-person' },
+        { id: 'behavior', title: 'CharacterBehavior', icon: 'fa-solid fa-person-running' },
     ],
     modelTiles: [
       { id: 'service', title: 'modelService', icon: 'fa-solid fa-cloud' },
@@ -927,6 +928,9 @@ let vue_data = {
       { label: '—', value: '—' },
       { label: '/', value: '/' },
     ],
+    behaviorSettings:{
+      enabled: false,
+    }, // 行为设置
     qqBotConfig: {
       QQAgent:'super-model',
       memoryLimit: 30,
