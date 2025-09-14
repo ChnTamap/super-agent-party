@@ -160,7 +160,25 @@
     },
     "behaviorSettings": {
       "enabled": false,
-      "behaviorList":[]
+      "behaviorList":[
+        {
+          "enabled": false,
+          "trigger": {
+            "type": "noInput",
+            "time":{
+              "timeValue": "00:00:00",
+              "days": [] 
+            },
+            "noInput":{
+              "atency": 30
+            }
+          },
+          "action": {
+            "type": "prompt",
+            "prompt": ""
+          }
+        }
+      ]
     },
     "text2imgSettings": {
       "enabled": false,

@@ -1037,7 +1037,8 @@ if ('serviceWorker' in navigator) {
                 :rows="isMobile?(isInputExpanded ? 8 : 2):(isInputExpanded ? 16 : 4)"
                 :placeholder="t('inputMessage')"
                 resize="none"
-                @keydown="handleKeyDown"
+                @keydown="isInputting=true;handleKeyDown()"
+                @keyup="isInputting=false"
                 class="input-box">
             </el-input>
           </div>
@@ -2261,7 +2262,7 @@ if ('serviceWorker' in navigator) {
               <!-- 角色行为 -->
               <div v-show="subMenu === 'behavior'" class="page">
                 <el-tabs v-model="activeMemoryTab">
-                  <!-- 记忆配置标签页 -->
+                  <!-- 角色行为标签页 -->
                   <el-tab-pane :label="t('behaviorConfig')" name="config">
                     <el-form :model="behaviorSettings" class="settings-form"  label-position="top">
                       <div class="tool-item">
@@ -2277,20 +2278,8 @@ if ('serviceWorker' in navigator) {
                           <el-switch v-model="behaviorSettings.enabled" @click.stop @change="autoSaveSettings" />
                         </div>
                         <div class="tool-content">
-                          <el-form-item label="" class="form-item-align">
-                            <!-- 新增按钮 -->
-                            <el-button 
-                              type="primary" 
-                              plain 
-                              @click="addBehavior" 
-                              class="add-server-btn"
-                            >
-                              <el-icon><i class="fa-solid fa-plus"></i></el-icon>
-                              {{ t('addBehavior') }}
-                            </el-button>
-                          </el-form-item>
                           <!-- 行为块列表 -->
-                          <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx">
+                          <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx" class="behavior-block">
                             <!-- 行为块标题 + 开关 + 删除 -->
                             <div class="tool-header">
                               <div class="header-left">
@@ -2310,24 +2299,21 @@ if ('serviceWorker' in navigator) {
                             <!-- 时间触发 -->
                             <div v-if="b.trigger.type === 'time'">
                               <el-row :gutter="12">
-                                <el-col :span="6">
-                                  <el-form-item :label="t('hour')">
-                                    <el-input-number v-model="b.trigger.time.hour" :min="0" :max="23" @change="autoSaveSettings"/>
-                                  </el-form-item>
-                                </el-col>
-                                <el-col :span="6">
-                                  <el-form-item :label="t('minute')">
-                                    <el-input-number v-model="b.trigger.time.minute" :min="0" :max="59" @change="autoSaveSettings"/>
-                                  </el-form-item>
-                                </el-col>
-                                <el-col :span="6">
-                                  <el-form-item :label="t('second')">
-                                    <el-input-number v-model="b.trigger.time.second" :min="0" :max="59" @change="autoSaveSettings"/>
+                                <el-col :span="24">
+                                  <el-form-item :label="t('time')">
+                                    <el-time-picker
+                                      v-model="b.trigger.time.timeValue"
+                                      value-format="HH:mm:ss"
+                                      format="HH:mm:ss"
+                                      :placeholder="t('selectTime')"
+                                      @change="autoSaveSettings"
+                                      style="width: 100%"
+                                    />
                                   </el-form-item>
                                 </el-col>
                               </el-row>
                               <el-form-item :label="t('repeatDays')">
-                                <el-select v-model="b.trigger.time.days" multiple collapse-tags @change="autoSaveSettings">
+                                <el-select v-model="b.trigger.time.days" multiple @change="autoSaveSettings">
                                   <el-option :label="t('monday')"    :value="1"></el-option>
                                   <el-option :label="t('tuesday')"   :value="2"></el-option>
                                   <el-option :label="t('wednesday')" :value="3"></el-option>
@@ -2342,13 +2328,13 @@ if ('serviceWorker' in navigator) {
                             <!-- 无输入触发 -->
                             <div v-if="b.trigger.type === 'noInput'">
                               <el-form-item :label="t('noInputLatency')">
-                                <el-input-number
+                                <el-slider
                                   v-model="b.trigger.noInput.latency"
-                                  :min="1"
-                                  :max="3600"
+                                  :min="5"
+                                  :max="600"
+                                  :step="5"
                                   @change="autoSaveSettings">
-                                  <template #append>{{ t('seconds') }}</template>
-                                </el-input-number>
+                                </el-slider>
                               </el-form-item>
                             </div>
 
@@ -2359,7 +2345,7 @@ if ('serviceWorker' in navigator) {
                               </el-select>
                             </el-form-item>
 
-                            <el-form-item v-if="b.action.type === 'prompt'" :label="t('prompt')">
+                            <el-form-item v-if="b.action.type === 'prompt'" :label="t('promptAction')">
                               <el-input
                                 type="textarea"
                                 v-model="b.action.prompt"
@@ -2369,21 +2355,32 @@ if ('serviceWorker' in navigator) {
                                 class="full-width-input"/>
                             </el-form-item>
 
-                            <el-form-item label="" class="form-item-align">
+                            <el-form-item label="" class="form-item-align" v-show="idx > 0" >
                               <el-button
                                 type="danger" 
                                 plain 
                                 @click="removeBehavior(idx)"
-                                class="add-server-btn"
+                                class="add-server-btn" 
+                                :disable="idx === 0"
                               >
                               <el-icon><i class="fa-solid fa-trash"></i></el-icon>
                               {{ t('removeBehavior') }}
                               </el-button>
                             </el-form-item>
-                            <!-- 分割线 -->
-                            <el-divider></el-divider>
+
+                            <el-form-item label="" class="form-item-align">
+                                <!-- 新增按钮 -->
+                                <el-button 
+                                  type="primary" 
+                                  plain 
+                                  @click="addBehavior(idx)" 
+                                  class="add-server-btn"
+                                >
+                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
+                                  {{ t('addBehavior') }}
+                                </el-button>
+                              </el-form-item>
                           </div>
-                 
                         </div>
                       </div>
                     </el-form>

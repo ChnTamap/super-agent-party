@@ -13,6 +13,8 @@ const app = Vue.createApp({
   },
   // 在组件销毁时清除定时器
   beforeDestroy() {
+    if (this.behaviorTimeTimer)   clearInterval(this.behaviorTimeTimer)
+    if (this.behaviorNoInputTimer) clearInterval(this.behaviorNoInputTimer)
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
     }
@@ -78,6 +80,43 @@ const app = Vue.createApp({
     this.$nextTick(() => {
       this.generateQRCode(); // 生成二维码
     });
+    // 1. 时间触发器（每秒扫一次）
+    this.behaviorTimeTimer = setInterval(() => {
+      if (!this.behaviorSettings.enabled) return
+      const now = new Date()
+      const hm = now.toLocaleTimeString('zh-CN', { hour12: false }) // HH:mm:ss
+      const d  = now.getDay() // 0=周日
+      this.behaviorSettings.behaviorList.forEach(b => {
+        if (!b.enabled || b.trigger.type !== 'time') return
+        const tv = b.trigger.time.timeValue
+        const ds = b.trigger.time.days
+        if (tv === hm) {
+          if (ds.length === 0 || ds.includes(d)) {
+            this.runBehavior(b)
+            this.disableOnceBehavior(b)
+          }
+        }
+      })
+    }, 1000)
+
+    // 2. 无-input 触发器（每 1s 检查一次）
+    this.noInputSec = 0 // 连续无输入秒数
+    this.behaviorNoInputTimer = setInterval(() => {
+      if (!this.behaviorSettings.enabled) return
+      this.behaviorSettings.behaviorList.forEach(b => {
+        if (!b.enabled || b.trigger.type !== 'noInput') return
+        const need = b.trigger.noInput.latency
+        if (this.noInputFlag) {
+          this.noInputSec++
+          if (this.noInputSec >= need) {
+            this.runBehavior(b)
+            this.noInputSec = 0 // 触发后重置
+          }
+        } else {
+          this.noInputSec = 0
+        }
+      })
+    }, 1000)
   },
   beforeUnmount() {
     if (isElectron) {
@@ -171,6 +210,12 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    noInputFlag() {
+      return !this.TTSrunning &&
+             !this.ASRrunning &&
+             !this.isInputting &&
+             !this.isTyping
+    },
     // 计算处理百分比
     processingPercentage() {
       if (this.totalChunksCount === 0) return 0;

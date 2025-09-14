@@ -4639,6 +4639,7 @@ let vue_methods = {
               }
             }
             if (!this.currentAudio || this.currentAudio.paused) {
+              this.isAsrRunning = true;
               if (this.asrSettings.engine === 'webSpeech') {
                 // Web Speech API模式：不处理音频帧，只是检测到语音
                 this.handleWebSpeechFrameProcessed();
@@ -4650,6 +4651,7 @@ let vue_methods = {
           }
         },
         onSpeechEnd: (audio) => {
+          this.ASRrunning = false;
           // 语音结束时的处理
           if (this.asrSettings.engine === 'webSpeech') {
             this.handleWebSpeechEnd();
@@ -7161,15 +7163,31 @@ let vue_methods = {
     this.showAddAppearanceDialog = false;
     this.autoSaveSettings();
   },
-  addBehavior() {
-    // 深拷贝一份默认模板
-    this.behaviorSettings.behaviorList.push(
-      JSON.parse(JSON.stringify(this.newBehavior))
-    );
+  addBehavior(idx) {
+    // 深拷贝一份默认模板到索引idx的后面
+    this.behaviorSettings.behaviorList.splice(idx + 1, 0, JSON.parse(JSON.stringify(this.newBehavior)));
     this.autoSaveSettings();
   },
   removeBehavior(idx) {
     this.behaviorSettings.behaviorList.splice(idx, 1);
     this.autoSaveSettings();
   },
+
+    /* 真正执行行为 */
+    runBehavior(b) {
+      if (!b.enabled) return
+      if (b.action.type === 'prompt' && b.action.prompt) {
+        console.log('Prompt:', b.action.prompt)
+        // 这里把 prompt 发给你的模型即可，举例：
+        // this.sendPromptToModel(b.action.prompt)   // 你需要实现这个函数
+      }
+    },
+
+    /* 触发一次后，如果是“不重复”就把 enabled 关掉 */
+    disableOnceBehavior(b) {
+      if (b.trigger.type === 'time' && !b.trigger.time.days.length) {
+        b.enabled = false
+        this.autoSaveSettings()
+      }
+    },
 }
