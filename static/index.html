@@ -2277,7 +2277,113 @@ if ('serviceWorker' in navigator) {
                           <el-switch v-model="behaviorSettings.enabled" @click.stop @change="autoSaveSettings" />
                         </div>
                         <div class="tool-content">
+                          <el-form-item label="" class="form-item-align">
+                            <!-- 新增按钮 -->
+                            <el-button 
+                              type="primary" 
+                              plain 
+                              @click="addBehavior" 
+                              class="add-server-btn"
+                            >
+                              <el-icon><i class="fa-solid fa-plus"></i></el-icon>
+                              {{ t('addBehavior') }}
+                            </el-button>
+                          </el-form-item>
+                          <!-- 行为块列表 -->
+                          <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx">
+                            <!-- 行为块标题 + 开关 + 删除 -->
+                            <div class="tool-header">
+                              <div class="header-left">
+                                <span>{{ t('behavior') }} #{{ idx + 1 }}</span>
+                              </div>
+                              <el-switch v-model="b.enabled" @change="autoSaveSettings" />
+                            </div>
 
+                            <!-- 触发条件 -->
+                            <el-form-item :label="t('triggerType')">
+                              <el-select v-model="b.trigger.type" @change="autoSaveSettings">
+                                <el-option :label="t('time')"   value="time"></el-option>
+                                <el-option :label="t('noInput')" value="noInput"></el-option>
+                              </el-select>
+                            </el-form-item>
+
+                            <!-- 时间触发 -->
+                            <div v-if="b.trigger.type === 'time'">
+                              <el-row :gutter="12">
+                                <el-col :span="6">
+                                  <el-form-item :label="t('hour')">
+                                    <el-input-number v-model="b.trigger.time.hour" :min="0" :max="23" @change="autoSaveSettings"/>
+                                  </el-form-item>
+                                </el-col>
+                                <el-col :span="6">
+                                  <el-form-item :label="t('minute')">
+                                    <el-input-number v-model="b.trigger.time.minute" :min="0" :max="59" @change="autoSaveSettings"/>
+                                  </el-form-item>
+                                </el-col>
+                                <el-col :span="6">
+                                  <el-form-item :label="t('second')">
+                                    <el-input-number v-model="b.trigger.time.second" :min="0" :max="59" @change="autoSaveSettings"/>
+                                  </el-form-item>
+                                </el-col>
+                              </el-row>
+                              <el-form-item :label="t('repeatDays')">
+                                <el-select v-model="b.trigger.time.days" multiple collapse-tags @change="autoSaveSettings">
+                                  <el-option :label="t('monday')"    :value="1"></el-option>
+                                  <el-option :label="t('tuesday')"   :value="2"></el-option>
+                                  <el-option :label="t('wednesday')" :value="3"></el-option>
+                                  <el-option :label="t('thursday')"  :value="4"></el-option>
+                                  <el-option :label="t('friday')"    :value="5"></el-option>
+                                  <el-option :label="t('saturday')"  :value="6"></el-option>
+                                  <el-option :label="t('sunday')"    :value="0"></el-option>
+                                </el-select>
+                              </el-form-item>
+                            </div>
+
+                            <!-- 无输入触发 -->
+                            <div v-if="b.trigger.type === 'noInput'">
+                              <el-form-item :label="t('noInputLatency')">
+                                <el-input-number
+                                  v-model="b.trigger.noInput.latency"
+                                  :min="1"
+                                  :max="3600"
+                                  @change="autoSaveSettings">
+                                  <template #append>{{ t('seconds') }}</template>
+                                </el-input-number>
+                              </el-form-item>
+                            </div>
+
+                            <!-- 执行内容 -->
+                            <el-form-item :label="t('actionType')">
+                              <el-select v-model="b.action.type" @change="autoSaveSettings">
+                                <el-option :label="t('prompt')" value="prompt"/>
+                              </el-select>
+                            </el-form-item>
+
+                            <el-form-item v-if="b.action.type === 'prompt'" :label="t('prompt')">
+                              <el-input
+                                type="textarea"
+                                v-model="b.action.prompt"
+                                :rows="3"
+                                :placeholder="t('promptPlaceholder')"
+                                @input="autoSaveSettings"
+                                class="full-width-input"/>
+                            </el-form-item>
+
+                            <el-form-item label="" class="form-item-align">
+                              <el-button
+                                type="danger" 
+                                plain 
+                                @click="removeBehavior(idx)"
+                                class="add-server-btn"
+                              >
+                              <el-icon><i class="fa-solid fa-trash"></i></el-icon>
+                              {{ t('removeBehavior') }}
+                              </el-button>
+                            </el-form-item>
+                            <!-- 分割线 -->
+                            <el-divider></el-divider>
+                          </div>
+                 
                         </div>
                       </div>
                     </el-form>

@@ -159,7 +159,8 @@
       "quickRestart": true
     },
     "behaviorSettings": {
-      "enabled": false
+      "enabled": false,
+      "behaviorList":[]
     },
     "text2imgSettings": {
       "enabled": false,

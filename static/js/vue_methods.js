@@ -7161,4 +7161,15 @@ let vue_methods = {
     this.showAddAppearanceDialog = false;
     this.autoSaveSettings();
   },
+  addBehavior() {
+    // 深拷贝一份默认模板
+    this.behaviorSettings.behaviorList.push(
+      JSON.parse(JSON.stringify(this.newBehavior))
+    );
+    this.autoSaveSettings();
+  },
+  removeBehavior(idx) {
+    this.behaviorSettings.behaviorList.splice(idx, 1);
+    this.autoSaveSettings();
+  },
 }
