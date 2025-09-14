@@ -747,6 +747,17 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
+            <el-tooltip :content="allBriefly ? t('allBriefly'):t('allNoBriefly')" placement="top">
+              <el-button
+                @click="handleAllBriefly"
+                class="icon-btn history-btn"
+                v-if="!isBtnCollapse"
+                :type="allBriefly ? 'primary' : 'default'"
+                circle>
+                <i class="fa-solid fa-asterisk"></i>
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip :content="isInputExpanded ? t('collapseInput') : t('expandInput')" placement="top">
                 <el-button 
                     @click="toggleInputExpand"

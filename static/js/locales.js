@@ -819,6 +819,8 @@ key3`,
         'promptAction': '提示词（动作触发时，会将以下提示词发给模型，令其作出反应）',
         "noInputName": "闲置行为",
         "timeName": "定时行为",
+        'allNoBriefly': '显示推理和工具信息',
+        'allBriefly': '自动收起推理和工具信息',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1639,5 +1641,7 @@ Key3`,
         'promptAction': 'Prompt (when the action is triggered, the following prompt word will be sent to the model to make it react) ',
         "noInputName": "Idle behavior",
         "timeName": "Timed behavior",
+        'allNoBriefly': 'Display reasoning and tool info',
+        'allBriefly': 'Automatically hide reasoning and tool info',
     }
   };

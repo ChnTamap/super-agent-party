@@ -109,6 +109,7 @@ let vue_methods = {
       }
     }
     else {
+      try {
         const url = new URL(originalUrl);
         if (url.hostname === '127.0.0.1') {
           url.hostname = "localhost";
@@ -117,6 +118,9 @@ let vue_methods = {
           url.port = window.location.port;
         }
         return url.toString();
+      } catch(e) {
+        return originalUrl;
+      }
     }
     return originalUrl;
   },
@@ -1032,6 +1036,7 @@ let vue_methods = {
           this.agents = data.data.agents || this.agents;
           this.mainAgent = data.data.mainAgent || this.mainAgent;
           this.qqBotConfig = data.data.qqBotConfig || this.qqBotConfig;
+          this.allBriefly = data.data.allBriefly || this.allBriefly;
           this.BotConfig = data.data.BotConfig || this.BotConfig;
           this.liveConfig = data.data.liveConfig || this.liveConfig;
           this.WXBotConfig = data.data.WXBotConfig || this.WXBotConfig;
@@ -1420,6 +1425,9 @@ let vue_methods = {
           audioChunks: [],
           isPlaying:false,
         });
+        if (this.allBriefly){
+          this.messages[this.messages.length - 1].briefly = true;
+        }
         if (this.ttsSettings.enabled) {
           // 启动TTS和音频播放进程
           this.startTTSProcess();
@@ -1492,7 +1500,7 @@ let vue_methods = {
                   
                   // 将新内容中的换行符转换为换行+引用符号
                   newContent = newContent.replace(/\n/g, '\n> ');
-                
+                  lastMessage.briefly = false;
                   if (!this.isThinkOpen) {
                     // 新增思考块时换行并添加 "> " 前缀
                     lastMessage.content += '\n> ' + newContent;
@@ -1532,12 +1540,15 @@ let vue_methods = {
             }
           }
         }
+        const lastMessage = this.messages[this.messages.length - 1];
         // 循环结束后，处理 tts_buffer 中的剩余内容
         if (tts_buffer.trim() && this.ttsSettings.enabled) {
-          const lastMessage = this.messages[this.messages.length - 1];
           // 这里不需要再次调用 splitTTSBuffer，因为 remaining 已经是清理后的文本
           lastMessage.chunks_voice.push(this.cur_voice);
           lastMessage.ttsChunks.push(tts_buffer);
+        }
+        if (this.allBriefly){
+          lastMessage.briefly = true;
         }
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1724,6 +1735,7 @@ let vue_methods = {
           agents: this.agents,
           mainAgent: this.mainAgent,
           qqBotConfig : this.qqBotConfig,
+          allBriefly: this.allBriefly,
           BotConfig: this.BotConfig,
           liveConfig: this.liveConfig,
           WXBotConfig: this.WXBotConfig,
@@ -7189,6 +7201,18 @@ let vue_methods = {
       if (b.trigger.type === 'time' && !b.trigger.time.days.length) {
         b.enabled = false
         this.autoSaveSettings()
+      }
+    },
+    handleAllBriefly(){
+      this.allBriefly = !this.allBriefly;
+      if(this.allBriefly){
+        this.messages.forEach((m) => {
+          m.briefly = true;
+        })
+      }else{
+        this.messages.forEach((m) => {
+          m.briefly = false;
+        })
       }
     },
 }

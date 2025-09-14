@@ -158,6 +158,7 @@
       "reasoningVisible": true,
       "quickRestart": true
     },
+    "allBriefly":false,
     "behaviorSettings": {
       "enabled": false,
       "behaviorList":[

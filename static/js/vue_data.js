@@ -973,6 +973,7 @@ let vue_data = {
         prompt: "", // Prompt会向模型发送一条命令
       }
     },
+    allBriefly:false,
     qqBotConfig: {
       QQAgent:'super-model',
       memoryLimit: 30,
