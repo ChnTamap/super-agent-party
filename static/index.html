@@ -2330,7 +2330,7 @@ if ('serviceWorker' in navigator) {
                               <el-form-item :label="t('noInputLatency')">
                                 <el-slider
                                   v-model="b.trigger.noInput.latency"
-                                  :min="5"
+                                  :min="10"
                                   :max="600"
                                   :step="5"
                                   @change="autoSaveSettings">
