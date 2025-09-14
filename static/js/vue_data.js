@@ -952,6 +952,10 @@ let vue_data = {
         }
       ]
     }, // 行为设置
+    behaviorNameDict:{
+      noInput: "noInputName",
+      time: "timeName",
+    },
     newBehavior:{
       enabled: false,
       trigger: {

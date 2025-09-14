@@ -2283,7 +2283,7 @@ if ('serviceWorker' in navigator) {
                             <!-- 行为块标题 + 开关 + 删除 -->
                             <div class="tool-header">
                               <div class="header-left">
-                                <span>{{ t('behavior') }} #{{ idx + 1 }}</span>
+                                <span>{{t(behaviorNameDict[b.trigger.type])}}</span>
                               </div>
                               <el-switch v-model="b.enabled" @change="autoSaveSettings" />
                             </div>
@@ -2291,8 +2291,8 @@ if ('serviceWorker' in navigator) {
                             <!-- 触发条件 -->
                             <el-form-item :label="t('triggerType')">
                               <el-select v-model="b.trigger.type" @change="autoSaveSettings">
-                                <el-option :label="t('time')"   value="time"></el-option>
-                                <el-option :label="t('noInput')" value="noInput"></el-option>
+                                <el-option :label="t('timeName')"   value="time"></el-option>
+                                <el-option :label="t('noInputName')" value="noInput"></el-option>
                               </el-select>
                             </el-form-item>
 
