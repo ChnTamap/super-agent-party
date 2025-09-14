@@ -1167,7 +1167,7 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     // 发送消息
-    async sendMessage() { 
+    async sendMessage(role = 'user') { 
       if (!this.userInput.trim() || this.isTyping) return;
       this.isTyping = true;
       // 开始计时
@@ -1273,7 +1273,7 @@ let vue_methods = {
       // const escapedContent = this.escapeHtml(userInput.trim());
       // 添加用户消息
       this.messages.push({
-        role: 'user',
+        role: role,
         content: userInput.trim(),
         fileLinks: fileLinks,
         fileLinks_content: fileLinks_content,
@@ -7178,8 +7178,9 @@ let vue_methods = {
       if (!b.enabled) return
       if (b.action.type === 'prompt' && b.action.prompt) {
         console.log('Prompt:', b.action.prompt)
+        this.userInput= b.action.prompt
         // 这里把 prompt 发给你的模型即可，举例：
-        // this.sendPromptToModel(b.action.prompt)   // 你需要实现这个函数
+        this.sendMessage(role = 'system')   // 你需要实现这个函数
       }
     },
 
