@@ -2363,7 +2363,8 @@ if ('serviceWorker' in navigator) {
                             <!-- 执行内容 -->
                             <el-form-item :label="t('actionType')">
                               <el-select v-model="b.action.type" @change="autoSaveSettings">
-                                <el-option :label="t('prompt')" value="prompt"/>
+                                <el-option :label="t('prompt')" value="prompt"></el-option>
+                                <el-option :label="t('randomEvent')" value="random"></el-option>
                               </el-select>
                             </el-form-item>
 
@@ -2377,7 +2378,26 @@ if ('serviceWorker' in navigator) {
                                 class="full-width-input"/>
                             </el-form-item>
 
-                            <el-form-item label="" class="form-item-align" v-show="idx > 0" >
+                            <el-form-item v-if="b.action.type === 'random'" :label="t('eventType')">
+                              <el-select v-model="b.action.random.type" @change="autoSaveSettings">
+                                <el-option :label="t('random')" value="random"></el-option>
+                                <el-option :label="t('order')" value="order"></el-option>
+                              </el-select>
+                            </el-form-item>
+                            
+                            <div v-for="(event, eventIdx) in b.action.random.events" :key="eventIdx">
+                              <el-form-item v-if="b.action.type === 'random'" :label="t('eventType')">
+                                <el-input
+                                  type="textarea"
+                                  v-model="event"
+                                  :rows="3"
+                                  :placeholder="t('promptPlaceholder')"
+                                  @input="autoSaveSettings"
+                                  class="full-width-input"/>
+                              </el-form-item>
+                            </div>
+
+                            <el-form-item label="" class="form-item-align" >
                               <el-button
                                 type="danger" 
                                 plain 
@@ -2389,20 +2409,19 @@ if ('serviceWorker' in navigator) {
                               {{ t('removeBehavior') }}
                               </el-button>
                             </el-form-item>
-
+                          </div>
                             <el-form-item label="" class="form-item-align">
                                 <!-- 新增按钮 -->
                                 <el-button 
                                   type="primary" 
                                   plain 
-                                  @click="addBehavior(idx)" 
+                                  @click="addBehavior()" 
                                   class="add-server-btn"
                                 >
                                   <el-icon><i class="fa-solid fa-plus"></i></el-icon>
                                   {{ t('addBehavior') }}
                                 </el-button>
                               </el-form-item>
-                          </div>
                         </div>
                       </div>
                     </el-form>

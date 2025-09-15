@@ -7175,13 +7175,14 @@ let vue_methods = {
     this.showAddAppearanceDialog = false;
     this.autoSaveSettings();
   },
-  addBehavior(idx) {
-    // 深拷贝一份默认模板到索引idx的后面
-    this.behaviorSettings.behaviorList.splice(idx + 1, 0, JSON.parse(JSON.stringify(this.newBehavior)));
+  addBehavior() {
+    // 深拷贝一份默认模板
+    this.behaviorSettings.behaviorList.push(JSON.parse(JSON.stringify(this.newBehavior)));
     this.autoSaveSettings();
   },
   removeBehavior(idx) {
     this.behaviorSettings.behaviorList.splice(idx, 1);
+    showNotification(this.t('deleteBehaviorSuccess'))
     this.autoSaveSettings();
   },
 
