@@ -1093,11 +1093,12 @@ body {
 }
 
 .system .message-content {
-  background-color: var(--el-bg-color-page);
+  background-color: var(--el-color-primary-light-5) !important;
   border: 1px solid var(--el-border-color-light);
-  color: var(--el-color-info) !important; /* 增加文字颜色定义 */
+  color: var(--el-bg-color) !important; /* 增加文字颜色定义 */
   border-radius: 12px;
   padding: 5px;
+  box-shadow: var(--el-box-shadow)!important;
 }
 
 .assistant .message-content {

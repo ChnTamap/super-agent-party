@@ -747,7 +747,7 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
-            <el-tooltip :content="allBriefly ? t('allBriefly'):t('allNoBriefly')" placement="top">
+            <el-tooltip :content="allBriefly ? t('allNoBriefly'):t('allBriefly')" placement="top">
               <el-button
                 @click="handleAllBriefly"
                 class="icon-btn history-btn"
