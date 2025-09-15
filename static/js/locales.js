@@ -827,6 +827,8 @@ key3`,
         'eventType': '事件类型',
         'random': '随机',
         'order': '顺序',
+        'triggerNewRandomEvent1': '\n触发了随机事件：',
+        'triggerNewRandomEvent2': '请根据事件继续对话。',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1655,5 +1657,7 @@ Key3`,
         'eventType': 'Event Type',
         'random': 'Random',
         'order': 'Order',
+        'triggerNewRandomEvent1': '\nTriggered a random event:',
+        'triggerNewRandomEvent2': 'Please continue the conversation based on the event.',
     }
   };
