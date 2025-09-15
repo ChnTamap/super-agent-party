@@ -373,6 +373,15 @@ let vue_methods = {
         this.system_prompt = " ";
         this.messages = [{ role: 'system', content: this.system_prompt }];
       }
+      if(this.allBriefly){
+        this.messages.forEach((m) => {
+          m.briefly = true;
+        })
+      }else{
+        this.messages.forEach((m) => {
+          m.briefly = false;
+        })
+      }
       this.scrollToBottom();
       await this.autoSaveSettings();
     },
