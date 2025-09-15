@@ -1012,6 +1012,17 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
+            <el-tooltip :content="t('enableAutoBehavior')" placement="top">
+              <el-button
+                @click="behaviorSettings.enabled=!behaviorSettings.enabled; autoSaveSettings();"
+                class="icon-btn behavior-btn"
+                :type="behaviorSettings.enabled ? 'primary' : 'default'"
+                v-if="!isBtnCollapse"
+                circle>
+                <i class="fa-solid fa-person-running"></i>
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip :content="isSending ? t('stopGenerating') : t('sendMessage')" placement="top">
               <el-button
                 @click="isSending ? stopGenerate() : sendMessage()"
@@ -2348,7 +2359,7 @@ if ('serviceWorker' in navigator) {
                                 </el-slider>
                               </el-form-item>
                             </div>
-
+                            <el-divider></el-divider>
                             <!-- 执行内容 -->
                             <el-form-item :label="t('actionType')">
                               <el-select v-model="b.action.type" @change="autoSaveSettings">

@@ -821,6 +821,7 @@ key3`,
         "timeName": "定时行为",
         'allNoBriefly': '显示推理和工具信息',
         'allBriefly': '自动收起推理和工具信息',
+        'enableAutoBehavior': '启用自主行为',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1643,5 +1644,6 @@ Key3`,
         "timeName": "Timed behavior",
         'allNoBriefly': 'Display reasoning and tool info',
         'allBriefly': 'Automatically hide reasoning and tool info',
+        'enableAutoBehavior': 'Enable Auto Behavior',
     }
   };
