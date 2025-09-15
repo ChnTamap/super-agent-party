@@ -7198,6 +7198,9 @@ let vue_methods = {
     /* 真正执行行为 */
     runBehavior(b) {
       if (!b.enabled) return
+      if (!this.noInputFlag){
+        this.stopGenerate()
+      }
       if (b.action.type === 'prompt' && b.action.prompt) {
         console.log('Prompt:', b.action.prompt)
         this.userInput= b.action.prompt
@@ -7280,5 +7283,55 @@ let vue_methods = {
   addNewEvent(idx) {
     this.behaviorSettings.behaviorList[idx].action.random.events.push(''); // 添加一个新的空事件，从而新增一个输入框
     this.autoSaveSettings();
+  },
+
+  // 初始化周期定时器
+  initCycleTimer(behavior, index) {
+    // 清除现有定时器
+    if (this.cycleTimers[index]) {
+      clearInterval(this.cycleTimers[index]);
+    }
+    
+    // 解析周期时间 (HH:mm:ss)
+    const [hours, minutes, seconds] = behavior.trigger.cycle.cycleValue.split(':').map(Number);
+    const cycleMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    
+    // 当前周期计数
+    let currentCount = 0;
+    
+    // 创建定时器
+    this.cycleTimers[index] = setInterval(() => {
+      if (!behavior.enabled) return;
+      
+      // 检查是否无限循环或未达到重复次数
+      if (behavior.trigger.cycle.isInfiniteLoop || 
+          currentCount < behavior.trigger.cycle.repeatNumber) {
+        
+        this.runBehavior(behavior);
+        currentCount++;
+        
+        // 非无限循环且达到次数时停止
+        if (!behavior.trigger.cycle.isInfiniteLoop && 
+            currentCount >= behavior.trigger.cycle.repeatNumber) {
+          clearInterval(this.cycleTimers[index]);
+          this.cycleTimers[index] = null;
+        }
+      }
+    }, cycleMs);
+  },
+  
+  // 当配置变化时重置定时器
+  resetCycleTimers() {
+    this.cycleTimers.forEach((timer, index) => {
+      if (timer) clearInterval(timer);
+      this.cycleTimers[index] = null;
+    });
+    
+    // 重新初始化启用的周期触发器
+    this.behaviorSettings.behaviorList.forEach((b, index) => {
+      if (b.enabled && b.trigger.type === 'cycle') {
+        this.initCycleTimer(b, index);
+      }
+    });
   },
 }

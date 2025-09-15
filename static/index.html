@@ -2297,7 +2297,7 @@ if ('serviceWorker' in navigator) {
                               {{ t('AutoBehavior') }}
                             </span>
                           </div>
-                          <el-switch v-model="behaviorSettings.enabled" @click.stop @change="autoSaveSettings" />
+                          <el-switch v-model="behaviorSettings.enabled" @click.stop @change="resetCycleTimers();autoSaveSettings()" />
                         </div>
                         <div class="tool-content">
                           <!-- 行为块列表 -->
@@ -2307,14 +2307,15 @@ if ('serviceWorker' in navigator) {
                               <div class="header-left">
                                 <span>{{t(behaviorNameDict[b.trigger.type])}}</span>
                               </div>
-                              <el-switch v-model="b.enabled" @change="autoSaveSettings" />
+                              <el-switch v-model="b.enabled" @change="resetCycleTimers();autoSaveSettings()" />
                             </div>
 
                             <!-- 触发条件 -->
                             <el-form-item :label="t('triggerType')">
-                              <el-select v-model="b.trigger.type" @change="autoSaveSettings">
+                              <el-select v-model="b.trigger.type" @change="resetCycleTimers();autoSaveSettings()">
                                 <el-option :label="t('timeName')"   value="time"></el-option>
                                 <el-option :label="t('noInputName')" value="noInput"></el-option>
+                                <el-option :label="t('cycleName')" value="cycle"></el-option>
                               </el-select>
                             </el-form-item>
 
@@ -2359,6 +2360,37 @@ if ('serviceWorker' in navigator) {
                                 </el-slider>
                               </el-form-item>
                             </div>
+
+                            <!-- 周期触发 - 新增部分 -->
+                            <div v-if="b.trigger.type === 'cycle'">
+                              <el-row :gutter="12">
+                                <el-col :span="24">
+                                  <el-form-item :label="t('cycleValue')">
+                                    <el-time-picker
+                                      v-model="b.trigger.cycle.cycleValue"
+                                      value-format="HH:mm:ss"
+                                      format="HH:mm:ss"
+                                      :placeholder="t('selectTime')"
+                                      @change="resetCycleTimers();autoSaveSettings()"
+                                      style="width: 100%"
+                                    />
+                                  </el-form-item>
+                                </el-col>
+                              </el-row>
+                              <el-form-item :label="t('repeatNumber')">
+                                <el-slider
+                                  v-model="b.trigger.cycle.repeatNumber"
+                                  :min="1"
+                                  :max="100"
+                                  :step="1"
+                                  @change="resetCycleTimers();autoSaveSettings()">
+                                </el-slider>
+                              </el-form-item>
+                              <el-form-item :label="t('isInfiniteLoop')" class="form-item-align" label-position="left">
+                                <el-switch v-model="b.trigger.cycle.isInfiniteLoop" @change="resetCycleTimers();autoSaveSettings()"></el-switch>
+                              </el-form-item>
+                            </div>
+
                             <el-divider></el-divider>
                             <!-- 执行内容 -->
                             <el-form-item :label="t('actionType')">
@@ -2433,13 +2465,13 @@ if ('serviceWorker' in navigator) {
                     </el-form>
                   </el-tab-pane>
                   <!-- 添加新记忆标签页 -->
-                  <el-tab-pane :label="t('addNewBehavior')" name="add">
+                  <el-tab-pane :label="t('addNewBehaviorChain')" name="add">
                     <div class="provider-grid">
                       
                       <!-- 添加新记忆磁贴 -->
                       <div class="provider-card add-tile">
                         <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewBehavior') }}</div>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewBehaviorChain') }}</div>
                       </div>
                     </div>
                   </el-tab-pane>

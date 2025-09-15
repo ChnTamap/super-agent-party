@@ -937,6 +937,7 @@ let vue_data = {
     behaviorNameDict:{
       noInput: "noInputName",
       time: "timeName",
+      cycle: "cycleName"
     },
     newBehavior:{
       enabled: false,
@@ -948,6 +949,11 @@ let vue_data = {
         },
         noInput:{
           latency: 30, // 无输入时等待的秒数
+        },
+        cycle:{
+          cycleValue: "00:00:30", // 时间值，例如：00:00:30
+          repeatNumber: 1, // 周期次数，例如：3次
+          isInfiniteLoop: false, // 是否无限循环
         }
       },
       action: {
