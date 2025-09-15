@@ -18,7 +18,11 @@ async def pollinations_image(prompt: str, width=512, height=512, model="flux"):
     # Convert prompt into a URL-compatible format
     prompt = prompt.replace(" ", "%20")
     url = f"https://image.pollinations.ai/prompt/{prompt}?width={width}&height={height}&model={model}&nologo=true&enhance=true&private=true&safe=true"
-    
+    res_data = requests.get(url).content
+    image_id = str(uuid.uuid4())
+    # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+    with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
+        f.write(res_data)
     return f"![image]({url})"
 
 pollinations_image_tool = {
@@ -88,6 +92,12 @@ async def openai_image(prompt: str, size="auto"):
         with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
             f.write(base64.b64decode(res))
         res = f"![image](http://{HOST}:{PORT}/uploaded_files/{image_id}.png)"
+    else:
+        res_data = requests.get(res_url).content
+        image_id = str(uuid.uuid4())
+        # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+        with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
+            f.write(res_data)
     return res
         
 openai_image_tool = {
@@ -134,6 +144,12 @@ async def siliconflow_image(prompt: str, size="1024x1024"):
         return f"ERROR: {e}"
     
     try:
+        res_url = response.data[0].url
+        res_data = requests.get(res_url).content
+        image_id = str(uuid.uuid4())
+        # 将图片保存到本地UPLOAD_FILES_DIR，文件名为image_id，返回本地文件路径
+        with open(f"{UPLOAD_FILES_DIR}/{image_id}.png", "wb") as f:
+            f.write(res_data)
         res = f"![image]({response.data[0].url})"
     except Exception as e:
         print(e)

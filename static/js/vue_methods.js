@@ -109,6 +109,7 @@ let vue_methods = {
       }
     }
     else {
+      try {
         const url = new URL(originalUrl);
         if (url.hostname === '127.0.0.1') {
           url.hostname = "localhost";
@@ -117,6 +118,9 @@ let vue_methods = {
           url.port = window.location.port;
         }
         return url.toString();
+      } catch(e) {
+        return originalUrl;
+      }
     }
     return originalUrl;
   },
@@ -1032,6 +1036,7 @@ let vue_methods = {
           this.agents = data.data.agents || this.agents;
           this.mainAgent = data.data.mainAgent || this.mainAgent;
           this.qqBotConfig = data.data.qqBotConfig || this.qqBotConfig;
+          this.allBriefly = data.data.allBriefly || this.allBriefly;
           this.BotConfig = data.data.BotConfig || this.BotConfig;
           this.liveConfig = data.data.liveConfig || this.liveConfig;
           this.WXBotConfig = data.data.WXBotConfig || this.WXBotConfig;
@@ -1167,7 +1172,7 @@ let vue_methods = {
       await this.autoSaveSettings();
     },
     // 发送消息
-    async sendMessage() { 
+    async sendMessage(role = 'user') { 
       if (!this.userInput.trim() || this.isTyping) return;
       this.isTyping = true;
       // 开始计时
@@ -1273,7 +1278,7 @@ let vue_methods = {
       // const escapedContent = this.escapeHtml(userInput.trim());
       // 添加用户消息
       this.messages.push({
-        role: 'user',
+        role: role,
         content: userInput.trim(),
         fileLinks: fileLinks,
         fileLinks_content: fileLinks_content,
@@ -1420,6 +1425,9 @@ let vue_methods = {
           audioChunks: [],
           isPlaying:false,
         });
+        if (this.allBriefly){
+          this.messages[this.messages.length - 1].briefly = true;
+        }
         if (this.ttsSettings.enabled) {
           // 启动TTS和音频播放进程
           this.startTTSProcess();
@@ -1492,7 +1500,7 @@ let vue_methods = {
                   
                   // 将新内容中的换行符转换为换行+引用符号
                   newContent = newContent.replace(/\n/g, '\n> ');
-                
+                  lastMessage.briefly = false;
                   if (!this.isThinkOpen) {
                     // 新增思考块时换行并添加 "> " 前缀
                     lastMessage.content += '\n> ' + newContent;
@@ -1532,12 +1540,15 @@ let vue_methods = {
             }
           }
         }
+        const lastMessage = this.messages[this.messages.length - 1];
         // 循环结束后，处理 tts_buffer 中的剩余内容
         if (tts_buffer.trim() && this.ttsSettings.enabled) {
-          const lastMessage = this.messages[this.messages.length - 1];
           // 这里不需要再次调用 splitTTSBuffer，因为 remaining 已经是清理后的文本
           lastMessage.chunks_voice.push(this.cur_voice);
           lastMessage.ttsChunks.push(tts_buffer);
+        }
+        if (this.allBriefly){
+          lastMessage.briefly = true;
         }
       } catch (error) {
         if (error.name === 'AbortError') {
@@ -1724,6 +1735,7 @@ let vue_methods = {
           agents: this.agents,
           mainAgent: this.mainAgent,
           qqBotConfig : this.qqBotConfig,
+          allBriefly: this.allBriefly,
           BotConfig: this.BotConfig,
           liveConfig: this.liveConfig,
           WXBotConfig: this.WXBotConfig,
@@ -4639,6 +4651,7 @@ let vue_methods = {
               }
             }
             if (!this.currentAudio || this.currentAudio.paused) {
+              this.isAsrRunning = true;
               if (this.asrSettings.engine === 'webSpeech') {
                 // Web Speech API模式：不处理音频帧，只是检测到语音
                 this.handleWebSpeechFrameProcessed();
@@ -4650,6 +4663,7 @@ let vue_methods = {
           }
         },
         onSpeechEnd: (audio) => {
+          this.ASRrunning = false;
           // 语音结束时的处理
           if (this.asrSettings.engine === 'webSpeech') {
             this.handleWebSpeechEnd();
@@ -7161,4 +7175,67 @@ let vue_methods = {
     this.showAddAppearanceDialog = false;
     this.autoSaveSettings();
   },
+  addBehavior(idx) {
+    // 深拷贝一份默认模板到索引idx的后面
+    this.behaviorSettings.behaviorList.splice(idx + 1, 0, JSON.parse(JSON.stringify(this.newBehavior)));
+    this.autoSaveSettings();
+  },
+  removeBehavior(idx) {
+    this.behaviorSettings.behaviorList.splice(idx, 1);
+    this.autoSaveSettings();
+  },
+
+    /* 真正执行行为 */
+    runBehavior(b) {
+      if (!b.enabled) return
+      if (b.action.type === 'prompt' && b.action.prompt) {
+        console.log('Prompt:', b.action.prompt)
+        this.userInput= b.action.prompt
+        // 这里把 prompt 发给你的模型即可，举例：
+        this.sendMessage(role = 'system')   // 你需要实现这个函数
+      }
+    },
+
+    /* 触发一次后，如果是“不重复”就把 enabled 关掉 */
+    disableOnceBehavior(b) {
+      if (b.trigger.type === 'time' && !b.trigger.time.days.length) {
+        b.enabled = false
+        this.autoSaveSettings()
+      }
+    },
+    handleAllBriefly(){
+      this.allBriefly = !this.allBriefly;
+      if(this.allBriefly){
+        this.messages.forEach((m) => {
+          m.briefly = true;
+        })
+      }else{
+        this.messages.forEach((m) => {
+          m.briefly = false;
+        })
+      }
+    },
+    async handleDownload(file) {
+      // 构造文件URL（确保是完整URL）
+      const fileUrl = `${this.partyURL}/uploaded_files/${file.unique_filename}`;
+      console.log(fileUrl);
+      if (isElectron) {
+        try {
+          await window.electronAPI.downloadFile({
+            url: fileUrl,
+            filename: file.original_filename || file.unique_filename
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        // 非Electron环境保留原逻辑
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.unique_filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    },
 }

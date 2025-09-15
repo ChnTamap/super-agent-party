@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 import aiosqlite
 from pathlib import Path
 HOST = None
@@ -74,6 +75,17 @@ os.makedirs(MEMORY_CACHE_DIR, exist_ok=True)
 
 UPLOAD_FILES_DIR = os.path.join(USER_DATA_DIR, 'uploaded_files')
 os.makedirs(UPLOAD_FILES_DIR, exist_ok=True)
+
+TOOL_TEMP_DIR = os.path.join(USER_DATA_DIR, 'tool_temp')
+os.makedirs(TOOL_TEMP_DIR, exist_ok=True)
+
+# 删除TOOL_TEMP_DIR中超过一周未修改的文件
+for filename in os.listdir(TOOL_TEMP_DIR):
+    file_path = os.path.join(TOOL_TEMP_DIR, filename)
+    if os.path.isfile(file_path):
+        if time.time() - os.path.getmtime(file_path) > 7 * 24 * 60 * 60:
+            os.remove(file_path)
+            
 
 AGENT_DIR = os.path.join(USER_DATA_DIR, 'agents')
 os.makedirs(AGENT_DIR, exist_ok=True)

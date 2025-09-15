@@ -149,6 +149,8 @@ let vue_data = {
     editIndex: null,
     asyncToolsID : [],
     TTSrunning:false,
+    ASRrunning:false,
+    isInputting: false,
     toolsSettings: {
       asyncTools: {
         enabled: false,
@@ -930,7 +932,48 @@ let vue_data = {
     ],
     behaviorSettings:{
       enabled: false,
+      behaviorList:[
+        {
+          enabled: false,
+          trigger: {
+            type: "noInput",
+            time:{
+              timeValue: "00:00:00", // 时间值，例如：12:00:00
+              days: [] // 星期几的列表，例如：[1, 2, 3] 表示周一、周二、周三，为空表示不重复
+            },
+            noInput:{
+              latency: 30, // 无输入时等待的秒数
+            }
+          },
+          action: {
+            type: "prompt",
+            prompt: "", // Prompt会向模型发送一条命令
+          }
+        }
+      ]
     }, // 行为设置
+    behaviorNameDict:{
+      noInput: "noInputName",
+      time: "timeName",
+    },
+    newBehavior:{
+      enabled: false,
+      trigger: {
+        type: "noInput",
+        time:{
+          timeValue: "00:00:00", // 时间值，例如：12:00:00
+          days: [] // 星期几的列表，例如：[1, 2, 3] 表示周一、周二、周三，为空表示不重复
+        },
+        noInput:{
+          latency: 30, // 无输入时等待的秒数
+        }
+      },
+      action: {
+        type: "prompt",
+        prompt: "", // Prompt会向模型发送一条命令
+      }
+    },
+    allBriefly:false,
     qqBotConfig: {
       QQAgent:'super-model',
       memoryLimit: 30,

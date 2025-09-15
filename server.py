@@ -52,7 +52,7 @@ from mem0 import Memory
 from py.qq_bot_manager import QQBotManager
 from py.dify_openai_async import DifyOpenAIAsync
 
-from py.get_setting import load_settings,save_settings,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,USER_DATA_DIR,LOG_DIR
+from py.get_setting import load_settings,save_settings,base_path,configure_host_port,UPLOAD_FILES_DIR,AGENT_DIR,MEMORY_CACHE_DIR,KB_DIR,DEFAULT_VRM_DIR,USER_DATA_DIR,LOG_DIR,TOOL_TEMP_DIR
 from py.llm_tool import get_image_base64,get_image_media_type
 
 timetamp = time.time()
@@ -1097,10 +1097,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             # 构造文件名
                             filename = f"{tid}.txt"
                             # 将搜索结果写入uploaded_file文件夹下的filename文件
-                            with open(os.path.join(UPLOAD_FILES_DIR, filename), "w", encoding='utf-8') as f:
+                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
                                 f.write(str(response["result"]))            
                             # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}uploaded_files/{filename}"
+                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -1139,10 +1139,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             # 构造文件名
                             filename = f"{tid}.txt"
                             # 将搜索结果写入uploaded_file文件夹下的filename文件
-                            with open(os.path.join(UPLOAD_FILES_DIR, filename), "w", encoding='utf-8') as f:
+                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
                                 f.write(str(response["result"]))            
                             # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}uploaded_files/{filename}"
+                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -1223,10 +1223,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             # 构造文件名
                             filename = f"{timestamp}_{uid}.txt"
                             # 将搜索结果写入UPLOAD_FILES_DIR文件夹下的filename文件
-                            with open(os.path.join(UPLOAD_FILES_DIR, filename), "w", encoding='utf-8') as f:
+                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
                                 f.write(str(all_kb_content))           
                             # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}uploaded_files/{filename}"
+                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -1288,10 +1288,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             # 构造文件名
                             filename = f"{timestamp}_{uid}.txt"
                             # 将搜索结果写入uploaded_file文件夹下的filename文件
-                            with open(os.path.join(UPLOAD_FILES_DIR, filename), "w", encoding='utf-8') as f:
+                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
                                 f.write(str(results))           
                             # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}uploaded_files/{filename}"
+                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -1923,10 +1923,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             # 构造文件名
                             filename = f"{timestamp}_{uid}.txt"
                             # 将搜索结果写入uploaded_file文件夹下的filename文件
-                            with open(os.path.join(UPLOAD_FILES_DIR, filename), "w", encoding='utf-8') as f:
+                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
                                 f.write(str(results))            
                             # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}uploaded_files/{filename}"
+                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
@@ -5985,6 +5985,7 @@ mcp = FastApiMCP(
 mcp.mount()
 
 app.mount("/vrm", StaticFiles(directory=DEFAULT_VRM_DIR), name="vrm")
+app.mount("/tool_temp", StaticFiles(directory=TOOL_TEMP_DIR), name="vrm")
 app.mount("/uploaded_files", StaticFiles(directory=UPLOAD_FILES_DIR), name="uploaded_files")
 app.mount("/node_modules", StaticFiles(directory=os.path.join(base_path, "node_modules")), name="node_modules")
 app.mount("/", StaticFiles(directory=os.path.join(base_path, "static"), html=True), name="static")

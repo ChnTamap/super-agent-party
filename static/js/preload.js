@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getServerInfo: () => ipcRenderer.invoke('get-server-info'),
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
   getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
+  downloadFile: (payload) => ipcRenderer.invoke('download-file', payload),
     // 修改：添加回调参数
     getWindowConfig: (callback) => {
         if (windowConfig.windowName !== "default") {
