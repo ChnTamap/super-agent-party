@@ -272,7 +272,7 @@ if ('serviceWorker' in navigator) {
               </div>
               <div class="message-content">
                 <!-- 用户消息内容 -->
-                <div v-if="message.role === 'user'" class="user-message-content" data-mjx-disabled="true">
+                <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
                   <div v-html="message.content" class = "user-msg"></div>
                   <!-- 文件链接展示 -->
                   <div v-if="message.fileLinks?.length" class="file-links">
@@ -288,7 +288,7 @@ if ('serviceWorker' in navigator) {
                 <!-- AI回复内容 -->
                 <div v-else-if="message.role === 'assistant'"  class="markdown-body" v-html="message.briefly ? formatMessage(message.pure_content??msg.content) : formatMessage(message.content)"></div>
                 <!-- 系统消息内容 -->
-                <div v-else class="user-message-content" data-mjx-disabled="true">
+                <div v-else class="system-content" data-mjx-disabled="true">
                   <div v-html="t('system_prompt') + message.content" @click="openEditDialog(message.role, message.content,index)"></div>
                 </div>
               </div>

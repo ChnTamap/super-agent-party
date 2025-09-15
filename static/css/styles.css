@@ -1077,7 +1077,7 @@ body {
 }
 
 /* 消息内容基础样式 */
-.user-message-content {
+.system-content {
   padding: 12px;
   border-radius: 12px;
   font-size: 14px;
@@ -1086,10 +1086,22 @@ body {
   word-break: break-word;
 }
 
+.user-content {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: var(--el-box-shadow)!important;
+}
+
+
 .user .message-content {
   background-color: var(--el-color-primary)!important;
   color: #ffffff;
   border-radius: 12px 12px 0 12px;
+  box-shadow: var(--el-box-shadow)!important;
 }
 
 .system .message-content {
@@ -1106,6 +1118,7 @@ body {
   border: 1px solid var(--el-border-color-light);
   color: var(--el-text-color-primary) !important; /* 增加文字颜色定义 */
   border-radius: 12px 12px 12px 0;
+  box-shadow: var(--el-box-shadow)!important;
 }
 
 /* 增强AI消息样式 */
