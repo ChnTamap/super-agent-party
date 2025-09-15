@@ -7200,7 +7200,7 @@ let vue_methods = {
           if (b.action.random.type === 'random'){
             let randomEvent = b.action.random.events[Math.floor(Math.random() * b.action.random.events.length)];
             if(randomEvent){
-              this.userInput= this.t('triggerNewRandomEvent1')+"\n"+randomEvent+"\n"+this.t('triggerNewRandomEvent2');
+              this.userInput= this.t('triggerNewRandomEvent1')+randomEvent+this.t('triggerNewRandomEvent2');
               // 这里把 prompt 发给你的模型即可，举例：
               this.sendMessage(role = 'system')   // 你需要实现这个函数
             }
@@ -7212,7 +7212,7 @@ let vue_methods = {
               let randomEvent = b.action.random.events[b.action.random.orderIndex];
               b.action.random.orderIndex += 1;
               if(randomEvent){
-                this.userInput= this.t('triggerNewRandomEvent1')+"\n"+randomEvent+"\n"+this.t('triggerNewRandomEvent2');
+                this.userInput= this.t('triggerNewRandomEvent1')+randomEvent+this.t('triggerNewRandomEvent2');
                 // 这里把 prompt 发给你的模型即可，举例：
                 this.sendMessage(role = 'system')   // 你需要实现这个函数
               }
