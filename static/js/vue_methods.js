@@ -7215,4 +7215,27 @@ let vue_methods = {
         })
       }
     },
+    async handleDownload(file) {
+      // 构造文件URL（确保是完整URL）
+      const fileUrl = `${this.partyURL}/uploaded_files/${file.unique_filename}`;
+      console.log(fileUrl);
+      if (isElectron) {
+        try {
+          await window.electronAPI.downloadFile({
+            url: fileUrl,
+            filename: file.original_filename || file.unique_filename
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        // 非Electron环境保留原逻辑
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = file.unique_filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    },
 }

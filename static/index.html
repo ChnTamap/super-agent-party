@@ -6182,11 +6182,13 @@ if ('serviceWorker' in navigator) {
                         <i class="fa-solid fa-link"></i>
                       </el-button>
                       <!-- 下载按钮 -->
-                      <a :href="`${partyURL}/uploaded_files/${file.unique_filename}`" download target="_blank">
-                        <el-button circle size="small" class="file-actions-btn">
-                            <i class="fa-solid fa-download"></i>
-                        </el-button>
-                      </a>
+                      <el-button 
+                        circle 
+                        size="small" 
+                        class="file-actions-btn"
+                        @click="handleDownload(file)">
+                        <i class="fa-solid fa-download"></i>
+                      </el-button>
                       <!-- 删除按钮 -->
                       <el-button type="danger" circle size="small" class="file-actions-btn" @click="deleteFile(file)">
                         <i class="fa-solid fa-trash"></i>
@@ -6238,11 +6240,13 @@ if ('serviceWorker' in navigator) {
                         </el-button>
                         
                         <!-- 下载按钮 -->
-                        <a :href="`${partyURL}/uploaded_files/${img.unique_filename}`" download target="_blank">
-                          <el-button circle size="small" class="image-actions-btn">
-                              <i class="fa-solid fa-download"></i>
-                          </el-button>
-                        </a>
+                      <el-button 
+                        circle 
+                        size="small" 
+                        class="image-actions-btn"
+                        @click="handleDownload(img)">
+                        <i class="fa-solid fa-download"></i>
+                      </el-button>
                         
                         <el-button type="danger" class="image-actions-btn" circle size="small" @click="deleteImage(img)">
                           <i class="fa-solid fa-trash"></i>

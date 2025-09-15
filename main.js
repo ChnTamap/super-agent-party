@@ -4,6 +4,7 @@ const { clipboard, nativeImage } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
+const { download } = require('electron-dl');
 const fs = require('fs')
 const os = require('os')
 const net = require('net') // 添加 net 模块用于端口检测
@@ -472,6 +473,17 @@ app.whenReady().then(async () => {
         });
         vrmWindows = [];
       }
+    });
+    // 统一处理下载
+    ipcMain.handle('download-file', async (event, payload) => {
+
+      const { url, filename } = payload;   // 这里再解构即可
+      const dlItem = await download(mainWindow, url, {
+        filename,
+        saveAs: true,
+        openFolderWhenDone: true
+      });
+      return { success: true, savePath: dlItem.getSavePath() };
     });
     // 检查更新IPC
     ipcMain.handle('check-for-updates', async () => {
