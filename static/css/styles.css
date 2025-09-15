@@ -1105,9 +1105,13 @@ body {
 }
 
 .system .message-content {
-  background-color: var(--el-color-primary-light-5) !important;
+  background: linear-gradient(
+    to bottom right, /* 渐变方向：从左上到右下 */
+    var(--el-color-primary) 0%, 
+    var(--el-color-primary-light-5) 100%
+  );
   border: 1px solid var(--el-border-color-light);
-  color: var(--el-bg-color) !important; /* 增加文字颜色定义 */
+  color: #ffffff;
   border-radius: 12px;
   padding: 5px;
   box-shadow: var(--el-box-shadow)!important;
