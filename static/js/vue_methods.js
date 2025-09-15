@@ -7195,6 +7195,31 @@ let vue_methods = {
         // 这里把 prompt 发给你的模型即可，举例：
         this.sendMessage(role = 'system')   // 你需要实现这个函数
       }
+      if (b.action.type === 'random' && b.action.random) {
+        if(b.action.random.events.length > 0){
+          if (b.action.random.type === 'random'){
+            let randomEvent = b.action.random.events[Math.floor(Math.random() * b.action.random.events.length)];
+            if(randomEvent){
+              this.userInput= randomEvent
+              // 这里把 prompt 发给你的模型即可，举例：
+              this.sendMessage(role = 'system')   // 你需要实现这个函数
+            }
+          }else if( b.action.random.type === 'order'){
+            if(b.action.random.orderIndex >= b.action.random.events.length){
+              b.action.random.orderIndex = 0;
+            }
+            if(b.action.random.events[b.action.random.orderIndex]){
+              let randomEvent = b.action.random.events[b.action.random.orderIndex];
+              b.action.random.orderIndex += 1;
+              if(randomEvent){
+                this.userInput= randomEvent
+                // 这里把 prompt 发给你的模型即可，举例：
+                this.sendMessage(role = 'system')   // 你需要实现这个函数
+              }
+            }
+          }
+        }
+      }
     },
 
     /* 触发一次后，如果是“不重复”就把 enabled 关掉 */
@@ -7239,4 +7264,12 @@ let vue_methods = {
         document.body.removeChild(link);
       }
     },
+  removeEvent(idx,index) {
+    this.behaviorSettings.behaviorList[idx].action.random.events.splice(index, 1);
+    this.autoSaveSettings(); // 删除后也触发自动保存
+  },
+  addNewEvent(idx) {
+    this.behaviorSettings.behaviorList[idx].action.random.events.push(''); // 添加一个新的空事件，从而新增一个输入框
+    this.autoSaveSettings();
+  },
 }

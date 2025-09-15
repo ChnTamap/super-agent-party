@@ -3277,3 +3277,9 @@ body {
 .model-info:hover {
   transform: scale(1.01);
 }
+
+.event-button-group {
+  display: flex;
+  justify-content: flex-end; /* 靠右对齐 */
+  margin-bottom: 10px;
+}

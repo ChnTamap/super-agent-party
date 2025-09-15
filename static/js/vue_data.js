@@ -954,8 +954,9 @@ let vue_data = {
         type: "prompt",
         prompt: "", // Prompt会向模型发送一条命令
         random:{
-          events:[],
+          events:[""],
           type:"random",
+          orderIndex:0,
         }
       }
     },
