@@ -2306,6 +2306,13 @@ if ('serviceWorker' in navigator) {
                               @change="autoSaveSettings"
                             ></el-switch>
                           </el-form-item>
+                          <el-alert type="info" :closable="false" class="mb-2">
+                            <template #default>
+                              <div class="alert-content">
+                                {{ t('autoBehaviorToolNotice') }}
+                              </div>
+                            </template>
+                          </el-alert>
 
                           <!-- 行为块列表 -->
                           <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx" class="behavior-block">
@@ -2442,31 +2449,49 @@ if ('serviceWorker' in navigator) {
                                 </el-button>
                               </div>
                             </div>
-
-                            <el-form-item label="" class="form-item-align" >
-                              <el-button
-                                type="danger" 
-                                plain 
-                                @click="removeBehavior(idx)"
-                                class="add-server-btn" 
-                              >
-                              <el-icon><i class="fa-solid fa-trash"></i></el-icon>
-                              {{ t('removeBehavior') }}
-                              </el-button>
-                            </el-form-item>
-                          </div>
-                            <el-form-item label="" class="form-item-align">
-                                <!-- 新增按钮 -->
+                            <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <el-tooltip :content="t('resetBehavior')" placement="top">
                                 <el-button 
-                                  type="primary" 
-                                  plain 
-                                  @click="addBehavior()" 
-                                  class="add-server-btn"
+                                  type="default" 
+                                  @click="resetBehavior(idx)" 
+                                  circle
                                 >
-                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
-                                  {{ t('addBehavior') }}
+                                  <i class="fa-solid fa-rotate-right"></i>
                                 </el-button>
-                              </el-form-item>
+                              </el-tooltip>
+                              
+                              <el-tooltip :content="t('removeBehavior')" placement="top">
+                                <el-button 
+                                  type="danger" 
+                                  @click="removeBehavior(idx)" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-trash"></i>
+                                </el-button>
+                              </el-tooltip>
+                            </div>
+                          </div>
+                          <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                            <el-tooltip :content="t('addBehavior')" placement="top">
+                              <el-button 
+                                type="primary" 
+                                @click="addBehavior()"
+                                circle
+                              >
+                                <i class="fa-solid fa-plus"></i>
+                              </el-button>
+                            </el-tooltip>
+                            <el-tooltip :content="t('removeAllBehavior')" placement="top">
+                              <el-button 
+                                type="danger" 
+                                @click="removeAllBehavior()" 
+                                circle
+                              >
+                                <i class="fa-solid fa-trash-can"></i>
+                              </el-button>
+                            </el-tooltip>
+                          </div>
+
                         </div>
                       </div>
                     </el-form>

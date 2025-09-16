@@ -24,7 +24,7 @@ async def auto_behavior(behaviorType="delay", time="00:00:00",prompt=""):
                 },
                 "action": {
                     "type": "prompt",
-                    "prompt": prompt, 
+                    "prompt": "时间到了，"+prompt, 
                     "random":{
                         "events":[""],
                         "type":"random",
@@ -54,7 +54,7 @@ async def auto_behavior(behaviorType="delay", time="00:00:00",prompt=""):
                 },
                 "action": {
                     "type": "prompt",
-                    "prompt": prompt, 
+                    "prompt": "时间到了，"+prompt, 
                     "random":{
                         "events":[""],
                         "type":"random",

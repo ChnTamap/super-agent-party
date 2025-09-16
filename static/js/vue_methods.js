@@ -7199,7 +7199,18 @@ let vue_methods = {
     showNotification(this.t('deleteBehaviorSuccess'))
     this.autoSaveSettings();
   },
-
+  resetBehavior(idx) {
+    this.behaviorSettings.behaviorList[idx] = JSON.parse(JSON.stringify(this.newBehavior));
+    this.autoSaveSettings();
+  },
+  removeAllBehavior() {
+    this.behaviorSettings.behaviorList.forEach((b) => {
+      b.enabled = false;
+    });
+    this.behaviorSettings.behaviorList = [];
+    showNotification(this.t('deleteAllBehaviorSuccess'))
+    this.autoSaveSettings();
+  },
     /* 真正执行行为 */
     runBehavior(b) {
       if (!b.enabled) return
