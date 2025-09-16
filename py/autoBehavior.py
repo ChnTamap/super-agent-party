@@ -1,6 +1,6 @@
 from py.get_setting import load_settings
 
-async def auto_behavior(behaviorType="delay", time="00:00:00",prompt=""):
+async def auto_behavior(behaviorType="delay", time="00:00:00",prompt="",days=[],repeatNumber=1,isInfiniteLoop=False):
     # Load settings
     settings = await load_settings()
     if behaviorType == "time":
@@ -11,7 +11,7 @@ async def auto_behavior(behaviorType="delay", time="00:00:00",prompt=""):
                     "type": "time",
                     "time":{
                         "timeValue": time, 
-                        "days": [] 
+                        "days": days
                     },
                     "noInput":{
                         "latency": 30, 
@@ -48,8 +48,8 @@ async def auto_behavior(behaviorType="delay", time="00:00:00",prompt=""):
                     },
                     "cycle":{
                         "cycleValue": time, 
-                        "repeatNumber": 1, 
-                        "isInfiniteLoop": False, 
+                        "repeatNumber": repeatNumber, 
+                        "isInfiniteLoop": isInfiniteLoop, 
                     }
                 },
                 "action": {
@@ -87,6 +87,27 @@ auto_behavior_tool = {
                 "prompt": {
                     "type": "string",
                     "description": "任务描述，例如：请立刻提醒用户开会、请立刻向用户发送问候语",
+                },
+                "days": {
+                    "type": "array",
+                    "description": "行为类型为time类型下表示在哪些天执行，例如：[1, 2]表示在周一和周二执行,[0]表示只有周日执行，[]表示不重复执行，[1, 2, 3, 4, 5, 6, 0]表示每天都执行",
+                    "items": {
+                        "type": "number",
+                        "enum": [0, 1, 2, 3, 4, 5, 6],
+                    },
+                    "default": [],
+                },
+                "repeatNumber": {
+                    "type": "number",
+                    "description": "行为类型为delay类型下表示重复次数，例如：3表示重复3次，repeatNumber只能在1到100之间",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 1,
+                },
+                "isInfiniteLoop": {
+                    "type": "boolean",
+                    "description": "行为类型为delay类型下表示是否无限循环，例如：True表示无限循环，False表示不循环",
+                    "default": False,
                 }
             },
             "required": ["prompt", "behaviorType", "time"],
