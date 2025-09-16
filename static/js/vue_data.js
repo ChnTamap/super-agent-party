@@ -104,9 +104,11 @@ let vue_data = {
     target_lang: 'zh-CN',
     reasoningEfforts:[
       { value: null, label: 'auto' },
+      { value: 'minimal', label: 'minimal' },
       { value: 'low', label: 'low' },
       { value: 'medium', label: 'medium' },
       { value: 'high', label: 'high' },
+      { value: 'none', label: 'none' },
     ],
     visionSettings: {
       enabled: false, // 默认不启用
@@ -325,7 +327,7 @@ let vue_data = {
       language: 'auto',
       theme: 'light',
       network:"local",
-      proxy: '',
+      proxy: 'http://127.0.0.1:7890',
       proxyEnabled: false,
     },
     networkOptions:[

@@ -17,7 +17,8 @@
       "language": "auto",
       "theme": "light",
       "network":"local",
-      "proxy": ""
+      "proxy": "http://127.0.0.1:7890",
+      "proxyEnabled": false
     },
     "mainAgent":"super-model",
     "mcpServers": {},
