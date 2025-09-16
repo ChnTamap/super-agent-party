@@ -194,6 +194,7 @@ const app = Vue.createApp({
           neon: '#ff2d95' ,       // 霓虹粉
           marshmallow: '#f5a5c3',  // Marshmallow 粉色
           ink: '#2c3e50',        // 墨水蓝
+          party: '#ed7d00',        // 派对黄
         };
 
         // 获取当前主题色

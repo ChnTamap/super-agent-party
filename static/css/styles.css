@@ -413,6 +413,100 @@
     --cactus-green: #8a9b52;
 }
 
+/* 派对主题 */
+[data-theme="party"] {
+  /* 基础三色 */
+  --bg-color: #fffbf0;           /* 暖白/奶油色背景 */
+  --text-color: #374151;         /* 深灰蓝色文字 */
+  --border-color: #e5e7eb;       /* 浅灰色边框 */
+
+  /* 主色调 - 活力橙 */
+  --el-color-primary: #ed7d00 !important;
+  --el-color-primary-light-3: #f59e0b;
+  --el-color-primary-light-5: #fbbf24;
+  --el-color-primary-light-7: #fde68a;
+  --el-color-primary-rgb: 237, 125, 0 !important;
+  
+  /* 次要色调 - 深海蓝 */
+  --el-color-info: #21859b !important;
+  --el-color-info-light-3: #0ea5e9;
+  --el-color-info-light-5: #38bdf8;
+  --el-color-info-light-7: #7dd3fc;
+  --el-color-info-rgb: 33, 133, 155 !important;
+
+  /* 辅助色调 - 暖棕色 */
+  --el-color-warning: #d97706 !important;
+  --el-color-warning-light-3: #f59e0b;
+  --el-color-warning-light-5: #fbbf24;
+
+  /* 背景系统 */
+  --el-bg-color: var(--bg-color) !important;
+  --el-bg-color-page: #fef7e6 !important;      /* 更暖的米黄色页面背景 */
+  --el-tabs-bg-color: #fef7e6 !important;      /* 米黄色标签页背景 */
+  --el-bg-color-overlay: #ffffff !important;   /* 纯白浮层背景 */
+
+  /* 文字系统 */
+  --el-text-color-primary: #1f2937 !important;  /* 深炭灰色 */
+  --el-text-color-regular: #4b5563 !important; /* 中灰色 */
+  --el-text-color-secondary: #6b7280 !important; /* 浅灰色 */
+  
+  /* 边框系统 */
+  --el-border-color: var(--border-color) !important;
+  --el-border-color-light: #d1d5db !important; /* 中等灰色边框 */
+  --el-border-color-lighter: #e5e7eb !important;
+
+  /* 组件特定 */
+  --el-button-bg-color: var(--el-color-primary) !important;
+  --el-input-bg-color: #ffffff !important;      /* 纯白输入框背景 */
+  --el-menu-bg-color: #fef7e6 !important;       /* 米黄色菜单背景 */
+  --el-table-bg-color: #ffffff !important;      /* 纯白表格背景 */
+  --el-tag-bg-color: rgba(237, 125, 0, 0.12) !important; /* 半透明橙色标签 */
+  
+  /* 状态颜色 */
+  --el-color-success: #059669 !important;       /* 深绿色 */
+  --el-color-warning: #d97706 !important;       /* 暖棕色 */
+  --el-color-danger: #dc2626 !important;        /* 深红色 */
+  
+  /* 阴影效果 */
+  --el-box-shadow-light: 0 4px 16px rgba(237, 125, 0, 0.18) !important;
+  --card-shadow: 0 4px 12px rgba(33, 133, 155, 0.12); /* 青蓝色调阴影 */
+
+  /* 输入框系统 */
+  --el-input-text-color: var(--el-text-color-primary);
+  --el-input-placeholder-color: #9ca3af;
+  --el-input-hover-border-color: var(--el-color-primary-light-5);
+  --el-input-focus-border-color: var(--el-color-primary);
+  --el-input-disabled-bg-color: #f9fafb;
+
+  /* 导航和菜单 */
+  --el-menu-text-color: #4b5563;
+  --el-menu-hover-bg-color: rgba(237, 125, 0, 0.08);
+  --el-menu-active-bg-color: rgba(237, 125, 0, 0.15);
+
+  /* 代码块 */
+  --code-bg: #fef7e6;
+  --code-border: #e5e7eb;
+}
+
+/* 配套代码高亮主题 */
+[data-theme="party"] {
+  --hljs-text: #374151;
+  --hljs-bg: #fef7e6;
+  --hljs-border: rgba(237, 125, 0, 0.2);
+  --hljs-keyword: #ed7d00;        /* 活力橙 */
+  --hljs-string: #21859b;         /* 深海蓝 */
+  --hljs-number: #d97706;         /* 暖棕色 */
+  --hljs-comment: #9ca3af;        /* 中灰色 */
+  --hljs-title: #059669;          /* 深绿色 */
+  --hljs-built_in: #dc2626;       /* 深红色 */
+  --hljs-literal: #f59e0b;        /* 琥珀色 */
+  --hljs-class: #0ea5e9;          /* 青蓝色 */
+  --hljs-function: #4b5563;       /* 中灰色 */
+  --hljs-params: #6b7280;         /* 浅灰色 */
+  --hljs-attr: #10b981;           /* 翡翠绿 */
+}
+
+
 /* 沙漠主题代码高亮 */
 [data-theme="desert"] {
     --hljs-text: #5c3d2e;
