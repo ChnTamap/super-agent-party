@@ -60,7 +60,7 @@
       "formula": {
         "enabled": false
       },
-      "pollinations": {
+      "autoBehavior": {
         "enabled": false
       }
     },

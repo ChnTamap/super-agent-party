@@ -188,7 +188,10 @@ let vue_data = {
       },
       formula: {
         enabled: true
-      }
+      },
+      autoBehavior: {
+        enabled: false
+      },
     },
     mcpServers: {},
     showAddMCPDialog: false,

@@ -179,17 +179,17 @@ if ('serviceWorker' in navigator) {
             </el-icon>
             <template #title>{{ t('modelConfig') }}</template>
           </el-menu-item>
-          <el-menu-item index="role">
-            <el-icon>
-              <i class="fa-solid fa-masks-theater"></i>
-            </el-icon>
-            <template #title>{{ t('role') }}</template>
-          </el-menu-item>
           <el-menu-item index="toolkit">
             <el-icon>
               <i class="fa-solid fa-toolbox"></i>
             </el-icon>
             <template #title>{{ t('toolkit') }}</template>
+          </el-menu-item>
+          <el-menu-item index="role">
+            <el-icon>
+              <i class="fa-solid fa-masks-theater"></i>
+            </el-icon>
+            <template #title>{{ t('role') }}</template>
           </el-menu-item>
           <el-menu-item index="deploy-bot">
               <el-icon>
@@ -2300,6 +2300,13 @@ if ('serviceWorker' in navigator) {
                           <el-switch v-model="behaviorSettings.enabled" @click.stop @change="resetCycleTimers();autoSaveSettings()" />
                         </div>
                         <div class="tool-content">
+                          <el-form-item :label="t('enableAutoBehaviorTool')" class="form-item-align" label-position="left">
+                            <el-switch 
+                              v-model="toolsSettings.autoBehavior.enabled" 
+                              @change="autoSaveSettings"
+                            ></el-switch>
+                          </el-form-item>
+
                           <!-- 行为块列表 -->
                           <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx" class="behavior-block">
                             <!-- 行为块标题 + 开关 + 删除 -->
@@ -4293,6 +4300,25 @@ if ('serviceWorker' in navigator) {
                     <el-alert type="info" :closable="false" class="mb-2">
                       <div class="alert-content">
                         {{ t('languageNotice') }}
+                      </div>
+                    </el-alert>
+                  </div>
+
+                  <!-- 自主行为工具 -->
+                  <div class="provider-card tool-card">
+                    <div class="card-header">
+                      <el-switch 
+                        v-model="toolsSettings.autoBehavior.enabled" 
+                        @change="autoSaveSettings"
+                        class="tool-switch"
+                      ></el-switch>
+                    </div>
+                    <div class="tool-card-title">
+                      <h3 class="kb-title">{{ t('autoBehaviorTool') }}</h3>
+                    </div>
+                    <el-alert type="info" :closable="false" class="mb-2">
+                      <div class="alert-content">
+                        {{ t('autoBehaviorToolNotice') }}
                       </div>
                     </el-alert>
                   </div>
