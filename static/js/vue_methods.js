@@ -7315,6 +7315,7 @@ let vue_methods = {
             currentCount >= behavior.trigger.cycle.repeatNumber) {
           clearInterval(this.cycleTimers[index]);
           this.cycleTimers[index] = null;
+          behavior.enabled = false;
         }
       }
     }, cycleMs);
