@@ -188,7 +188,10 @@ let vue_data = {
       },
       formula: {
         enabled: true
-      }
+      },
+      autoBehavior: {
+        enabled: false
+      },
     },
     mcpServers: {},
     showAddMCPDialog: false,
@@ -349,7 +352,7 @@ let vue_data = {
     editingAgent: false,
     currentLanguage: 'zh-CN',
     translations: translations,
-    themeValues: ['light', 'dark','midnight','desert','neon','marshmallow','ink'],
+    themeValues: ['light', 'dark','midnight','desert','neon','marshmallow','ink','party'],
     isBrowserOpening: false,
     expandedSections: {
       settingsBase: true,
@@ -932,29 +935,12 @@ let vue_data = {
     ],
     behaviorSettings:{
       enabled: false,
-      behaviorList:[
-        {
-          enabled: false,
-          trigger: {
-            type: "noInput",
-            time:{
-              timeValue: "00:00:00", // 时间值，例如：12:00:00
-              days: [] // 星期几的列表，例如：[1, 2, 3] 表示周一、周二、周三，为空表示不重复
-            },
-            noInput:{
-              latency: 30, // 无输入时等待的秒数
-            }
-          },
-          action: {
-            type: "prompt",
-            prompt: "", // Prompt会向模型发送一条命令
-          }
-        }
-      ]
+      behaviorList:[]
     }, // 行为设置
     behaviorNameDict:{
       noInput: "noInputName",
       time: "timeName",
+      cycle: "cycleName"
     },
     newBehavior:{
       enabled: false,
@@ -966,11 +952,21 @@ let vue_data = {
         },
         noInput:{
           latency: 30, // 无输入时等待的秒数
+        },
+        cycle:{
+          cycleValue: "00:00:30", // 时间值，例如：00:00:30
+          repeatNumber: 1, // 周期次数，例如：3次
+          isInfiniteLoop: false, // 是否无限循环
         }
       },
       action: {
         type: "prompt",
         prompt: "", // Prompt会向模型发送一条命令
+        random:{
+          events:[""],
+          type:"random",
+          orderIndex:0,
+        }
       }
     },
     allBriefly:false,

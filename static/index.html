@@ -179,17 +179,17 @@ if ('serviceWorker' in navigator) {
             </el-icon>
             <template #title>{{ t('modelConfig') }}</template>
           </el-menu-item>
-          <el-menu-item index="role">
-            <el-icon>
-              <i class="fa-solid fa-masks-theater"></i>
-            </el-icon>
-            <template #title>{{ t('role') }}</template>
-          </el-menu-item>
           <el-menu-item index="toolkit">
             <el-icon>
               <i class="fa-solid fa-toolbox"></i>
             </el-icon>
             <template #title>{{ t('toolkit') }}</template>
+          </el-menu-item>
+          <el-menu-item index="role">
+            <el-icon>
+              <i class="fa-solid fa-masks-theater"></i>
+            </el-icon>
+            <template #title>{{ t('role') }}</template>
           </el-menu-item>
           <el-menu-item index="deploy-bot">
               <el-icon>
@@ -272,7 +272,7 @@ if ('serviceWorker' in navigator) {
               </div>
               <div class="message-content">
                 <!-- 用户消息内容 -->
-                <div v-if="message.role === 'user'" class="user-message-content" data-mjx-disabled="true">
+                <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
                   <div v-html="message.content" class = "user-msg"></div>
                   <!-- 文件链接展示 -->
                   <div v-if="message.fileLinks?.length" class="file-links">
@@ -288,8 +288,8 @@ if ('serviceWorker' in navigator) {
                 <!-- AI回复内容 -->
                 <div v-else-if="message.role === 'assistant'"  class="markdown-body" v-html="message.briefly ? formatMessage(message.pure_content??msg.content) : formatMessage(message.content)"></div>
                 <!-- 系统消息内容 -->
-                <div v-else class="user-message-content" data-mjx-disabled="true">
-                  <div v-html="t('system_prompt') + message.content" @click="openEditDialog(message.role, message.content,index)"></div>
+                <div v-else class="system-content" data-mjx-disabled="true">
+                  <div v-html="index===0 ? (t('system_prompt') + message.content):message.content" @click="openEditDialog(message.role, message.content,index)"></div>
                 </div>
               </div>
               <!-- 添加复制按钮 -->
@@ -747,7 +747,7 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
-            <el-tooltip :content="allBriefly ? t('allBriefly'):t('allNoBriefly')" placement="top">
+            <el-tooltip :content="allBriefly ? t('allNoBriefly'):t('allBriefly')" placement="top">
               <el-button
                 @click="handleAllBriefly"
                 class="icon-btn history-btn"
@@ -1009,6 +1009,17 @@ if ('serviceWorker' in navigator) {
                 v-if="!isBtnCollapse"
                 circle>
                 <i :class='isVRMStarting? "fa-solid fa-spinner fa-spin" : "fa-solid fa-user-ninja"'></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('enableAutoBehavior')" placement="top">
+              <el-button
+                @click="behaviorSettings.enabled=!behaviorSettings.enabled; autoSaveSettings();"
+                class="icon-btn behavior-btn"
+                :type="behaviorSettings.enabled ? 'primary' : 'default'"
+                v-if="!isBtnCollapse"
+                circle>
+                <i class="fa-solid fa-person-running"></i>
               </el-button>
             </el-tooltip>
 
@@ -2286,9 +2297,42 @@ if ('serviceWorker' in navigator) {
                               {{ t('AutoBehavior') }}
                             </span>
                           </div>
-                          <el-switch v-model="behaviorSettings.enabled" @click.stop @change="autoSaveSettings" />
+                          <el-switch v-model="behaviorSettings.enabled" @click.stop @change="resetCycleTimers();autoSaveSettings()" />
                         </div>
                         <div class="tool-content">
+                          <el-form-item :label="t('enableAutoBehaviorTool')" class="form-item-align" label-position="left">
+                            <el-switch 
+                              v-model="toolsSettings.autoBehavior.enabled" 
+                              @change="autoSaveSettings"
+                            ></el-switch>
+                          </el-form-item>
+                          <el-alert type="info" :closable="false" class="mb-2">
+                            <template #default>
+                              <div class="alert-content">
+                                {{ t('autoBehaviorToolNotice') }}
+                              </div>
+                            </template>
+                          </el-alert>
+                          <div v-show ="behaviorSettings.behaviorList.length > 0" style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                            <el-tooltip :content="t('addBehavior')" placement="top">
+                              <el-button 
+                                type="primary" 
+                                @click="addBehavior()"
+                                circle
+                              >
+                                <i class="fa-solid fa-plus"></i>
+                              </el-button>
+                            </el-tooltip>
+                            <el-tooltip :content="t('removeAllBehavior')" placement="top">
+                              <el-button 
+                                type="danger" 
+                                @click="removeAllBehavior()" 
+                                circle
+                              >
+                                <i class="fa-solid fa-trash-can"></i>
+                              </el-button>
+                            </el-tooltip>
+                          </div>
                           <!-- 行为块列表 -->
                           <div v-for="(b, idx) in behaviorSettings.behaviorList" :key="idx" class="behavior-block">
                             <!-- 行为块标题 + 开关 + 删除 -->
@@ -2296,14 +2340,15 @@ if ('serviceWorker' in navigator) {
                               <div class="header-left">
                                 <span>{{t(behaviorNameDict[b.trigger.type])}}</span>
                               </div>
-                              <el-switch v-model="b.enabled" @change="autoSaveSettings" />
+                              <el-switch v-model="b.enabled" @change="resetCycleTimers();autoSaveSettings()" />
                             </div>
 
                             <!-- 触发条件 -->
                             <el-form-item :label="t('triggerType')">
-                              <el-select v-model="b.trigger.type" @change="autoSaveSettings">
+                              <el-select v-model="b.trigger.type" @change="resetCycleTimers();autoSaveSettings()">
                                 <el-option :label="t('timeName')"   value="time"></el-option>
                                 <el-option :label="t('noInputName')" value="noInput"></el-option>
+                                <el-option :label="t('cycleName')" value="cycle"></el-option>
                               </el-select>
                             </el-form-item>
 
@@ -2349,10 +2394,42 @@ if ('serviceWorker' in navigator) {
                               </el-form-item>
                             </div>
 
+                            <!-- 周期触发 - 新增部分 -->
+                            <div v-if="b.trigger.type === 'cycle'">
+                              <el-row :gutter="12">
+                                <el-col :span="24">
+                                  <el-form-item :label="t('cycleValue')">
+                                    <el-time-picker
+                                      v-model="b.trigger.cycle.cycleValue"
+                                      value-format="HH:mm:ss"
+                                      format="HH:mm:ss"
+                                      :placeholder="t('selectTime')"
+                                      @change="resetCycleTimers();autoSaveSettings()"
+                                      style="width: 100%"
+                                    />
+                                  </el-form-item>
+                                </el-col>
+                              </el-row>
+                              <el-form-item :label="t('repeatNumber')">
+                                <el-slider
+                                  v-model="b.trigger.cycle.repeatNumber"
+                                  :min="1"
+                                  :max="100"
+                                  :step="1"
+                                  @change="resetCycleTimers();autoSaveSettings()">
+                                </el-slider>
+                              </el-form-item>
+                              <el-form-item :label="t('isInfiniteLoop')" class="form-item-align" label-position="left">
+                                <el-switch v-model="b.trigger.cycle.isInfiniteLoop" @change="resetCycleTimers();autoSaveSettings()"></el-switch>
+                              </el-form-item>
+                            </div>
+
+                            <el-divider></el-divider>
                             <!-- 执行内容 -->
                             <el-form-item :label="t('actionType')">
                               <el-select v-model="b.action.type" @change="autoSaveSettings">
-                                <el-option :label="t('prompt')" value="prompt"/>
+                                <el-option :label="t('prompt')" value="prompt"></el-option>
+                                <el-option :label="t('randomEvent')" value="random"></el-option>
                               </el-select>
                             </el-form-item>
 
@@ -2366,44 +2443,86 @@ if ('serviceWorker' in navigator) {
                                 class="full-width-input"/>
                             </el-form-item>
 
-                            <el-form-item label="" class="form-item-align" v-show="idx > 0" >
-                              <el-button
-                                type="danger" 
-                                plain 
-                                @click="removeBehavior(idx)"
-                                class="add-server-btn" 
-                                :disable="idx === 0"
-                              >
-                              <el-icon><i class="fa-solid fa-trash"></i></el-icon>
-                              {{ t('removeBehavior') }}
-                              </el-button>
+                            <el-form-item v-if="b.action.type === 'random'" :label="t('eventType')">
+                              <el-select v-model="b.action.random.type" @change="autoSaveSettings">
+                                <el-option :label="t('random')" value="random"></el-option>
+                                <el-option :label="t('order')" value="order"></el-option>
+                              </el-select>
                             </el-form-item>
-
-                            <el-form-item label="" class="form-item-align">
-                                <!-- 新增按钮 -->
-                                <el-button 
-                                  type="primary" 
-                                  plain 
-                                  @click="addBehavior(idx)" 
-                                  class="add-server-btn"
-                                >
-                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
-                                  {{ t('addBehavior') }}
-                                </el-button>
+                            <div v-for="(event, eventIdx) in b.action.random.events" :key="eventIdx">
+                              <el-form-item v-if="b.action.type === 'random'">
+                                <el-input
+                                  type="textarea"
+                                  v-model="b.action.random.events[eventIdx]"
+                                  :rows="3"
+                                  :placeholder="t('promptPlaceholder')"
+                                  @input="autoSaveSettings"
+                                  class="full-width-input"/>
                               </el-form-item>
+                              <div class="event-button-group" v-if="b.action.type === 'random'">
+                                <el-button @click="addNewEvent(idx)" type="primary" circle size="small">
+                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
+                                </el-button>
+                                <el-button v-show="eventIdx>0" @click="removeEvent(idx,eventIdx)" type="danger" circle size="small">
+                                  <el-icon><i class="fa-solid fa-trash"></i></el-icon>
+                                </el-button>
+                              </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                              <el-tooltip :content="t('resetBehavior')" placement="top">
+                                <el-button 
+                                  type="default" 
+                                  @click="resetBehavior(idx)" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-rotate-right"></i>
+                                </el-button>
+                              </el-tooltip>
+                              
+                              <el-tooltip :content="t('removeBehavior')" placement="top">
+                                <el-button 
+                                  type="danger" 
+                                  @click="removeBehavior(idx)" 
+                                  circle
+                                >
+                                  <i class="fa-solid fa-trash"></i>
+                                </el-button>
+                              </el-tooltip>
+                            </div>
                           </div>
+                          <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                            <el-tooltip :content="t('addBehavior')" placement="top">
+                              <el-button 
+                                type="primary" 
+                                @click="addBehavior()"
+                                circle
+                              >
+                                <i class="fa-solid fa-plus"></i>
+                              </el-button>
+                            </el-tooltip>
+                            <el-tooltip :content="t('removeAllBehavior')" placement="top">
+                              <el-button 
+                                type="danger" 
+                                @click="removeAllBehavior()" 
+                                circle
+                              >
+                                <i class="fa-solid fa-trash-can"></i>
+                              </el-button>
+                            </el-tooltip>
+                          </div>
+
                         </div>
                       </div>
                     </el-form>
                   </el-tab-pane>
                   <!-- 添加新记忆标签页 -->
-                  <el-tab-pane :label="t('addNewBehavior')" name="add">
+                  <el-tab-pane :label="t('addNewBehaviorChain')" name="add">
                     <div class="provider-grid">
                       
                       <!-- 添加新记忆磁贴 -->
                       <div class="provider-card add-tile">
                         <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
-                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewBehavior') }}</div>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('addNewBehaviorChain') }}</div>
                       </div>
                     </div>
                   </el-tab-pane>
@@ -4225,6 +4344,25 @@ if ('serviceWorker' in navigator) {
                     <el-alert type="info" :closable="false" class="mb-2">
                       <div class="alert-content">
                         {{ t('languageNotice') }}
+                      </div>
+                    </el-alert>
+                  </div>
+
+                  <!-- 自主行为工具 -->
+                  <div class="provider-card tool-card">
+                    <div class="card-header">
+                      <el-switch 
+                        v-model="toolsSettings.autoBehavior.enabled" 
+                        @change="autoSaveSettings"
+                        class="tool-switch"
+                      ></el-switch>
+                    </div>
+                    <div class="tool-card-title">
+                      <h3 class="kb-title">{{ t('autoBehaviorTool') }}</h3>
+                    </div>
+                    <el-alert type="info" :closable="false" class="mb-2">
+                      <div class="alert-content">
+                        {{ t('autoBehaviorToolNotice') }}
                       </div>
                     </el-alert>
                   </div>
@@ -6321,7 +6459,7 @@ if ('serviceWorker' in navigator) {
         <!-- logo页面 -->
         <div v-show="activeMenu === 'logo'" class="page logo-container">
           <div class="license-notice">
-            <h1>Super Agent Party v0.2.9</h1>
+            <h1>Super Agent Party v0.3.0</h1>
             <h3>开源协议声明 / Open Source License</h3>
             <div class="notice-section">
               <p class="warning-text">❗ 注意！本项目是基于AGPL协议开源的，请遵守AGPL协议，以避免不必要的法律问题！</p>

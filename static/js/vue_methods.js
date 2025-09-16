@@ -373,6 +373,15 @@ let vue_methods = {
         this.system_prompt = " ";
         this.messages = [{ role: 'system', content: this.system_prompt }];
       }
+      if(this.allBriefly){
+        this.messages.forEach((m) => {
+          m.briefly = true;
+        })
+      }else{
+        this.messages.forEach((m) => {
+          m.briefly = false;
+        })
+      }
       this.scrollToBottom();
       await this.autoSaveSettings();
     },
@@ -1016,6 +1025,10 @@ let vue_methods = {
         // 可以在这里处理 pong 回复，比如记录状态
         console.log('Received pong from server.');
       } 
+      else if (data.type === 'behavior') {
+          this.behaviorSettings = data.data.behaviorSettings || this.behaviorSettings;
+          this.autoSaveSettings();
+      }
       else if (data.type === 'settings') {
           this.isdocker = data.data.isdocker || false;
           this.settings = {
@@ -7175,24 +7188,65 @@ let vue_methods = {
     this.showAddAppearanceDialog = false;
     this.autoSaveSettings();
   },
-  addBehavior(idx) {
-    // 深拷贝一份默认模板到索引idx的后面
-    this.behaviorSettings.behaviorList.splice(idx + 1, 0, JSON.parse(JSON.stringify(this.newBehavior)));
+  addBehavior() {
+    // 深拷贝一份默认模板
+    this.behaviorSettings.behaviorList.push(JSON.parse(JSON.stringify(this.newBehavior)));
     this.autoSaveSettings();
   },
   removeBehavior(idx) {
+    this.behaviorSettings.behaviorList[idx].enabled = false;
     this.behaviorSettings.behaviorList.splice(idx, 1);
+    showNotification(this.t('deleteBehaviorSuccess'))
     this.autoSaveSettings();
   },
-
+  resetBehavior(idx) {
+    this.behaviorSettings.behaviorList[idx] = JSON.parse(JSON.stringify(this.newBehavior));
+    this.autoSaveSettings();
+  },
+  removeAllBehavior() {
+    this.behaviorSettings.behaviorList.forEach((b) => {
+      b.enabled = false;
+    });
+    this.behaviorSettings.behaviorList = [];
+    showNotification(this.t('deleteAllBehaviorSuccess'))
+    this.autoSaveSettings();
+  },
     /* 真正执行行为 */
     runBehavior(b) {
       if (!b.enabled) return
+      if (!this.noInputFlag){
+        this.stopGenerate()
+      }
       if (b.action.type === 'prompt' && b.action.prompt) {
         console.log('Prompt:', b.action.prompt)
         this.userInput= b.action.prompt
         // 这里把 prompt 发给你的模型即可，举例：
         this.sendMessage(role = 'system')   // 你需要实现这个函数
+      }
+      if (b.action.type === 'random' && b.action.random) {
+        if(b.action.random.events.length > 0){
+          if (b.action.random.type === 'random'){
+            let randomEvent = b.action.random.events[Math.floor(Math.random() * b.action.random.events.length)];
+            if(randomEvent){
+              this.userInput= randomEvent;
+              // 这里把 prompt 发给你的模型即可，举例：
+              this.sendMessage(role = 'system')   // 你需要实现这个函数
+            }
+          }else if( b.action.random.type === 'order'){
+            if(b.action.random.orderIndex >= b.action.random.events.length){
+              b.action.random.orderIndex = 0;
+            }
+            if(b.action.random.events[b.action.random.orderIndex]){
+              let randomEvent = b.action.random.events[b.action.random.orderIndex];
+              b.action.random.orderIndex += 1;
+              if(randomEvent){
+                this.userInput= randomEvent;
+                // 这里把 prompt 发给你的模型即可，举例：
+                this.sendMessage(role = 'system')   // 你需要实现这个函数
+              }
+            }
+          }
+        }
       }
     },
 
@@ -7238,4 +7292,63 @@ let vue_methods = {
         document.body.removeChild(link);
       }
     },
+  removeEvent(idx,index) {
+    this.behaviorSettings.behaviorList[idx].action.random.events.splice(index, 1);
+    this.autoSaveSettings(); // 删除后也触发自动保存
+  },
+  addNewEvent(idx) {
+    this.behaviorSettings.behaviorList[idx].action.random.events.push(''); // 添加一个新的空事件，从而新增一个输入框
+    this.autoSaveSettings();
+  },
+
+  // 初始化周期定时器
+  initCycleTimer(behavior, index) {
+    // 清除现有定时器
+    if (this.cycleTimers[index]) {
+      clearInterval(this.cycleTimers[index]);
+    }
+    
+    // 解析周期时间 (HH:mm:ss)
+    const [hours, minutes, seconds] = behavior.trigger.cycle.cycleValue.split(':').map(Number);
+    const cycleMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+    
+    // 当前周期计数
+    let currentCount = 0;
+    
+    // 创建定时器
+    this.cycleTimers[index] = setInterval(() => {
+      if (!behavior||!behavior.enabled) return;
+      
+      // 检查是否无限循环或未达到重复次数
+      if (behavior.trigger.cycle.isInfiniteLoop || 
+          currentCount < behavior.trigger.cycle.repeatNumber) {
+        
+        this.runBehavior(behavior);
+        currentCount++;
+        
+        // 非无限循环且达到次数时停止
+        if (!behavior.trigger.cycle.isInfiniteLoop && 
+            currentCount >= behavior.trigger.cycle.repeatNumber) {
+          clearInterval(this.cycleTimers[index]);
+          this.cycleTimers[index] = null;
+          behavior.enabled = false;
+        }
+      }
+    }, cycleMs);
+  },
+  
+  // 当配置变化时重置定时器
+  resetCycleTimers() {
+    this.cycleTimers.forEach((timer, index) => {
+      if (timer) clearInterval(timer);
+      this.cycleTimers[index] = null;
+    });
+    
+    // 重新初始化启用的周期触发器
+    this.behaviorSettings.behaviorList.forEach((b, index) => {
+      if (b.enabled && b.trigger.type === 'cycle') {
+        this.initCycleTimer(b, index);
+      }
+    });
+  },
 }

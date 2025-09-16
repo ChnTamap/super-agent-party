@@ -60,7 +60,7 @@
       "formula": {
         "enabled": false
       },
-      "pollinations": {
+      "autoBehavior": {
         "enabled": false
       }
     },
@@ -161,25 +161,7 @@
     "allBriefly":false,
     "behaviorSettings": {
       "enabled": false,
-      "behaviorList":[
-        {
-          "enabled": false,
-          "trigger": {
-            "type": "noInput",
-            "time":{
-              "timeValue": "00:00:00",
-              "days": [] 
-            },
-            "noInput":{
-              "atency": 30
-            }
-          },
-          "action": {
-            "type": "prompt",
-            "prompt": ""
-          }
-        }
-      ]
+      "behaviorList":[]
     },
     "text2imgSettings": {
       "enabled": false,

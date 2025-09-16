@@ -15,6 +15,10 @@ const app = Vue.createApp({
   beforeDestroy() {
     if (this.behaviorTimeTimer)   clearInterval(this.behaviorTimeTimer)
     if (this.behaviorNoInputTimer) clearInterval(this.behaviorNoInputTimer)
+    clearInterval(this.behaviorCycleTimer);
+    this.cycleTimers.forEach(timer => {
+      if (timer) clearInterval(timer);
+    });
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
     }
@@ -117,6 +121,24 @@ const app = Vue.createApp({
         }
       })
     }, 1000)
+
+   // 在 mounted() 函数中添加以下代码
+  this.cycleTimers = []; // 存储所有周期触发器的定时器
+
+  // 3. 周期触发器（每1秒检查一次）
+  this.behaviorCycleTimer = setInterval(() => {
+    if (!this.behaviorSettings.enabled) return;
+    
+    const now = new Date();
+    this.behaviorSettings.behaviorList.forEach((b, index) => {
+      if (!b.enabled || b.trigger.type !== 'cycle') return;
+      
+      // 检查是否已有定时器
+      if (!this.cycleTimers[index]) {
+        this.initCycleTimer(b, index);
+      }
+    });
+  }, 1000); 
   },
   beforeUnmount() {
     if (isElectron) {
@@ -172,6 +194,7 @@ const app = Vue.createApp({
           neon: '#ff2d95' ,       // 霓虹粉
           marshmallow: '#f5a5c3',  // Marshmallow 粉色
           ink: '#2c3e50',        // 墨水蓝
+          party: '#ed7d00',        // 派对黄
         };
 
         // 获取当前主题色
