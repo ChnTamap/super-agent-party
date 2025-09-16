@@ -1025,6 +1025,10 @@ let vue_methods = {
         // 可以在这里处理 pong 回复，比如记录状态
         console.log('Received pong from server.');
       } 
+      else if (data.type === 'behavior') {
+          this.behaviorSettings = data.data.behaviorSettings || this.behaviorSettings;
+          this.autoSaveSettings();
+      }
       else if (data.type === 'settings') {
           this.isdocker = data.data.isdocker || false;
           this.settings = {
@@ -7190,6 +7194,7 @@ let vue_methods = {
     this.autoSaveSettings();
   },
   removeBehavior(idx) {
+    this.behaviorSettings.behaviorList[idx].enabled = false;
     this.behaviorSettings.behaviorList.splice(idx, 1);
     showNotification(this.t('deleteBehaviorSuccess'))
     this.autoSaveSettings();
@@ -7301,7 +7306,7 @@ let vue_methods = {
     
     // 创建定时器
     this.cycleTimers[index] = setInterval(() => {
-      if (!behavior.enabled) return;
+      if (!behavior||!behavior.enabled) return;
       
       // 检查是否无限循环或未达到重复次数
       if (behavior.trigger.cycle.isInfiniteLoop || 
