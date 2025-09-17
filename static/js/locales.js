@@ -864,6 +864,7 @@ key3`,
         'guide.input-api-Key-notice':'本地推理供应商如：ollama/vllm等不需要填写API key，其他供应商需要填写API key',
         'guide.driver-guide-btn':'欢迎使用super agent party！',
         'guide.driver-guide-btn-notice':'点击这个按钮会重新开启教程，点击下一步查看教程',
+        'mcpCreationFailed': 'MCP创建失败，已自动禁用，请点击重连按钮或者修改后重试',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1729,5 +1730,6 @@ Key3`,
         'guide.driver-guide-btn':'Welcome to Super Agent Party!',
         'guide.driver-guide-btn-notice':'Clicking this button will restart the tutorial. Click Next to view the tutorial.',
         'guide.input-api-Key-notice': 'Local inference providers such as ollama/vllm do not need to fill in the API key, other providers do.',
+        'mcpCreationFailed': 'MCP creation failed and has been automatically disabled. Please click the reconnect button or modify and try again',
     }
   };
