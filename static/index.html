@@ -115,6 +115,11 @@ if ('serviceWorker' in navigator) {
             ({{ downloadProgress }}%)
           </span>
         </el-button>
+        <el-button  @click="restartDriverGuide" class="top-bar-btn" text id="driver-guide-btn">
+          <el-icon>
+            <i class="fa-solid fa-school"></i>
+          </el-icon>
+        </el-button>
       <!-- 添加移动端菜单按钮 -->
       <el-button 
       class="top-bar-btn"

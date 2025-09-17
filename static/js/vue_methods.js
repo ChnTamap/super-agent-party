@@ -7367,12 +7367,20 @@ let vue_methods = {
         doneBtnText: this.t('done'),
         steps: [
           {
+            element: '#driver-guide-btn',
+            popover: {
+              title: this.t('guide.driver-guide-btn'),
+              description: this.t('guide.driver-guide-btn-notice'),
+              side: 'right',
+              align: 'start',
+            },
+          },
+          {
             element: '#model-config',
             popover: {
               title: this.t('guide.model-config'),
               description: this.t('guide.model-config-notice'),
               side: 'right',
-              align: 'start',
               // 使用 onNextClick 替代 onNext
               onNextClick: async () => {
                 await this.handleSelect('model-config');
@@ -7431,6 +7439,7 @@ let vue_methods = {
             element: '#input-api-Key',
             popover: {
               title: this.t('guide.input-api-Key'),
+              description: this.t('guide.input-api-Key-notice'),
               side: 'right',
             }
           },
