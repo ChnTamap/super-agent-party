@@ -21,6 +21,8 @@
   <script src="js/ort.js"></script>
   <script src="js/bundle.min.js"></script>
   <script src="js/qrcode.min.js"></script>
+  <script src="node_modules/driver.js/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="node_modules/driver.js/dist/driver.css">
   <script>
     console.log(`
      _       ____   _____   _   _   _____ 
@@ -173,7 +175,7 @@ if ('serviceWorker' in navigator) {
             </el-icon>
             <template #title>{{ t('chat') }}</template>
           </el-menu-item>
-          <el-menu-item index="model-config">
+          <el-menu-item index="model-config" id="model-config">
             <el-icon>
               <i class="fa-solid fa-hexagon-nodes"></i>
             </el-icon>
@@ -2591,6 +2593,7 @@ if ('serviceWorker' in navigator) {
                             type="info"
                             circle
                             size="small"
+                            id="get-API-key"
                           >
                           <i class="fa-solid fa-key"></i>
                           </el-button>
@@ -2601,6 +2604,7 @@ if ('serviceWorker' in navigator) {
                             type="primary"
                             circle
                             size="small"
+                            id="get-Models-List"
                           >
                           <i class="fa-solid fa-magnifying-glass"></i>
                           </el-button>
@@ -2650,10 +2654,11 @@ if ('serviceWorker' in navigator) {
                           :placeholder="t('apiKeyPlaceholder')"
                           show-password
                           @change="autoSaveSettings"
+                          id="input-api-Key"
                         />
                       </div>
 
-                      <div class="input-item">
+                      <div class="input-item" id="model-Id">
                         <label>{{ t('modelId') }}</label>
                         <el-select
                           v-model="provider.modelId"
@@ -2674,7 +2679,7 @@ if ('serviceWorker' in navigator) {
                     </div>
                   </div>
                   <!-- 添加新磁贴 -->
-                  <div class="provider-card add-tile" @click="showAddDialog = true">
+                  <div id="add-provider-card" class="provider-card add-tile" @click="showAddDialog = true">
                     <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
                     <div style="color: #606266; margin-top: 10px;">{{ t('addNewProvider') }}</div>
                   </div>
@@ -2683,6 +2688,7 @@ if ('serviceWorker' in navigator) {
                 <!-- 添加供应商对话框 -->
                 <el-dialog
                   v-model="showAddDialog"
+                  id="show-Add-Dialog"
                   :title="t('addNewProvider')"
                   width="90%"
                   @closed="newProviderTemp = { vendor: '', url: '' }"
@@ -2696,6 +2702,7 @@ if ('serviceWorker' in navigator) {
                         class="vendor-card"
                         :class="{ 'selected': newProviderTemp.vendor === item.value }"
                         @click="handleSelectVendor(item.value)"
+                        id="vendor-Option"
                       >
                         <img 
                           :src="getVendorLogo(item.value)" 
@@ -2747,6 +2754,7 @@ if ('serviceWorker' in navigator) {
                     <el-button @click="showAddDialog = false">{{ t('cancel') }}</el-button>
                     <el-button
                       type="primary"
+                      id = "confirm-Add-Provider-Button"
                       @click="confirmAddProvider"
                       :disabled="!validProvider"
                     >
