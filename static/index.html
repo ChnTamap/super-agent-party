@@ -5938,13 +5938,13 @@ if ('serviceWorker' in navigator) {
                       <el-select 
                         v-model="mcpInputType" 
                         class="full-width-input">
-                        <el-option 
-                          :label="t('jsonInput')" 
-                          value="json">
-                        </el-option>
                         <el-option
                           :label="t('formInput')"
                           value="form">
+                        </el-option>
+                        <el-option 
+                          :label="t('jsonInput')" 
+                          value="json">
                         </el-option>
                       </el-select>
                     </el-form-item>

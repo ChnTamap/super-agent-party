@@ -209,7 +209,7 @@ let vue_data = {
       apiKey: '',
     },
     newMCPType: 'stdio', // 新增类型字段
-    mcpInputType: 'json', // 默认为JSON，还可以是 'form'
+    mcpInputType: 'form', // 默认为JSON，还可以是 'form'
     currentMCPExample: '',
     mcpExamples: {
       stdio: `{
