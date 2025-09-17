@@ -5934,18 +5934,64 @@ if ('serviceWorker' in navigator) {
                       </el-select>
                     </el-form-item>
                 
-                    <el-alert type="info" :closable="false" class="mb-2">
+                    <el-form-item :label="t('inputMethod')">
+                      <el-select 
+                        v-model="mcpInputType" 
+                        class="full-width-input">
+                        <el-option 
+                          :label="t('jsonInput')" 
+                          value="json">
+                        </el-option>
+                        <el-option
+                          :label="t('formInput')"
+                          value="form">
+                        </el-option>
+                      </el-select>
+                    </el-form-item>
+
+                    <el-alert v-if="mcpInputType === 'json'" type="info" :closable="false" class="mb-2">
                       {{ t('mcpJsonFormat') }}
                       <pre class="json-example">{{ currentMCPExample }}</pre>
                     </el-alert>
                 
-                    <el-form-item :label="t('mcpJsonInput')">
+                    <el-form-item :label="t('mcpJsonInput')" v-if="mcpInputType === 'json'">
                       <el-input
                         v-model="newMCPJson"
                         type="textarea"
                         :rows="8"
                         :placeholder="t('mcpJsonPlaceholder')"
-                        resize="none"/>
+                      />
+                    </el-form-item>
+
+                    <el-form-item :label="t('mcpName')" v-if="mcpInputType === 'form'">
+                      <el-input
+                        v-model="newMCPFormData.name"/>
+                    </el-form-item>
+                    <el-form-item :label="t('mcpURL')" v-if="mcpInputType === 'form' && newMCPType != 'stdio'">
+                      <el-input
+                        v-model="newMCPFormData.url"/>
+                    </el-form-item>
+                    <el-form-item :label="t('mcpApiKey')" v-if="mcpInputType === 'form' && newMCPType != 'stdio'">
+                      <el-input
+                        v-model="newMCPFormData.apiKey"/>
+                    </el-form-item>
+                    <el-form-item :label="t('mcpCommand')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
+                      <el-input
+                        v-model="newMCPFormData.command"/>
+                    </el-form-item>
+                    <el-form-item :label="t('mcpArgs')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
+                      <el-input
+                        type="textarea"
+                        :rows="3"
+                        v-model="newMCPFormData.args"
+                      />
+                    </el-form-item>
+                    <el-form-item :label="t('mcpEnv')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
+                      <el-input
+                        type="textarea"
+                        :rows="3"
+                        v-model="newMCPFormData.env"
+                      />
                     </el-form-item>
                   </el-form>
                   <template #footer>
@@ -5953,7 +5999,7 @@ if ('serviceWorker' in navigator) {
                     <el-button 
                       type="primary" 
                       @click="addMCPServer"
-                      :disabled="!newMCPJson">
+                      :disabled="!newMCPJson&&!newMCPFormData.name">
                       {{ t('confirmAdd') }}
                     </el-button>
                   </template>
