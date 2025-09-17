@@ -5,6 +5,7 @@ import logging
 import shutil
 from typing import Dict, Any, AsyncIterator, Optional
 
+import anyio
 from mcp import ClientSession
 from mcp.client.stdio   import stdio_client
 from mcp.client.sse     import sse_client
@@ -53,25 +54,23 @@ class ConnectionManager:
 
                 transport = await stack.enter_async_context(client)
 
-                # ---------- 首包校验（仅 SSE 需要） ----------
-                if mcptype == "sse":
-                    # transport 实际就是 SSE 的 event_source
-                    event_source = transport[0]  # sse_client 返回 (read, write)
-                    try:
-                        # 立即拉第一条 SSE，验证 content-type 和流可用性
-                        async for sse in event_source.aiter_sse():
-                            # 能进到这里就说明首包 OK
-                            break
-                    except Exception as e:
-                        # 统一把异常抛给外层，让 _connection_monitor 捕获
-                        raise RuntimeError(f"SSE initial handshake failed: {e}") from e
                 # ---------- END ----------
 
                 if mcptype == "streamablehttp":
                     read, write, _ = transport
                 else:
                     read, write = transport
-
+                # ---------- 首包校验（仅 SSE 需要） ----------
+                if mcptype == "sse":
+                    try:
+                        # 非阻塞读 1 条消息，超时 3 秒
+                        with anyio.move_on_after(3):
+                            await read.receive()
+                    except anyio.EndOfStream:
+                        # 服务器立刻关闭，说明失败
+                        raise RuntimeError("SSE stream closed immediately")
+                    except Exception as e:
+                        raise RuntimeError(f"SSE initial handshake failed: {e}") from e
             # 2. 建立会话
             self.session = await stack.enter_async_context(ClientSession(read, write))
             await self.session.initialize()
