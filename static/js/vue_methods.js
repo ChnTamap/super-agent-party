@@ -2935,7 +2935,7 @@ let vue_methods = {
         this.showAddMCPDialog = false;
         this.newMCPJson = '';
         this.newMCPFormData = {
-          name: '',
+          name: 'mcp',
           command: '',
           args:'',
           env: '',

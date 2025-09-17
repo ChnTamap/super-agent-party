@@ -5969,18 +5969,23 @@ if ('serviceWorker' in navigator) {
                     </el-form-item>
                     <el-form-item :label="t('mcpURL')" v-if="mcpInputType === 'form' && newMCPType != 'stdio'">
                       <el-input
+                        :placeholder="mcpURLDict[newMCPType]"
                         v-model="newMCPFormData.url"/>
                     </el-form-item>
                     <el-form-item :label="t('mcpApiKey')" v-if="mcpInputType === 'form' && newMCPType != 'stdio'">
                       <el-input
-                        v-model="newMCPFormData.apiKey"/>
+                        :placeholder="t('mcpApiKeyPlaceholder')"
+                        v-model="newMCPFormData.apiKey"
+                        />
                     </el-form-item>
                     <el-form-item :label="t('mcpCommand')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
                       <el-input
+                        :placeholder="t('mcpCommandPlaceholder')"
                         v-model="newMCPFormData.command"/>
                     </el-form-item>
                     <el-form-item :label="t('mcpArgs')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
                       <el-input
+                        :placeholder="t('mcpArgsPlaceholder')"
                         type="textarea"
                         :rows="3"
                         v-model="newMCPFormData.args"
@@ -5988,6 +5993,7 @@ if ('serviceWorker' in navigator) {
                     </el-form-item>
                     <el-form-item :label="t('mcpEnv')" v-if="mcpInputType === 'form' && newMCPType === 'stdio'">
                       <el-input
+                        :placeholder="t('mcpEnvPlaceholder')"
                         type="textarea"
                         :rows="3"
                         v-model="newMCPFormData.env"

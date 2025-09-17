@@ -201,7 +201,7 @@ let vue_data = {
     deletingMCPName: null,
     newMCPJson: '',
     newMCPFormData: {
-      name: '',
+      name: 'mcp',
       command: '',
       args:'',
       env: '',
@@ -211,6 +211,12 @@ let vue_data = {
     newMCPType: 'stdio', // 新增类型字段
     mcpInputType: 'form', // 默认为JSON，还可以是 'form'
     currentMCPExample: '',
+    mcpURLDict: {
+      stdio: 'http://127.0.0.1:8000/mcp',
+      sse: 'http://127.0.0.1:8000/sse',
+      ws: 'ws://127.0.0.1:8000/ws',
+      streamablehttp: 'http://127.0.0.1:8000/mcp'
+    },
     mcpExamples: {
       stdio: `{
   "mcpServers": {
