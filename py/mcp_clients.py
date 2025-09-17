@@ -25,60 +25,60 @@ class ConnectionManager:
         self.session: Optional[ClientSession] = None
         self.tools: list[str] = []
 
-@asynccontextmanager
-async def connect(self, config: dict) -> AsyncIterator["ConnectionManager"]:
-    async with AsyncExitStack() as stack:
-        # 1. 建立传输层
-        if "command" in config:
-            from mcp.client.stdio import StdioServerParameters
-            server_params = StdioServerParameters(
-                command=get_command_path(config["command"]),
-                args=config.get("args", []),
-                env=config.get("env"),
-            )
-            read, write = await stack.enter_async_context(stdio_client(server_params))
-        else:
-            mcptype = config.get("type", "ws")
-            if "streamable" in mcptype:
-                mcptype = "streamablehttp"
-            client_map = {
-                "ws": websocket_client,
-                "sse": sse_client,
-                "streamablehttp": streamablehttp_client,
-            }
-            headers = config.get("headers", {})
-            client = client_map[mcptype](
-                config["url"], headers=headers
-            ) if headers else client_map[mcptype](config["url"])
-
-            transport = await stack.enter_async_context(client)
-
-            # ---------- 首包校验（仅 SSE 需要） ----------
-            if mcptype == "sse":
-                # transport 实际就是 SSE 的 event_source
-                event_source = transport[0]  # sse_client 返回 (read, write)
-                try:
-                    # 立即拉第一条 SSE，验证 content-type 和流可用性
-                    async for sse in event_source.aiter_sse():
-                        # 能进到这里就说明首包 OK
-                        break
-                except Exception as e:
-                    # 统一把异常抛给外层，让 _connection_monitor 捕获
-                    raise RuntimeError(f"SSE initial handshake failed: {e}") from e
-            # ---------- END ----------
-
-            if mcptype == "streamablehttp":
-                read, write, _ = transport
+    @asynccontextmanager
+    async def connect(self, config: dict) -> AsyncIterator["ConnectionManager"]:
+        async with AsyncExitStack() as stack:
+            # 1. 建立传输层
+            if "command" in config:
+                from mcp.client.stdio import StdioServerParameters
+                server_params = StdioServerParameters(
+                    command=get_command_path(config["command"]),
+                    args=config.get("args", []),
+                    env=config.get("env"),
+                )
+                read, write = await stack.enter_async_context(stdio_client(server_params))
             else:
-                read, write = transport
+                mcptype = config.get("type", "ws")
+                if "streamable" in mcptype:
+                    mcptype = "streamablehttp"
+                client_map = {
+                    "ws": websocket_client,
+                    "sse": sse_client,
+                    "streamablehttp": streamablehttp_client,
+                }
+                headers = config.get("headers", {})
+                client = client_map[mcptype](
+                    config["url"], headers=headers
+                ) if headers else client_map[mcptype](config["url"])
 
-        # 2. 建立会话
-        self.session = await stack.enter_async_context(ClientSession(read, write))
-        await self.session.initialize()
-        self.tools = [t.name for t in (await self.session.list_tools()).tools]
-        logging.info("Connected to MCP server. Tools: %s", self.tools)
+                transport = await stack.enter_async_context(client)
 
-        yield self
+                # ---------- 首包校验（仅 SSE 需要） ----------
+                if mcptype == "sse":
+                    # transport 实际就是 SSE 的 event_source
+                    event_source = transport[0]  # sse_client 返回 (read, write)
+                    try:
+                        # 立即拉第一条 SSE，验证 content-type 和流可用性
+                        async for sse in event_source.aiter_sse():
+                            # 能进到这里就说明首包 OK
+                            break
+                    except Exception as e:
+                        # 统一把异常抛给外层，让 _connection_monitor 捕获
+                        raise RuntimeError(f"SSE initial handshake failed: {e}") from e
+                # ---------- END ----------
+
+                if mcptype == "streamablehttp":
+                    read, write, _ = transport
+                else:
+                    read, write = transport
+
+            # 2. 建立会话
+            self.session = await stack.enter_async_context(ClientSession(read, write))
+            await self.session.initialize()
+            self.tools = [t.name for t in (await self.session.list_tools()).tools]
+            logging.info("Connected to MCP server. Tools: %s", self.tools)
+
+            yield self
 
 
 # ---------- 客户端 ----------
