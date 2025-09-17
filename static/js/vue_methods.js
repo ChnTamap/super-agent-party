@@ -7351,4 +7351,151 @@ let vue_methods = {
       }
     });
   },
+    startDriverGuide() {
+      const KEY = 'driver_guide_shown';
+      if (localStorage.getItem(KEY)) return;
+      localStorage.setItem(KEY, '1');
+
+      const driver = window.driver.js.driver;
+
+      const d = driver({
+        allowClose: true,
+        disableActiveInteraction: false,
+        showProgress: true,
+        nextBtnText: this.t('next'),
+        prevBtnText: this.t('prev'),
+        doneBtnText: this.t('done'),
+        steps: [
+          {
+            element: '#driver-guide-btn',
+            popover: {
+              title: this.t('guide.driver-guide-btn'),
+              description: this.t('guide.driver-guide-btn-notice'),
+              side: 'right',
+              align: 'start',
+            },
+          },
+          {
+            element: '#model-config',
+            popover: {
+              title: this.t('guide.model-config'),
+              description: this.t('guide.model-config-notice'),
+              side: 'right',
+              // 使用 onNextClick 替代 onNext
+              onNextClick: async () => {
+                await this.handleSelect('model-config');
+                // 手动触发下一步导航
+                d.moveNext();
+              }
+            },
+          },
+          {
+            element: '#add-provider-card',
+            popover: {
+              title: this.t('guide.add-provider-card'),
+              description: this.t('guide.add-provider-card-notice'),
+              side: 'right',
+              // 使用 onNextClick 替代 onNext
+              onNextClick: () => {
+                this.showAddDialog = true;
+                setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+              }
+            }
+          },
+          {
+            element: '#show-Add-Dialog',
+            popover: {
+              title: this.t('guide.show-Add-Dialog'),
+              description: this.t('guide.show-Add-Dialog-notice'),
+              side: 'top',
+            }
+          },
+          {
+            element: '#confirm-Add-Provider-Button',
+            popover: {
+              title: this.t('guide.confirm-Add-Provider-Button'),
+              side: 'right',
+              // 使用 onNextClick 替代 onNext
+              onNextClick: async () => {
+                this.confirmAddProvider();
+                // 手动触发下一步导航
+                d.moveNext();
+              }
+            }
+          },
+          {
+            element: '#get-API-key',
+            popover: {
+              title: this.t('guide.get-API-key'),
+              description: this.t('guide.get-API-key-notice'),
+              side: 'right',
+              onPrevClick: () => {
+                this.showAddDialog = true;
+                setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+              },
+            }
+          },
+          {
+            element: '#input-api-Key',
+            popover: {
+              title: this.t('guide.input-api-Key'),
+              description: this.t('guide.input-api-Key-notice'),
+              side: 'right',
+            }
+          },
+          {
+            element: '#get-Models-List',
+            popover: {
+              title: this.t('guide.get-Models-List'),
+              description: this.t('guide.get-Models-List-notice'),
+              side: 'right',
+            }
+          },
+          {
+            element: '#model-Id',
+            popover: {
+              title: this.t('guide.model-Id'),
+              description: this.t('guide.model-Id-notice'),
+              side: 'right',
+            }
+          },
+        ]
+      });
+
+      // 监听高亮元素点击
+      const checkClick = (e) => {
+        if (e.target.closest('#model-config')) {
+          d.moveNext();
+        }
+        if (e.target.closest('#add-provider-card')) {
+          d.moveNext();
+        }
+        if (e.target.closest('#confirm-Add-Provider-Button')) {
+          d.moveNext();
+        }
+        if (e.target.closest('#get-API-key')) {
+          d.moveNext();
+        }
+        if (e.target.closest('#get-Models-List')) {
+          d.moveNext();
+        }
+        if (e.target.closest('#vendor-Option')) {
+          setTimeout(() => d.moveNext(), 100); // 手动触发下一步导航
+        }
+      };
+      document.addEventListener('click', checkClick);
+
+      // 清理监听
+      d.onDestroyed = () => document.removeEventListener('click', checkClick);
+
+      setTimeout(() => d.drive(), 300);
+    },
+
+
+  // 手动重开引导（可绑定到按钮）
+  restartDriverGuide() {
+    localStorage.removeItem('driver_guide_shown');
+    this.startDriverGuide();
+  },
+  
 }

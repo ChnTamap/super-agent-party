@@ -139,6 +139,7 @@ const app = Vue.createApp({
       }
     });
   }, 1000); 
+  if (this.activeMenu === 'home') this.startDriverGuide();
   },
   beforeUnmount() {
     if (isElectron) {
