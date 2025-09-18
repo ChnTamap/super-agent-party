@@ -191,6 +191,7 @@ async def lifespan(app: FastAPI):
                 settings['mcpServers'][server_name]['processingStatus'] = 'server_error'
                 mcp_client_list[server_name] = McpClient()
                 mcp_client_list[server_name].disabled = True
+                await mcp_client_list[server_name].close()
 
             # fail_fast=True：首次连接失败即抛
             await asyncio.wait_for(
@@ -201,6 +202,8 @@ async def lifespan(app: FastAPI):
                 ),
                 timeout=6
             )
+            # 等待5秒
+            await asyncio.sleep(5)
             # 如果 initialize 抛异常，直接走到下面的 except
             # 如果成功到达这里，再检查 on_failure 是否已被触发
             if first_error:
@@ -4444,10 +4447,12 @@ async def process_mcp(mcp_id: str):
     global mcp_client_list, mcp_status
 
     async def on_failure(error_message: str):
+        mcp_status[mcp_id] = f"failed: {error_message}"
         # 容错：只有客户端已创建才标记 disabled
         if mcp_id in mcp_client_list:
             mcp_client_list[mcp_id].disabled = True
-        mcp_status[mcp_id] = f"failed: {error_message}"
+            await mcp_client_list[mcp_id].close()
+            print(f"关闭MCP服务器: {mcp_id}")
 
     mcp_status[mcp_id] = "initializing"
     try:
@@ -4458,12 +4463,16 @@ async def process_mcp(mcp_id: str):
         # 执行初始化逻辑
         mcp_client_list[mcp_id] = McpClient()    
         await asyncio.wait_for(mcp_client_list[mcp_id].initialize(mcp_id, server_config, on_failure_callback=on_failure), timeout=6)
-        mcp_status[mcp_id] = "ready"
-        mcp_client_list[mcp_id].disabled = False
+        # 等待1秒
+        await asyncio.sleep(5)
+        if mcp_status[mcp_id] == "initializing":
+            mcp_status[mcp_id] = "ready"
+            mcp_client_list[mcp_id].disabled = False
         
     except Exception as e:
         mcp_client_list[mcp_id].disabled = True
         mcp_status[mcp_id] = f"failed: {str(e)}"
+        await mcp_client_list[mcp_id].close()
 
 @app.delete("/remove_mcp")
 async def remove_mcp_server(request: Request):
