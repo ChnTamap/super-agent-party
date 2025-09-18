@@ -155,14 +155,7 @@ class McpClient:
             if not self._conn or not self._conn.session:
                 return None
             try:
-                # 调用工具，并设置超时时间，避免无限等待
-                return await asyncio.wait_for(
-                    self._conn.session.call_tool(tool_name, tool_params),
-                    timeout=60  # 设置超时时间为 60 秒
-                )
-            except asyncio.TimeoutError:
-                logging.error("Call to tool %s timed out", tool_name)
-                return "Call to tool %s timed out" % tool_name
+                return await self._conn.session.call_tool(tool_name, tool_params)
             except Exception as e:
                 logging.error("Failed to call tool %s: %s", tool_name, e)
                 return "Failed to call tool %s: %s" % (tool_name, e)
