@@ -4444,7 +4444,9 @@ async def process_mcp(mcp_id: str):
     global mcp_client_list, mcp_status
 
     async def on_failure(error_message: str):
-        mcp_client_list[mcp_id].disabled = True
+        # 容错：只有客户端已创建才标记 disabled
+        if mcp_id in mcp_client_list:
+            mcp_client_list[mcp_id].disabled = True
         mcp_status[mcp_id] = f"failed: {error_message}"
 
     mcp_status[mcp_id] = "initializing"
