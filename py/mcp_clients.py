@@ -90,6 +90,7 @@ class McpClient:
         self._shutdown = False
         self._on_failure_callback: Optional[callable] = None  # 新增：失败回调
         self._tools: list[str] = []
+        self._tools_list = []
 
     async def initialize(self, server_name: str, server_config: dict, on_failure_callback: Optional[callable] = None) -> None:
         """非阻塞初始化：拉起连接监控协程"""
@@ -132,29 +133,38 @@ class McpClient:
                 await asyncio.sleep(5)
 
     # ---------- 外部 API ----------
-    async def get_openai_functions(self):
+    async def get_openai_functions(self,disable_tools=[]):
         async with self._lock:
             if not self._conn or not self._conn.session:
                 return []
             tools = (await self._conn.session.list_tools()).tools
             self._tools = [t.name for t in tools]
-            return [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": t.name,
-                        "description": t.description,
-                        "parameters": t.inputSchema,
-                    },
-                }
-                for t in tools
-            ]
+            self._tools_list = [{"name": t.name, "description": t.description,"enabled":True} for t in tools]
+            tools_list = []
+            for t in tools:
+                if t.name not in disable_tools:
+                    tools_list.append(
+                        {
+                            "type": "function",
+                            "function": {
+                                "name": t.name,
+                                "description": t.description,
+                                "parameters": t.inputSchema,
+                            },
+                        }
+                    )
+
+            return tools_list
 
     async def call_tool(self, tool_name: str, tool_params: Dict[str, Any]) -> Any:
         async with self._lock:
             if not self._conn or not self._conn.session:
                 return None
-            return await self._conn.session.call_tool(tool_name, tool_params)
+            try:
+                return await self._conn.session.call_tool(tool_name, tool_params)
+            except Exception as e:
+                logging.error("Failed to call tool %s: %s", tool_name, e)
+                return "Failed to call tool %s: %s" % (tool_name, e)
 
 
 # ---------- 使用示例 ----------

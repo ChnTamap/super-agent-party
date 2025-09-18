@@ -195,6 +195,8 @@ let vue_data = {
         enabled: false
       },
     },
+    toolForShowInfo: {"name": "", "description": ""},
+    showToolInfoDialog: false,
     mcpServers: {},
     showAddMCPDialog: false,
     showMCPConfirm: false,

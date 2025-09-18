@@ -452,17 +452,32 @@ async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str
         ha_tool_list = HA_client._tools
         if tool_name in ha_tool_list:
             result = await HA_client.call_tool(tool_name, tool_params)
-            return str(result.model_dump())
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
+                return str(result.model_dump())
+            else:
+                return str(result)
     if settings["chromeMCPSettings"]["enabled"]:
         Chrome_tool_list = ChromeMCP_client._tools
         if tool_name in Chrome_tool_list:
             result = await ChromeMCP_client.call_tool(tool_name, tool_params)
-            return str(result.model_dump())
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
+                return str(result.model_dump())
+            else:
+                return str(result)
     if tool_name not in _TOOL_HOOKS:
         for server_name, mcp_client in mcp_client_list.items():
             if tool_name in mcp_client._conn.tools:
                 result = await mcp_client.call_tool(tool_name, tool_params)
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
                 return str(result.model_dump())
+            else:
+                return str(result)
         return None
     tool_call = _TOOL_HOOKS[tool_name]
     try:
@@ -844,7 +859,11 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     if 'disabled' not in settings['mcpServers'][server_name]:
                         settings['mcpServers'][server_name]['disabled'] = False
                     if settings['mcpServers'][server_name]['disabled'] == False and settings['mcpServers'][server_name]['processingStatus'] == 'ready':
-                        function = await mcp_client.get_openai_functions()
+                        disable_tools = []
+                        for tool in settings['mcpServers'][server_name]["tools"]: 
+                            if tool.get("enabled", True) == False:
+                                disable_tools.append(tool["name"])
+                        function = await mcp_client.get_openai_functions(disable_tools=disable_tools)
                         if function:
                             tools.extend(function)
         get_llm_tool_fuction = await get_llm_tool(settings)
@@ -2495,7 +2514,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if 'disabled' not in settings['mcpServers'][server_name]:
                     settings['mcpServers'][server_name]['disabled'] = False
                 if settings['mcpServers'][server_name]['disabled'] == False and settings['mcpServers'][server_name]['processingStatus'] == 'ready':
-                    function = await mcp_client.get_openai_functions()
+                    disable_tools = []
+                    for tool in settings['mcpServers'][server_name]["tools"]: 
+                        if tool.get("enabled", True) == False:
+                            disable_tools.append(tool["name"])
+                    function = await mcp_client.get_openai_functions(disable_tools=disable_tools)
                     if function:
                         tools.extend(function)
     get_llm_tool_fuction = await get_llm_tool(settings)
@@ -4405,10 +4428,18 @@ async def create_mcp_endpoint(request: Request, background_tasks: BackgroundTask
     background_tasks.add_task(process_mcp, mcp_id)
     
     return {"success": True, "message": "MCP服务器初始化已开始"}
+
 @app.get("/mcp_status/{mcp_id}")
 async def get_mcp_status(mcp_id: str):
+    global mcp_client_list, mcp_status
     status = mcp_status.get(mcp_id, "not_found")
-    return {"mcp_id": mcp_id, "status": status}
+    if status == "ready":
+        # 保证 _tools 里都是可序列化的 dict / list / 基本类型
+        tools = await mcp_client_list[mcp_id].get_openai_functions()
+        tools = json.dumps(mcp_client_list[mcp_id]._tools_list)
+        return {"mcp_id": mcp_id, "status": status, "tools": tools}
+    return {"mcp_id": mcp_id, "status": status, "tools": []}
+
 async def process_mcp(mcp_id: str):
     global mcp_client_list, mcp_status
 
