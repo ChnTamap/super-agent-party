@@ -2858,27 +2858,99 @@ let vue_methods = {
     // 在methods中添加
     async addMCPServer() {
       try {
-        const input = this.newMCPJson.trim();
-        const parsed = JSON.parse(input.startsWith('{') ? input : `{${input}}`);
-        const servers = parsed.mcpServers || parsed;
-        
-        // 将服务器name作为ID
-        const mcpId = Object.keys(servers)[0];
-        
-        // 添加临时状态
-        this.mcpServers = {
-          ...this.mcpServers,
-          [mcpId]: {
-            ...servers[Object.keys(servers)[0]],
-            processingStatus: 'initializing', // 新增状态字段
-            disabled:true,
-            type: this.newMCPType,
-            input: input
+        let mcpId = "mcp";
+        if (this.mcpInputType === 'json') {
+          const input = this.newMCPJson.trim();
+          const parsed = JSON.parse(input.startsWith('{') ? input : `{${input}}`);
+          const servers = parsed.mcpServers || parsed;
+          
+          // 将服务器name作为ID
+          mcpId = Object.keys(servers)[0];
+          
+          // 添加临时状态
+          this.mcpServers = {
+            ...this.mcpServers,
+            [mcpId]: {
+              ...servers[Object.keys(servers)[0]],
+              processingStatus: 'initializing', // 新增状态字段
+              disabled:true,
+              type: this.newMCPType,
+              input: input
+            }
+          };
+        }
+        else {
+          mcpId = this.newMCPFormData.name;
+          let servers = {};
+          if (this.newMCPType === 'stdio'){
+            servers = {
+              "command": this.newMCPFormData.command,
+            };
+            // 处理args和env
+            let args = this.newMCPFormData.args;
+            let env = this.newMCPFormData.env;
+            if (args) {
+              // 按回车符分离成列表
+              args = args.split('\n').map(arg => arg.trim()).filter(arg => arg);
+              servers['args'] = args;
+            }
+            if (env) {
+              // 按回车符分离成字典, 等号分离成键值对
+              env = env.split('\n').map(env => env.trim()).filter(env => env).reduce((acc, cur) => {
+                const [key, value] = cur.split('=').map(part => part.trim());
+                acc[key] = value;
+              })
+              servers['env'] = env;
+            }
+          } 
+          else {
+            servers = {
+              "url": this.newMCPFormData.url,
+            };
+            let ContentType = 'application/json';
+            if (this.newMCPType== 'sse'){
+              ContentType = 'text/event-stream';
+            }else if (this.newMCPType== 'ws'){
+              ContentType = 'text/plain';
+            }else if (this.newMCPType== 'streamablehttp'){
+              ContentType = 'application/json';
+            }
+            if (this.newMCPFormData.apiKey && this.newMCPFormData.apiKey.trim()!= '') {
+              servers['headers'] = {
+                "Authorization": `Bearer ${this.newMCPFormData.apiKey.trim()}`,
+                "Content-Type": ContentType
+              }
+            }
           }
-        };
+          let input = {
+            "mcpServers": {
+            }
+          }
+          input.mcpServers[mcpId] = servers;
+          input = JSON.stringify(input, null, 2);
+          // 添加临时状态
+          this.mcpServers = {
+            ...this.mcpServers,
+            [mcpId]: {
+              ...servers,
+              processingStatus: 'initializing', // 新增状态字段
+              disabled:true,
+              type: this.newMCPType,
+              input: input
+            }
+          };
+        }
         
         this.showAddMCPDialog = false;
         this.newMCPJson = '';
+        this.newMCPFormData = {
+          name: 'mcp',
+          command: '',
+          args:'',
+          env: '',
+          url: '',
+          apiKey: '',
+        },
         await this.autoSaveSettings();
         // 触发后台任务
         const response = await fetch(`/create_mcp`, {
@@ -2922,6 +2994,14 @@ let vue_methods = {
     async editMCPServer(name) {
       this.newMCPJson =  this.mcpServers[name].input
       this.newMCPType = this.mcpServers[name].type
+      this.newMCPFormData = {
+        name: name,
+        command: this.mcpServers[name]?.command || '',
+        args:this.mcpServers[name]?.args?.join('\n') || '',
+        env: this.mcpServers[name]?.env ? Object.entries(this.mcpServers[name]?.env).map(env => `${env[0]}=${env[1]}`).join('\n') : '',
+        url: this.mcpServers[name]?.url || '',
+        apiKey: this.mcpServers[name]?.headers?.Authorization?.split(' ')[1] || '',
+      }
       this.showAddMCPDialog = true
     },
     async restartMCPServer(name) {
@@ -3247,6 +3327,9 @@ let vue_methods = {
     },
     getVendorLogo(vendor) {
       return this.vendorLogoList[vendor] || "source/providers/custom.png";
+    },
+    getMCPVendorLogo(vendor) {
+      return this.MCPvendorLogoList[vendor] || "source/providers/custom.png";
     },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;
@@ -4046,6 +4129,14 @@ let vue_methods = {
         else {
           url = this.vendorAPIpage[provider.vendor];
         }
+        if (isElectron) {
+          window.electronAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+    },
+    goToMCPURL(value) {
+        url = this.MCPpage[value]
         if (isElectron) {
           window.electronAPI.openExternal(url);
         } else {
