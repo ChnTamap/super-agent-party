@@ -96,7 +96,7 @@ if ('serviceWorker' in navigator) {
     <!-- 顶部栏 -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
-        <div class="model-info" @click="showModelDialog = true">
+        <div v-show="settings?.model!==''" class="model-info" @click="showModelDialog = true" >
           <el-alert type="info" :closable="false" class="model-info">
             <span>{{settings.model}}</span>  
           </el-alert>
@@ -5897,17 +5897,36 @@ if ('serviceWorker' in navigator) {
                               <span>{{ t('clickToolInfo') }}</span>
                             </div>
                             <div v-if="server.processingStatus==='ready' && server.tools && server.tools.length" class="tool-list">
-                              <el-tag
-                                v-for="tool in server.tools"
-                                :key="tool.name"
-                                size="small"
-                                type="info"
-                                effect="plain"
-                                @click="showToolInfo(tool)"
-                                style="margin:2px"
-                              >
-                                {{ tool.name }}
-                              </el-tag>
+                              <div style="max-height: 120px; overflow-y: auto;">
+                                <div
+                                  v-for="tool in server.tools"
+                                  :key="tool.name"
+                                  style="
+                                    display: flex;          /* 横向排列 */
+                                    align-items: center;    /* 垂直居中 */
+                                    gap: 8px;               /* tag 与 switch 间距，可自行调 */
+                                    margin: 2px 0;
+                                  "
+                                >
+                                  <!-- tag 保持自然宽度 -->
+                                  <el-tag
+                                    size="small"
+                                    type="info"
+                                    effect="plain"
+                                    @click="showToolInfo(tool)"
+                                    style="cursor: pointer"
+                                  >
+                                    {{ tool.name }}
+                                  </el-tag>
+
+                                  <!-- margin-left:auto 把 switch 挤到最右 -->
+                                  <el-switch 
+                                    @change="autoSaveSettings"
+                                    size="small" 
+                                    v-model="tool.enabled" 
+                                    style="margin-left: auto;" />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>

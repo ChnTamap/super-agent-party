@@ -859,7 +859,11 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     if 'disabled' not in settings['mcpServers'][server_name]:
                         settings['mcpServers'][server_name]['disabled'] = False
                     if settings['mcpServers'][server_name]['disabled'] == False and settings['mcpServers'][server_name]['processingStatus'] == 'ready':
-                        function = await mcp_client.get_openai_functions()
+                        disable_tools = []
+                        for tool in settings['mcpServers'][server_name]["tools"]: 
+                            if tool.get("enabled", True) == False:
+                                disable_tools.append(tool["name"])
+                        function = await mcp_client.get_openai_functions(disable_tools=disable_tools)
                         if function:
                             tools.extend(function)
         get_llm_tool_fuction = await get_llm_tool(settings)
@@ -2510,7 +2514,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 if 'disabled' not in settings['mcpServers'][server_name]:
                     settings['mcpServers'][server_name]['disabled'] = False
                 if settings['mcpServers'][server_name]['disabled'] == False and settings['mcpServers'][server_name]['processingStatus'] == 'ready':
-                    function = await mcp_client.get_openai_functions()
+                    disable_tools = []
+                    for tool in settings['mcpServers'][server_name]["tools"]: 
+                        if tool.get("enabled", True) == False:
+                            disable_tools.append(tool["name"])
+                    function = await mcp_client.get_openai_functions(disable_tools=disable_tools)
                     if function:
                         tools.extend(function)
     get_llm_tool_fuction = await get_llm_tool(settings)
