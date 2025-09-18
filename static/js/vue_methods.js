@@ -2966,12 +2966,17 @@ let vue_methods = {
         };
         
         const interval = setInterval(async () => {
-          const { status } = await checkStatus();
+          const { status,tools } = await checkStatus();
           
           if (status === 'ready') {
             clearInterval(interval);
-            this.mcpServers[mcpId].processingStatus = 'ready';
-            this.mcpServers[mcpId].disabled = false;
+            // 一次性写入，保证响应式
+            this.mcpServers[mcpId] = {
+              ...this.mcpServers[mcpId],
+              processingStatus: 'ready',
+              disabled: false,
+              tools:JSON.parse(tools)    
+            };
             await this.autoSaveSettings();
             showNotification(this.t('mcpAdded'), 'success');
           } else if (status.startsWith('failed')) {
@@ -3023,12 +3028,15 @@ let vue_methods = {
           };
           
           const interval = setInterval(async () => {
-            const { status } = await checkStatus();
-            
+            const { status,tools } = await checkStatus();
             if (status === 'ready') {
               clearInterval(interval);
-              this.mcpServers[mcpId].processingStatus = 'ready';
-              this.mcpServers[mcpId].disabled = false;
+              this.mcpServers[mcpId] = {
+                ...this.mcpServers[mcpId],
+                processingStatus: 'ready',
+                disabled: false,
+                tools:JSON.parse(tools)    
+              };
               await this.autoSaveSettings();
               showNotification(this.t('mcpAdded'), 'success');
             } else if (status.startsWith('failed')) {
@@ -7588,5 +7596,8 @@ let vue_methods = {
     localStorage.removeItem('driver_guide_shown');
     this.startDriverGuide();
   },
-  
+  showToolInfo(tool) {
+    this.toolForShowInfo = tool;
+    this.showToolInfoDialog = true;
+  }
 }

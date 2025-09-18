@@ -534,6 +534,7 @@ if ('serviceWorker' in navigator) {
                   :active-value="false"  
                   :inactive-value="true" 
                   v-model="server.disabled" 
+                  :disabled="server.processingStatus === 'server_error'"
                   @change="autoSaveSettings">
                 </el-switch>
                 <div class="knowledge-info">
@@ -5200,16 +5201,16 @@ if ('serviceWorker' in navigator) {
                       <div class="provider-card knowledge-card" v-for="kb in knowledgeBases" :key="kb.id">
                         <div class="card-header">
                           <!-- 加载状态指示 -->
-                          <template v-if="kb.processingStatus === 'processing'">
-                            <el-icon class="loading-spinner">
-                              <i class="fa-solid fa-spinner"></i>
-                            </el-icon>
-                          </template>
-                          <template v-else>
-                            <el-switch v-model="kb.enabled" @change="toggleKbEnabled(kb)"></el-switch>
-                          </template>
+                          <el-switch 
+                            v-show="kb.processingStatus !== 'processing'" 
+                            v-model="kb.enabled" 
+                            @change="toggleKbEnabled(kb)">
+                          </el-switch>
 
                           <div class="card-actions">
+                            <el-button  type="info" v-if="kb.processingStatus === 'processing'"  circle size="small">
+                              <i class="fa-solid fa-spinner"></i>
+                            </el-button>
                             <el-button @click="removeKnowledgeBase(kb)" type="danger"  circle size="small">
                               <i class="fa-solid fa-trash"></i>
                             </el-button>
@@ -5222,7 +5223,7 @@ if ('serviceWorker' in navigator) {
                           <div class="kb-content">
                             <div class="kb-header">
                               <h3 class="kb-title">{{ kb.name }}</h3>
-                              <el-tag v-if="kb.files?.length" type="info" size="small" effect="dark">
+                              <el-tag v-if="kb.files?.length" type="info" size="small">
                                 {{ kb.files.length }} {{ t('files') }}
                               </el-tag>
                             </div>
@@ -5792,15 +5793,11 @@ if ('serviceWorker' in navigator) {
                 <div class="provider-grid">
                   <div class="provider-card a2a-card" v-for="(server, url) in a2aServers" :key="url">
                     <div class="card-header">
-                      <template v-if="server.status === 'initializing'">
-                        <el-icon class="loading-spinner">
-                          <i class="fa-solid fa-spinner"></i>
-                        </el-icon>
-                      </template>
-                      <template v-else>
-                        <el-switch v-model="server.enabled" @change="autoSaveSettings"></el-switch>
-                      </template>
+                      <el-switch v-show="server.status !== 'initializing'" v-model="server.enabled" @change="autoSaveSettings"></el-switch>
                       <div class="card-actions">
+                        <el-button  type="info" v-if="server.status === 'initializing'"  circle size="small">
+                          <i class="fa-solid fa-spinner"></i>
+                        </el-button>
                         <el-button @click="removeA2AServer(url)" type="danger" circle size="small">
                           <i class="fa-solid fa-trash"></i>
                         </el-button>
@@ -5849,22 +5846,15 @@ if ('serviceWorker' in navigator) {
                     <div class="provider-grid">
                       <div class="provider-card knowledge-card" v-for="(server, name) in mcpServers" :key="name">
                         <div class="card-header">
-                          <!-- 加载状态指示 -->
-                          <template v-if="server.processingStatus === 'initializing'">
-                            <el-icon class="loading-spinner">
-                              <i class="fa-solid fa-spinner"></i>
-                            </el-icon>
-                          </template>
-                          <template v-else>
-                            <el-switch
-                              :active-value="false"  
-                              :inactive-value="true" 
-                              v-model="server.disabled"
-                              @change="autoSaveSettings"
-                              class="kb-switch"
-                              :disabled="server.processingStatus === 'server_error'"
-                            ></el-switch>
-                          </template>
+                          <el-switch
+                            v-show="server.processingStatus !== 'initializing'"
+                            :active-value="false"  
+                            :inactive-value="true" 
+                            v-model="server.disabled"
+                            @change="autoSaveSettings"
+                            class="kb-switch"
+                            :disabled="server.processingStatus === 'server_error'"
+                          ></el-switch>
                           <div class="card-actions">
                             <el-button
                               @click="restartMCPServer(name)"
@@ -5872,7 +5862,7 @@ if ('serviceWorker' in navigator) {
                               circle
                               size="small"
                             >
-                              <i class="fa-solid fa-rotate-right"></i>
+                              <i :class="server.processingStatus == 'initializing'?'fa-solid fa-spinner':'fa-solid fa-rotate-right'"></i>
                             </el-button>
                             <el-button
                               @click="editMCPServer(name)"
@@ -5895,6 +5885,30 @@ if ('serviceWorker' in navigator) {
                         <div class="kb-content">
                           <div class="kb-header">
                             <h3 class="kb-title">{{ name }}</h3>
+                            <el-tag v-if="server?.tools?.length" type="info" size="small">
+                              {{ server?.tools?.length }} {{ t('tools') }}
+                            </el-tag>
+                          </div>
+                           <div class="kb-meta">
+                            <div class="kb-meta-item">
+                              <el-icon class="kb-icon">
+                                <i class="fa-solid fa-toolbox"></i>
+                              </el-icon>
+                              <span>{{ t('clickToolInfo') }}</span>
+                            </div>
+                            <div v-if="server.processingStatus==='ready' && server.tools && server.tools.length" class="tool-list">
+                              <el-tag
+                                v-for="tool in server.tools"
+                                :key="tool.name"
+                                size="small"
+                                type="info"
+                                effect="plain"
+                                @click="showToolInfo(tool)"
+                                style="margin:2px"
+                              >
+                                {{ tool.name }}
+                              </el-tag>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -5905,6 +5919,20 @@ if ('serviceWorker' in navigator) {
                         <div style="color: #606266; margin-top: 10px;">{{ t('addNewMCP') }}</div>
                       </div>
                     </div>
+
+                    <el-dialog
+                      v-model="showToolInfoDialog"
+                      :title="toolForShowInfo.name"
+                      width="400px"
+                      >
+                      <el-alert
+                          type="info"
+                          :closable="false"
+                          class="mb-2"
+                        >
+                          {{ toolForShowInfo.description }}
+                      </el-alert>
+                    </el-dialog>
                     <!-- 添加MCP对话框 -->
                     <el-dialog
                       v-model="showAddMCPDialog"

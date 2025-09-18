@@ -4420,10 +4420,18 @@ async def create_mcp_endpoint(request: Request, background_tasks: BackgroundTask
     background_tasks.add_task(process_mcp, mcp_id)
     
     return {"success": True, "message": "MCP服务器初始化已开始"}
+
 @app.get("/mcp_status/{mcp_id}")
 async def get_mcp_status(mcp_id: str):
+    global mcp_client_list, mcp_status
     status = mcp_status.get(mcp_id, "not_found")
-    return {"mcp_id": mcp_id, "status": status}
+    if status == "ready":
+        # 保证 _tools 里都是可序列化的 dict / list / 基本类型
+        tools = await mcp_client_list[mcp_id].get_openai_functions()
+        tools = json.dumps(mcp_client_list[mcp_id]._tools_list)
+        return {"mcp_id": mcp_id, "status": status, "tools": tools}
+    return {"mcp_id": mcp_id, "status": status, "tools": []}
+
 async def process_mcp(mcp_id: str):
     global mcp_client_list, mcp_status
 

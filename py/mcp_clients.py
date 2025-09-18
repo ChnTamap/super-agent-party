@@ -90,6 +90,7 @@ class McpClient:
         self._shutdown = False
         self._on_failure_callback: Optional[callable] = None  # 新增：失败回调
         self._tools: list[str] = []
+        self._tools_list = []
 
     async def initialize(self, server_name: str, server_config: dict, on_failure_callback: Optional[callable] = None) -> None:
         """非阻塞初始化：拉起连接监控协程"""
@@ -138,6 +139,7 @@ class McpClient:
                 return []
             tools = (await self._conn.session.list_tools()).tools
             self._tools = [t.name for t in tools]
+            self._tools_list = [{"name": t.name, "description": t.description} for t in tools]
             return [
                 {
                     "type": "function",
