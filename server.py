@@ -452,17 +452,32 @@ async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str
         ha_tool_list = HA_client._tools
         if tool_name in ha_tool_list:
             result = await HA_client.call_tool(tool_name, tool_params)
-            return str(result.model_dump())
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
+                return str(result.model_dump())
+            else:
+                return str(result)
     if settings["chromeMCPSettings"]["enabled"]:
         Chrome_tool_list = ChromeMCP_client._tools
         if tool_name in Chrome_tool_list:
             result = await ChromeMCP_client.call_tool(tool_name, tool_params)
-            return str(result.model_dump())
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
+                return str(result.model_dump())
+            else:
+                return str(result)
     if tool_name not in _TOOL_HOOKS:
         for server_name, mcp_client in mcp_client_list.items():
             if tool_name in mcp_client._conn.tools:
                 result = await mcp_client.call_tool(tool_name, tool_params)
+            if isinstance(result,str):
+                return result
+            elif hasattr(result, 'model_dump'):
                 return str(result.model_dump())
+            else:
+                return str(result)
         return None
     tool_call = _TOOL_HOOKS[tool_name]
     try:
