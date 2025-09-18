@@ -3319,6 +3319,9 @@ let vue_methods = {
     getVendorLogo(vendor) {
       return this.vendorLogoList[vendor] || "source/providers/custom.png";
     },
+    getMCPVendorLogo(vendor) {
+      return this.MCPvendorLogoList[vendor] || "source/providers/custom.png";
+    },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;
       this.handleVendorChange(vendor);
@@ -4117,6 +4120,14 @@ let vue_methods = {
         else {
           url = this.vendorAPIpage[provider.vendor];
         }
+        if (isElectron) {
+          window.electronAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+    },
+    goToMCPURL(value) {
+        url = this.MCPpage[value]
         if (isElectron) {
           window.electronAPI.openExternal(url);
         } else {

@@ -433,7 +433,13 @@ const app = Vue.createApp({
       return this.vendorValues.map(value => ({
         label: this.t(`vendor.${value}`), // 使用统一的翻译键
         value
-    }));
+      }));
+    },
+    MCPvendorOptions() {
+      return this.MCPvendorValues.map(value => ({
+        label: this.t(`MCPvendor.${value}`), // 使用统一的翻译键
+        value
+      }));
     },
     themeOptions() {
       return this.themeValues.map(value => ({
