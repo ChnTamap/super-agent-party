@@ -2907,9 +2907,18 @@ let vue_methods = {
             servers = {
               "url": this.newMCPFormData.url,
             };
+            let ContentType = 'application/json';
+            if (this.newMCPType== 'sse'){
+              ContentType = 'text/event-stream';
+            }else if (this.newMCPType== 'ws'){
+              ContentType = 'text/plain';
+            }else if (this.newMCPType== 'streamablehttp'){
+              ContentType = 'application/json';
+            }
             if (this.newMCPFormData.apiKey && this.newMCPFormData.apiKey.trim()!= '') {
               servers['headers'] = {
-                "Authorization": `Bearer ${this.newMCPFormData.apiKey.trim()}`
+                "Authorization": `Bearer ${this.newMCPFormData.apiKey.trim()}`,
+                "Content-Type": ContentType
               }
             }
           }
