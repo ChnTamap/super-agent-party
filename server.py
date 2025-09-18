@@ -860,7 +860,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         settings['mcpServers'][server_name]['disabled'] = False
                     if settings['mcpServers'][server_name]['disabled'] == False and settings['mcpServers'][server_name]['processingStatus'] == 'ready':
                         disable_tools = []
-                        for tool in settings['mcpServers'][server_name]["tools"]: 
+                        for tool in settings['mcpServers'][server_name].get("tools", []): 
                             if tool.get("enabled", True) == False:
                                 disable_tools.append(tool["name"])
                         function = await mcp_client.get_openai_functions(disable_tools=disable_tools)
