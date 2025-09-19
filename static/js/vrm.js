@@ -2489,8 +2489,30 @@ if (isElectron) {
                                 host: cfg.send.host,
                                 port: cfg.send.port
                             }
+                        },
+                        // 翻译文本
+                        translations: {
+                            title: '',
+                            receiveEnable: '',
+                            receivePort: '',
+                            sendEnable: '',
+                            sendHost: '',
+                            sendPort: '',
+                            cancelButton: '',
+                            saveButton: ''
                         }
                     }
+                },
+                async mounted() {
+                    // 初始化翻译文本
+                    this.translations.title = await t('vmcSettings');
+                    this.translations.receiveEnable = await t('vmcReceiveEnable');
+                    this.translations.receivePort = await t('vmcReceivePort');
+                    this.translations.sendEnable = await t('vmcSendEnable');
+                    this.translations.sendHost = await t('vmcSendHost');
+                    this.translations.sendPort = await t('vmcSendPort');
+                    this.translations.cancelButton = await t('cancel');
+                    this.translations.saveButton = await t('save');
                 },
                 methods: {
                     async saveConfig() {
@@ -2515,7 +2537,7 @@ if (isElectron) {
                 template: `
                     <el-dialog
                         v-model="dialogVisible"
-                        title="VMC 协议设置"
+                        :title="translations.title"
                         width="420px"
                         :modal="false"
                         :close-on-click-modal="false"
@@ -2527,16 +2549,16 @@ if (isElectron) {
                             <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                     <el-switch v-model="form.receive.enable"></el-switch>
-                                    <span style="margin-left: 10px; font-weight: 500;">启用接收（UDP）</span>
+                                    <span style="margin-left: 10px; font-weight: 500;">{{ translations.receiveEnable }}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="width: 70px; font-size: 14px;">接收端口:</span>
+                                    <span style="width: 70px;margin-right:30px; font-size: 14px;">{{ translations.receivePort }}:</span>
                                     <el-input-number 
                                         v-model="form.receive.port" 
                                         :min="1024" 
                                         :max="65535"
                                         controls-position="right"
-                                        style="width: 120px;"
+                                        style="width: 200px;"
                                     ></el-input-number>
                                 </div>
                             </div>
@@ -2545,23 +2567,23 @@ if (isElectron) {
                             <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                     <el-switch v-model="form.send.enable"></el-switch>
-                                    <span style="margin-left: 10px; font-weight: 500;">启用发送（UDP）</span>
+                                    <span style="margin-left: 10px;margin-right:30px; font-weight: 500;">{{ translations.sendEnable }}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                    <span style="width: 70px; font-size: 14px;">目标主机:</span>
+                                    <span style="width: 70px; margin-right:30px;font-size: 14px;">{{ translations.sendHost }}:</span>
                                     <el-input 
                                         v-model="form.send.host" 
                                         style="width: 200px;"
                                     ></el-input>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="width: 70px; font-size: 14px;">目标端口:</span>
+                                    <span style="width: 70px;margin-right:30px; font-size: 14px;">{{ translations.sendPort }}:</span>
                                     <el-input-number 
                                         v-model="form.send.port" 
                                         :min="1024" 
                                         :max="65535"
                                         controls-position="right"
-                                        style="width: 120px;"
+                                        style="width: 200px;"
                                     ></el-input-number>
                                 </div>
                             </div>
@@ -2569,8 +2591,8 @@ if (isElectron) {
                         
                         <template #footer>
                             <div style="text-align: right;">
-                                <el-button @click="cancel" style="margin-right: 10px;">取消</el-button>
-                                <el-button type="primary" @click="saveConfig">保存</el-button>
+                                <el-button @click="cancel" style="margin-right: 10px;">{{ translations.cancelButton }}</el-button>
+                                <el-button type="primary" @click="saveConfig">{{ translations.saveButton }}</el-button>
                             </div>
                         </template>
                     </el-dialog>
@@ -2590,6 +2612,7 @@ if (isElectron) {
                 }
             });
         });
+
 
         // 保存所有需要隐藏的按钮引用
         const controlButtons = [];
