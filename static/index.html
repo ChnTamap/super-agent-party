@@ -5897,7 +5897,7 @@ if ('serviceWorker' in navigator) {
                               <span>{{ t('clickToolInfo') }}</span>
                             </div>
                             <div v-if="server.processingStatus==='ready' && server.tools && server.tools.length" class="tool-list">
-                              <div style="max-height: 120px; overflow-y: auto;">
+                              <div style="max-height: 200px; overflow-y: auto;">
                                 <div
                                   v-for="tool in server.tools"
                                   :key="tool.name"
