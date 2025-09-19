@@ -71,20 +71,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
   getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
   downloadFile: (payload) => ipcRenderer.invoke('download-file', payload),
-    // 修改：添加回调参数
-    getWindowConfig: (callback) => {
-        if (windowConfig.windowName !== "default") {
-            // 如果配置已更新，直接返回
-            callback(windowConfig);
-        } else {
-            // 如果配置未更新，监听更新事件
-            const handler = (event) => {
-                callback(event.detail);
-                window.removeEventListener('window-config-updated', handler);
-            };
-            window.addEventListener('window-config-updated', handler);
-        }
-    },
+  // 修改：添加回调参数
+  getWindowConfig: (callback) => {
+      if (windowConfig.windowName !== "default") {
+          // 如果配置已更新，直接返回
+          callback(windowConfig);
+      } else {
+          // 如果配置未更新，监听更新事件
+          const handler = (event) => {
+              callback(event.detail);
+              window.removeEventListener('window-config-updated', handler);
+          };
+          window.addEventListener('window-config-updated', handler);
+      }
+  },
+});
+
+contextBridge.exposeInMainWorld('vmcAPI', {
+  onVMCBone: (callback) => ipcRenderer.on('vmc-bone', (_, data) => callback(data)),
+  sendVMCBone: (data) => ipcRenderer.invoke('send-vmc-bone', data),
+  sendVMCBlend: (data) => ipcRenderer.invoke('send-vmc-blend', data),
+  sendVMCBlendApply: () => ipcRenderer.invoke('send-vmc-blend-apply')
 });
 
 // 在文件末尾添加以下代码来接收主进程传递的配置

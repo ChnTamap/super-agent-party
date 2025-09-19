@@ -1748,6 +1748,120 @@ function clearSubtitle() {
     }
 }
 
+
+let vmcLastSent = 0;
+const VMC_SEND_INTERVAL = 1000 / 30;          // 30 fps
+const VMC_BONES = [                           // VMC 标准骨骼列表
+  'hips','spine','chest','upperChest','neck','head',
+  'leftShoulder','leftUpperArm','leftLowerArm','leftHand',
+  'rightShoulder','rightUpperArm','rightLowerArm','rightHand',
+  'leftUpperLeg','leftLowerLeg','leftFoot','leftToes',
+  'rightUpperLeg','rightLowerLeg','rightFoot','rightToes',
+  // 手指（可选）
+  'leftThumbProximal','leftThumbIntermediate','leftThumbDistal',
+  'leftIndexProximal','leftIndexIntermediate','leftIndexDistal',
+  'leftMiddleProximal','leftMiddleIntermediate','leftMiddleDistal',
+  'leftRingProximal','leftRingIntermediate','leftRingDistal',
+  'leftLittleProximal','leftLittleIntermediate','leftLittleDistal',
+  'rightThumbProximal','rightThumbIntermediate','rightThumbDistal',
+  'rightIndexProximal','rightIndexIntermediate','rightIndexDistal',
+  'rightMiddleProximal','rightMiddleIntermediate','rightMiddleDistal',
+  'rightRingProximal','rightRingIntermediate','rightRingDistal',
+  'rightLittleProximal','rightLittleIntermediate','rightLittleDistal'
+];
+
+/**
+ * 把当前 VRM 骨骼打成 VMC-OSC 消息发出去
+ * 自动 30 fps 节流，仅 Electron 有效
+ */
+function sendVMCBones() {
+  if (!window.vmcAPI || !currentVrm?.humanoid) return;
+
+  const now = performance.now();
+  if (now - vmcLastSent < VMC_SEND_INTERVAL) return;
+  vmcLastSent = now;
+
+  for (const name of VMC_BONES) {
+    const node = currentVrm.humanoid.getNormalizedBoneNode(name);
+    if (!node || !node.position || !node.quaternion) continue;
+
+    window.vmcAPI.sendVMCBone({
+      boneName: name,
+      position: {
+        x: node.position.x,
+        y: node.position.y,
+        z: node.position.z
+      },
+      rotation: {
+        x: node.quaternion.x,
+        y: - node.quaternion.y,
+        z: - node.quaternion.z,
+        w: node.quaternion.w
+      }
+    });
+  }
+}
+
+// VRM1 → VRM0（VMC 事实标准）
+const VRM1_TO_VMC0 = {
+  happy:  'Joy',
+  angry:  'Angry',
+  sad:    'Sorrow',
+  relaxed:'Fun',
+  aa:     'A',
+  ih:     'I',
+  ou:     'U',
+  ee:     'E',
+  oh:     'O',
+  blinkLeft:  'Blink_L',
+  blinkRight: 'Blink_R',
+  // 其余没有官方映射的，按原名发
+  blink:      'Blink',
+  surprised:  'Surprised',
+  neutral:    'Neutral',
+  lookDown:   'LookDown',
+  lookUp:     'LookUp',
+  lookLeft:   'LookLeft',
+  lookRight:  'LookRight'
+};
+
+// 需要同步的表情（按需删减）
+const VMC_BLEND_SHAPES = [
+  // 五元音
+  'aa','ee','ih','oh','ou',
+  'blink', 'blinkLeft', 'blinkRight',
+  'surprised','happy','angry', 'sad', 'neutral', 'relaxed',
+  'lookDown','lookUp','lookLeft','lookRight'
+];
+
+let lastBlendWeights = {}; // 节流：变化了才发
+
+
+
+function sendVMCBlends() {
+  if (!window.vmcAPI || !currentVrm?.expressionManager) return;
+
+  const mgr = currentVrm.expressionManager;
+  for (const vrmName of VMC_BLEND_SHAPES) {
+    const weight = mgr.getValue(vrmName);
+    if (weight === undefined) continue;
+
+    // 转换名字
+    const vmcName = VRM1_TO_VMC0[vrmName];
+    if (!vmcName) continue;          // 没有对应就跳过
+    // 节流
+    if (Math.abs(weight - (lastBlendWeights[vmcName] ?? 0)) < 0.01) continue;
+    lastBlendWeights[vmcName] = weight;
+    console.log('[VMC-OUT]', vmcName, weight); // 发送
+    window.vmcAPI.sendVMCBlend({
+      blendName: vmcName,
+      weight
+    });
+  }
+  window.vmcAPI.sendVMCBlendApply(); // 应用
+}
+
+
 // animate
 const clock = new THREE.Clock();
 clock.start();
@@ -1769,7 +1883,8 @@ function animate() {
     if (currentMixer) {
         currentMixer.update(deltaTime);
     }
-    
+    sendVMCBones();
+    sendVMCBlends();  // 表情
     renderer.render(scene, camera);
     
     // 处理窗口大小变化时字幕位置
