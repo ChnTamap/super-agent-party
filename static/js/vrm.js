@@ -2479,47 +2479,48 @@ if (isElectron) {
         wrap.id = 'vmc-popup';
         wrap.style.cssText = `
             position:fixed; inset:0; z-index:100000;
-            background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center;
-            opacity:0; transition:opacity .25s ease; backdrop-filter:blur(8px);`;
+            background: transparent; display:flex; align-items:center; justify-content:center;
+            opacity:0; transition:opacity .25s ease;`;
         wrap.innerHTML = `
-            <div style="background:rgba(255,255,255,.92); border-radius:12px; padding:24px; width:360px;
-                        color:#222; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; box-shadow:0 8px 32px rgba(0,0,0,.25);
-                        transform:scale(.95); transition:transform .25s ease;">
-            <h3 style="margin:0 0 16px; font-size:18px;">VMC 协议管理</h3>
+    <div style="background: rgba(255, 255, 255, 0.85); border-radius: 16px; padding: 24px; width: 380px;
+                color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial;
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(20px);
+                transform: scale(0.95); transition: transform 0.25s ease; border: 1px solid rgba(255,255,255,0.5);">
+        <h3 style="margin: 0 0 16px; font-size: 20px; font-weight: 600;">VMC 协议设置</h3>
 
-            <!-- 接收 -->
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <input type="checkbox" id="vmc-rcv-enable" ${cfg.receive.enable ? 'checked' : ''}>
-                <span>启用接收（UDP）</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-                <span>接收端口：</span>
-                <input id="vmc-rcv-port" type="number" min="1024" max="65535" value="${cfg.receive.port}"
-                    style="width:90px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
-            </label>
+        <!-- 接收 -->
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <input type="checkbox" id="vmc-rcv-enable" ${cfg.receive.enable ? 'checked' : ''} style="transform: scale(1.2);">
+            <span style="font-size: 14px;">启用接收（UDP）</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+            <span style="font-size: 14px;">接收端口：</span>
+            <input id="vmc-rcv-port" type="number" min="1024" max="65535" value="${cfg.receive.port}"
+                style="width: 100px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
+        </label>
 
-            <!-- 发送 -->
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <input type="checkbox" id="vmc-send-enable" ${cfg.send.enable ? 'checked' : ''}>
-                <span>启用发送（UDP）</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                <span>目标主机：</span>
-                <input id="vmc-send-host" type="text" value="${cfg.send.host}"
-                    style="width:110px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
-                <span>目标端口：</span>
-                <input id="vmc-send-port" type="number" min="1024" max="65535" value="${cfg.send.port}"
-                    style="width:90px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
-            </label>
+        <!-- 发送 -->
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <input type="checkbox" id="vmc-send-enable" ${cfg.send.enable ? 'checked' : ''} style="transform: scale(1.2);">
+            <span style="font-size: 14px;">启用发送（UDP）</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <span style="font-size: 14px;">目标主机：</span>
+            <input id="vmc-send-host" type="text" value="${cfg.send.host}"
+                style="width: 130px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
+        </label>
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+            <span style="font-size: 14px;">目标端口：</span>
+            <input id="vmc-send-port" type="number" min="1024" max="65535" value="${cfg.send.port}"
+                style="width: 100px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
+        </label>
 
-            <!-- 按钮组 -->
-            <div style="text-align:right;">
-                <button id="vmc-save" style="margin-right:8px; padding:6px 16px;">保存</button>
-                <button id="vmc-cancel" style="padding:6px 16px;">取消</button>
-            </div>
-            </div>`;
+        <!-- 按钮组 -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button id="vmc-cancel" style="padding: 8px 18px; background: #f1f1f1; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">取消</button>
+            <button id="vmc-save" style="padding: 8px 18px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">保存</button>
+        </div>
+    </div>`;
 
         document.body.appendChild(wrap);
         requestAnimationFrame(() => {
