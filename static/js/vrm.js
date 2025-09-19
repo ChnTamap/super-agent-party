@@ -2455,6 +2455,108 @@ if (isElectron) {
             closeButton.title = await t('closeWindow');
         }
         initbutton();
+
+
+        // ★ VMC：VMC 协议管理按钮
+        const vmcButton = document.createElement('div');
+        vmcButton.id = 'vmc-handle';
+        vmcButton.innerHTML = '<i class="fas fa-broadcast-tower"></i>';
+        vmcButton.style.cssText = `
+            width: 36px; height: 36px; background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333;
+            cursor: pointer; -webkit-app-region: no-drag; display: flex;
+            align-items: center; justify-content: center; font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s ease;
+            user-select: none; pointer-events: auto; backdrop-filter: blur(10px);`;
+        
+
+        // ★ 打开弹窗 + 实时同步配置
+        vmcButton.addEventListener('click', async () => {
+        // 拉取当前配置（主进程缓存）
+        const cfg = await window.electronAPI.getVMCConfig();
+
+        const wrap = document.createElement('div');
+        wrap.id = 'vmc-popup';
+        wrap.style.cssText = `
+            position:fixed; inset:0; z-index:100000;
+            background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center;
+            opacity:0; transition:opacity .25s ease; backdrop-filter:blur(8px);`;
+        wrap.innerHTML = `
+            <div style="background:rgba(255,255,255,.92); border-radius:12px; padding:24px; width:360px;
+                        color:#222; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial; box-shadow:0 8px 32px rgba(0,0,0,.25);
+                        transform:scale(.95); transition:transform .25s ease;">
+            <h3 style="margin:0 0 16px; font-size:18px;">VMC 协议管理</h3>
+
+            <!-- 接收 -->
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <input type="checkbox" id="vmc-rcv-enable" ${cfg.receive.enable ? 'checked' : ''}>
+                <span>启用接收（UDP）</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <span>接收端口：</span>
+                <input id="vmc-rcv-port" type="number" min="1024" max="65535" value="${cfg.receive.port}"
+                    style="width:90px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
+            </label>
+
+            <!-- 发送 -->
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <input type="checkbox" id="vmc-send-enable" ${cfg.send.enable ? 'checked' : ''}>
+                <span>启用发送（UDP）</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <span>目标主机：</span>
+                <input id="vmc-send-host" type="text" value="${cfg.send.host}"
+                    style="width:110px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+                <span>目标端口：</span>
+                <input id="vmc-send-port" type="number" min="1024" max="65535" value="${cfg.send.port}"
+                    style="width:90px; padding:4px 6px; border:1px solid #ccc; border-radius:4px;">
+            </label>
+
+            <!-- 按钮组 -->
+            <div style="text-align:right;">
+                <button id="vmc-save" style="margin-right:8px; padding:6px 16px;">保存</button>
+                <button id="vmc-cancel" style="padding:6px 16px;">取消</button>
+            </div>
+            </div>`;
+
+        document.body.appendChild(wrap);
+        requestAnimationFrame(() => {
+            wrap.style.opacity = '1';
+            wrap.querySelector('div').style.transform = 'scale(1)';
+        });
+
+        // 事件
+        const saveBtn = wrap.querySelector('#vmc-save');
+        const cancelBtn = wrap.querySelector('#vmc-cancel');
+
+        const close = () => {
+            wrap.style.opacity = '0';
+            wrap.querySelector('div').style.transform = 'scale(.95)';
+            setTimeout(() => wrap.remove(), 250);
+        };
+
+        saveBtn.onclick = () => {
+            const newCfg = {
+            receive: {
+                enable: wrap.querySelector('#vmc-rcv-enable').checked,
+                port:   +wrap.querySelector('#vmc-rcv-port').value
+            },
+            send: {
+                enable: wrap.querySelector('#vmc-send-enable').checked,
+                host:   wrap.querySelector('#vmc-send-host').value.trim(),
+                port:   +wrap.querySelector('#vmc-send-port').value
+            }
+            };
+            window.electronAPI.setVMCConfig(newCfg);
+            close();
+        };
+        cancelBtn.onclick = close;
+        wrap.onclick = (e) => { if (e.target === wrap) close(); };
+        });
+
+
         // 保存所有需要隐藏的按钮引用
         const controlButtons = [];
         // 鼠标穿透锁定按钮
@@ -2597,7 +2699,7 @@ if (isElectron) {
         // 组装控制面板
         controlPanel.appendChild(dragButton);
         controlPanel.appendChild(lockButton);
-        controlPanel.appendChild(wsStatusButton);
+        controlPanel.appendChild(vmcButton);
         controlPanel.appendChild(subtitleButton);
         controlPanel.appendChild(idleAnimationButton);
         controlPanel.appendChild(prevModelButton);
@@ -2608,6 +2710,7 @@ if (isElectron) {
         // 收集所有需要隐藏的按钮（除了锁定按钮）
         controlButtons.push(
             dragButton, 
+            vmcButton,
             wsStatusButton, 
             subtitleButton, 
             idleAnimationButton, 
@@ -2621,6 +2724,7 @@ if (isElectron) {
         document.body.appendChild(controlPanel);
 
         // 为每个按钮添加悬浮提示
+        addHoverEffect(vmcButton, await t('VMCSettings') || 'VMC Settings');
         addHoverEffect(dragButton, await t('dragWindow'));
         addHoverEffect(lockButton, isMouseLocked ? await t('UnlockWindow') : await t('LockWindow'));
         addHoverEffect(wsStatusButton, wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'));

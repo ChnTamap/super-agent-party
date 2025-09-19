@@ -11,29 +11,90 @@ const net = require('net') // 添加 net 模块用于端口检测
 const dgram = require('dgram');
 const osc = require('osc');
 
-function startVMCReceiver() {
-  const udpPort = new osc.UDPPort({
+// ★ VMC：UDP 收发资源
+let vmcUdpPort = null;          // osc.UDPPort 实例
+let vmcReceiverActive = false;  // 接收是否运行
+const vmcSendSocket = dgram.createSocket('udp4'); // 发送复用同一 socket
+// ★ 替换原来的 startVMCReceiver
+function startVMCReceiver(cfg) {
+  if (vmcReceiverActive) return;
+  vmcUdpPort = new osc.UDPPort({
     localAddress: '0.0.0.0',
-    localPort: 39539,
+    localPort: cfg.receive.port,
     metadata: true,
   });
+  vmcUdpPort.open();
+  vmcUdpPort.on('message', (oscMsg) => {
+    if (!oscMsg.address.startsWith('/VMC/Ext/Bone/Pos')) return;
+    const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args;
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
+  });
+  vmcReceiverActive = true;
+  console.log(`[VMC] 接收已启动 @ ${cfg.receive.port}`);
+}
+function stopVMCReceiver() {
+  if (!vmcReceiverActive) return;
+  vmcUdpPort.close();
+  vmcUdpPort = null;
+  vmcReceiverActive = false;
+  console.log('[VMC] 接收已停止');
+}
 
-  udpPort.open();
+// 发送 VMC Bone -------------------------------------------------
+function sendVMCBoneMain(data) {
+  if (!data) return;
+  const { boneName, position, rotation } = data;
+  if (!boneName || !position || !rotation) return;
 
-  udpPort.on('message', (oscMsg) => {
-    if (oscMsg.address.startsWith('/VMC/Ext/Bone/Pos')) {
-      const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args;
-      // 转发给 VRM 页面
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('vmc-bone', {
-          boneName,
-          position: { x, y, z },
-          rotation: { x: qx, y: qy, z: qz, w: qw },
-        });
-      }
-    }
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: `/VMC/Ext/Bone/Pos`,
+    args: [
+      { type: 's', value: boneName },
+      { type: 'f', value: position.x || 0 },
+      { type: 'f', value: position.y || 0 },
+      { type: 'f', value: position.z || 0 },
+      { type: 'f', value: rotation.x || 0 },
+      { type: 'f', value: rotation.y || 0 },
+      { type: 'f', value: rotation.z || 0 },
+      { type: 'f', value: rotation.w || 1 },
+    ],
+  });
+  vmcSendSocket.send(oscMsg, port, host, (err) => {
+    if (err) console.error('VMC send error:', err);
   });
 }
+
+// 发送 VMC Blend ------------------------------------------------
+function sendVMCBlendMain(data) {
+  if (!data) return;
+  const { blendName, weight } = data;
+  if (typeof blendName !== 'string' || typeof weight !== 'number') return;
+
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: '/VMC/Ext/Blend/Val',
+    args: [
+      { type: 's', value: blendName },
+      { type: 'f', value: Math.max(0, Math.min(1, weight)) },
+    ],
+  });
+  vmcSendSocket.send(oscMsg, port, host, (err) => {
+    if (err) console.error('VMC blend send error:', err);
+  });
+}
+
+// 发送 VMC Blend Apply ------------------------------------------
+function sendVMCBlendApplyMain() {
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: '/VMC/Ext/Blend/Apply',
+    args: [],
+  });
+  vmcSendSocket.send(oscMsg, port, host);
+}
+
 let pythonExec;
 let isQuitting = false;
 
@@ -387,9 +448,14 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
 // 只有在获得锁（第一个实例）时才执行初始化
 app.whenReady().then(async () => {
   try {
+      // 默认配置
+    global.vmcCfg = {
+      receive: { enable: false, port: 39539 },
+      send:    { enable: false, host: '127.0.0.1', port: 39540 }
+    };
     // 创建骨架屏窗口
     createSkeletonWindow()
-    startVMCReceiver(); // 启动 VMC 接收器
+    if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);
     // 启动后端服务（现在会自动查找可用端口）
     const actualPort = await startBackend()
     
@@ -561,63 +627,40 @@ app.whenReady().then(async () => {
     // 创建系统托盘
     createTray();
     updatecontextMenu();
-
-    const VMC_SEND_PORT = 39540;
-    const sender = dgram.createSocket('udp4');
-
-    ipcMain.handle('send-vmc-bone', (_, data) => {
-      if (!data) return;
-      const { boneName, position, rotation } = data;
-
-      if (!boneName || !position || !rotation) {
-        console.warn('[VMC] Invalid bone data:', data);
-        return;
+    ipcMain.handle('get-vmc-config', () => global.vmcCfg);
+    // ★ 下面这段就是你要放的「主进程 IPC + 默认配置」
+    ipcMain.handle('set-vmc-config', async (_, cfg) => {
+      if (cfg.receive.enable) {
+        if (!vmcReceiverActive || cfg.receive.port !== global.vmcCfg?.receive.port) {
+          if (vmcReceiverActive) stopVMCReceiver();
+          startVMCReceiver(cfg);
+        }
+      } else {
+        stopVMCReceiver();
       }
-
-      const oscMsg = osc.writePacket({
-        address: `/VMC/Ext/Bone/Pos`,
-        args: [
-          { type: 's', value: boneName },
-          { type: 'f', value: position.x || 0 },
-          { type: 'f', value: position.y || 0 },
-          { type: 'f', value: position.z || 0 },
-          { type: 'f', value: rotation.x || 0 },
-          { type: 'f', value: rotation.y || 0 },
-          { type: 'f', value: rotation.z || 0 },
-          { type: 'f', value: rotation.w || 1 },
-        ],
+      global.vmcCfg = cfg;
+      BrowserWindow.getAllWindows().forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-config-changed', cfg);
       });
+      return { success: true };
+    });
 
-      sender.send(oscMsg, VMC_SEND_PORT, '127.0.0.1', (err) => {
-        if (err) console.error('VMC send error:', err);
+    ['send-vmc-bone','send-vmc-blend','send-vmc-blend-apply'].forEach(method => {
+      ipcMain.removeHandler(method);          // 清掉旧注册
+      ipcMain.handle(method, (e, data) => {
+        if (!global.vmcCfg?.send.enable) return;   // 总开关
+        // 下面就是原来的实现（直接写，或抽成函数调用都可）
+        switch (method) {
+          case 'send-vmc-bone':
+            return sendVMCBoneMain(data);      // 你自己已有的实现
+          case 'send-vmc-blend':
+            return sendVMCBlendMain(data);
+          case 'send-vmc-blend-apply':
+            return sendVMCBlendApplyMain();
+        }
       });
     });
 
-    ipcMain.handle('send-vmc-blend', (_, data) => {
-      if (!data) return;
-      const { blendName, weight } = data;
-      if (typeof blendName !== 'string' || typeof weight !== 'number') return;
-
-      const oscMsg = osc.writePacket({
-        address: '/VMC/Ext/Blend/Val',
-        args: [
-          { type: 's', value: blendName },
-          { type: 'f', value: Math.max(0, Math.min(1, weight)) }
-        ]
-      });
-
-      sender.send(oscMsg, VMC_SEND_PORT, '127.0.0.1', err => {
-        if (err) console.error('VMC blend send error:', err);
-      });
-    });
-
-    ipcMain.handle('send-vmc-blend-apply', () => {
-      const oscMsg = osc.writePacket({
-        address: '/VMC/Ext/Blend/Apply',
-        args: []
-      });
-      sender.send(oscMsg, VMC_SEND_PORT, '127.0.0.1');
-    });
 
     // 窗口控制事件
     ipcMain.handle('window-action', (_, action) => {

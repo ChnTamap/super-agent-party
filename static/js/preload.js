@@ -2,6 +2,13 @@ const { contextBridge, shell, ipcRenderer } = require('electron');
 const path = require('path');
 const { remote } = require('@electron/remote/main')
 
+
+// 缓存最后一次 VMC 配置（默认关闭）
+let vmcCfg = { receive:{enable:false,port:39539}, send:{enable:false,host:'127.0.0.1',port:39540} };
+
+// 主进程推送最新配置
+ipcRenderer.on('vmc-config-changed', (_, cfg) => { vmcCfg = cfg; });
+
 // 与 main.js 保持一致的服务器配置
 const HOST = '127.0.0.1'
 const PORT = 3456
@@ -85,13 +92,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
           window.addEventListener('window-config-updated', handler);
       }
   },
+
+  setVMCConfig: (cfg) => ipcRenderer.invoke('set-vmc-config', cfg),
+  getVMCConfig: () => ipcRenderer.invoke('get-vmc-config'),
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {
   onVMCBone: (callback) => ipcRenderer.on('vmc-bone', (_, data) => callback(data)),
-  sendVMCBone: (data) => ipcRenderer.invoke('send-vmc-bone', data),
-  sendVMCBlend: (data) => ipcRenderer.invoke('send-vmc-blend', data),
-  sendVMCBlendApply: () => ipcRenderer.invoke('send-vmc-blend-apply')
+
+  sendVMCBone: (data) => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-bone', data);
+  },
+  sendVMCBlend: (data) => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-blend', data);
+  },
+  sendVMCBlendApply: () => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-blend-apply');
+  }
 });
 
 // 在文件末尾添加以下代码来接收主进程传递的配置
