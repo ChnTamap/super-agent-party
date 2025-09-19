@@ -2470,93 +2470,126 @@ if (isElectron) {
             user-select: none; pointer-events: auto; backdrop-filter: blur(10px);`;
         
 
-        // ★ 打开弹窗 + 实时同步配置
         vmcButton.addEventListener('click', async () => {
-        // 拉取当前配置（主进程缓存）
-        const cfg = await window.electronAPI.getVMCConfig();
-
-        const wrap = document.createElement('div');
-        wrap.id = 'vmc-popup';
-        wrap.style.cssText = `
-            position:fixed; inset:0; z-index:100000;
-            background: transparent; display:flex; align-items:center; justify-content:center;
-            opacity:0; transition:opacity .25s ease;`;
-        wrap.innerHTML = `
-    <div style="background: rgba(255, 255, 255, 0.85); border-radius: 16px; padding: 24px; width: 380px;
-                color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial;
-                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(20px);
-                transform: scale(0.95); transition: transform 0.25s ease; border: 1px solid rgba(255,255,255,0.5);">
-        <h3 style="margin: 0 0 16px; font-size: 20px; font-weight: 600;">VMC 协议设置</h3>
-
-        <!-- 接收 -->
-        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-            <input type="checkbox" id="vmc-rcv-enable" ${cfg.receive.enable ? 'checked' : ''} style="transform: scale(1.2);">
-            <span style="font-size: 14px;">启用接收（UDP）</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
-            <span style="font-size: 14px;">接收端口：</span>
-            <input id="vmc-rcv-port" type="number" min="1024" max="65535" value="${cfg.receive.port}"
-                style="width: 100px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
-        </label>
-
-        <!-- 发送 -->
-        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-            <input type="checkbox" id="vmc-send-enable" ${cfg.send.enable ? 'checked' : ''} style="transform: scale(1.2);">
-            <span style="font-size: 14px;">启用发送（UDP）</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-            <span style="font-size: 14px;">目标主机：</span>
-            <input id="vmc-send-host" type="text" value="${cfg.send.host}"
-                style="width: 130px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
-        </label>
-        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
-            <span style="font-size: 14px;">目标端口：</span>
-            <input id="vmc-send-port" type="number" min="1024" max="65535" value="${cfg.send.port}"
-                style="width: 100px; padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px;">
-        </label>
-
-        <!-- 按钮组 -->
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button id="vmc-cancel" style="padding: 8px 18px; background: #f1f1f1; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">取消</button>
-            <button id="vmc-save" style="padding: 8px 18px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">保存</button>
-        </div>
-    </div>`;
-
-        document.body.appendChild(wrap);
-        requestAnimationFrame(() => {
-            wrap.style.opacity = '1';
-            wrap.querySelector('div').style.transform = 'scale(1)';
+            const cfg = await window.electronAPI.getVMCConfig();
+            
+            const { ElDialog, ElForm, ElFormItem, ElInput, ElSwitch, ElButton, ElInputNumber } = ElementPlus;
+            
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        dialogVisible: true,
+                        form: {
+                            receive: {
+                                enable: cfg.receive.enable,
+                                port: cfg.receive.port
+                            },
+                            send: {
+                                enable: cfg.send.enable,
+                                host: cfg.send.host,
+                                port: cfg.send.port
+                            }
+                        }
+                    }
+                },
+                methods: {
+                    async saveConfig() {
+                        const newCfg = {
+                            receive: {
+                                enable: this.form.receive.enable,
+                                port: this.form.receive.port
+                            },
+                            send: {
+                                enable: this.form.send.enable,
+                                host: this.form.send.host,
+                                port: this.form.send.port
+                            }
+                        };
+                        await window.electronAPI.setVMCConfig(newCfg);
+                        this.dialogVisible = false;
+                    },
+                    cancel() {
+                        this.dialogVisible = false;
+                    }
+                },
+                template: `
+                    <el-dialog
+                        v-model="dialogVisible"
+                        title="VMC 协议设置"
+                        width="420px"
+                        :modal="false"
+                        :close-on-click-modal="false"
+                        append-to-body
+                        custom-class="vmc-dialog"
+                    >
+                        <div style="padding: 0 10px;">
+                            <!-- 接收设置 -->
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                    <el-switch v-model="form.receive.enable"></el-switch>
+                                    <span style="margin-left: 10px; font-weight: 500;">启用接收（UDP）</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="width: 70px; font-size: 14px;">接收端口:</span>
+                                    <el-input-number 
+                                        v-model="form.receive.port" 
+                                        :min="1024" 
+                                        :max="65535"
+                                        controls-position="right"
+                                        style="width: 120px;"
+                                    ></el-input-number>
+                                </div>
+                            </div>
+                            
+                            <!-- 发送设置 -->
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                    <el-switch v-model="form.send.enable"></el-switch>
+                                    <span style="margin-left: 10px; font-weight: 500;">启用发送（UDP）</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span style="width: 70px; font-size: 14px;">目标主机:</span>
+                                    <el-input 
+                                        v-model="form.send.host" 
+                                        style="width: 200px;"
+                                    ></el-input>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="width: 70px; font-size: 14px;">目标端口:</span>
+                                    <el-input-number 
+                                        v-model="form.send.port" 
+                                        :min="1024" 
+                                        :max="65535"
+                                        controls-position="right"
+                                        style="width: 120px;"
+                                    ></el-input-number>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <template #footer>
+                            <div style="text-align: right;">
+                                <el-button @click="cancel" style="margin-right: 10px;">取消</el-button>
+                                <el-button type="primary" @click="saveConfig">保存</el-button>
+                            </div>
+                        </template>
+                    </el-dialog>
+                `
+            });
+            
+            app.use(ElementPlus);
+            const dialogContainer = document.createElement('div');
+            document.body.appendChild(dialogContainer);
+            app.mount(dialogContainer);
+            
+            // 监听对话框关闭
+            const unwatch = app.watch(() => app._instance.data.dialogVisible, (newVal) => {
+                if (!newVal) {
+                    document.body.removeChild(dialogContainer);
+                    unwatch();
+                }
+            });
         });
-
-        // 事件
-        const saveBtn = wrap.querySelector('#vmc-save');
-        const cancelBtn = wrap.querySelector('#vmc-cancel');
-
-        const close = () => {
-            wrap.style.opacity = '0';
-            wrap.querySelector('div').style.transform = 'scale(.95)';
-            setTimeout(() => wrap.remove(), 250);
-        };
-
-        saveBtn.onclick = () => {
-            const newCfg = {
-            receive: {
-                enable: wrap.querySelector('#vmc-rcv-enable').checked,
-                port:   +wrap.querySelector('#vmc-rcv-port').value
-            },
-            send: {
-                enable: wrap.querySelector('#vmc-send-enable').checked,
-                host:   wrap.querySelector('#vmc-send-host').value.trim(),
-                port:   +wrap.querySelector('#vmc-send-port').value
-            }
-            };
-            window.electronAPI.setVMCConfig(newCfg);
-            close();
-        };
-        cancelBtn.onclick = close;
-        wrap.onclick = (e) => { if (e.target === wrap) close(); };
-        });
-
 
         // 保存所有需要隐藏的按钮引用
         const controlButtons = [];
@@ -2700,11 +2733,11 @@ if (isElectron) {
         // 组装控制面板
         controlPanel.appendChild(dragButton);
         controlPanel.appendChild(lockButton);
-        controlPanel.appendChild(vmcButton);
         controlPanel.appendChild(subtitleButton);
         controlPanel.appendChild(idleAnimationButton);
         controlPanel.appendChild(prevModelButton);
         controlPanel.appendChild(nextModelButton);
+        controlPanel.appendChild(vmcButton);
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
