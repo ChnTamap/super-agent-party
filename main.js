@@ -453,6 +453,7 @@ app.whenReady().then(async () => {
       receive: { enable: false, port: 39539 },
       send:    { enable: false, host: '127.0.0.1', port: 39540 }
     };
+    ipcMain.handle('get-vmc-config', () => global.vmcCfg);
     // 创建骨架屏窗口
     createSkeletonWindow()
     if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);
@@ -627,7 +628,6 @@ app.whenReady().then(async () => {
     // 创建系统托盘
     createTray();
     updatecontextMenu();
-    ipcMain.handle('get-vmc-config', () => global.vmcCfg);
     // ★ 下面这段就是你要放的「主进程 IPC + 默认配置」
     ipcMain.handle('set-vmc-config', async (_, cfg) => {
       if (cfg.receive.enable) {
@@ -660,7 +660,6 @@ app.whenReady().then(async () => {
         }
       });
     });
-
 
     // 窗口控制事件
     ipcMain.handle('window-action', (_, action) => {
