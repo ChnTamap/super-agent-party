@@ -40,7 +40,7 @@ from fastapi import status
 from fastapi.responses import JSONResponse, StreamingResponse
 import uuid
 import time
-from typing import Any, List, Dict,Optional
+from typing import Any, List, Dict,Optional, Tuple
 import shortuuid
 from py.mcp_clients import McpClient
 from contextlib import asynccontextmanager
@@ -174,48 +174,91 @@ async def lifespan(app: FastAPI):
         reasoner_client = reasoner_client_class()
     mcp_init_tasks = []
 
-    async def init_mcp_with_timeout(server_name, server_config):
-        try:
-            mcp_client = McpClient()
-            if server_config.get('disabled'):
-                return server_name, None, "disabled"
+    async def init_mcp_with_timeout(
+        server_name: str,
+        server_config: dict,
+        *,
+        timeout: float = 6.0,
+        max_wait_failure: float = 5.0
+    ) -> Tuple[str, Optional["McpClient"], Optional[str]]:
+        """
+        初始化单个 MCP 服务器，带超时与失败回调同步。
+        返回 (server_name, mcp_client or None, error or None)
+        """
+        # 1. 如果配置里直接禁用，直接返回
+        if server_config.get("disabled"):
+            return server_name, None, "disabled"
 
-            # 同步回调，仅在首次失败时标记
-            first_error = None
+        # 2. 预创建客户端实例
+        mcp_client = mcp_client_list.get(server_name) or McpClient()
+        mcp_client_list[server_name] = mcp_client
 
-            async def on_failure(msg: str):
-                nonlocal first_error
-                first_error = msg
-                logger.error("on_failure: %s -> %s", server_name, msg)
-                settings['mcpServers'][server_name]['disabled'] = True
-                settings['mcpServers'][server_name]['processingStatus'] = 'server_error'
-                mcp_client_list[server_name] = McpClient()
-                mcp_client_list[server_name].disabled = True
-                await mcp_client_list[server_name].close()
+        # 3. 用于同步回调的事件
+        failure_event = asyncio.Event()
+        first_error: Optional[str] = None
 
-            # fail_fast=True：首次连接失败即抛
-            await asyncio.wait_for(
-                mcp_client.initialize(
-                    server_name,
-                    server_config,
-                    on_failure_callback=on_failure
-                ),
-                timeout=6
+        async def on_failure(msg: str) -> None:
+            nonlocal first_error
+            # 仅第一次生效
+            if first_error is not None:
+                return
+            first_error = msg
+            logger.error("on_failure: %s -> %s", server_name, msg)
+
+            # 记录到 settings
+            settings.setdefault("mcpServers", {}).setdefault(server_name, {})
+            settings["mcpServers"][server_name]["disabled"] = True
+            settings["mcpServers"][server_name]["processingStatus"] = "server_error"
+
+            # 把当前客户端标为禁用并关闭
+            mcp_client.disabled = True
+            await mcp_client.close()
+            failure_event.set()          # 唤醒主协程
+
+        # 4. 真正初始化
+        init_task = asyncio.create_task(
+            mcp_client.initialize(
+                server_name,
+                server_config,
+                on_failure_callback=on_failure
             )
-            # 等待5秒
-            await asyncio.sleep(5)
-            # 如果 initialize 抛异常，直接走到下面的 except
-            # 如果成功到达这里，再检查 on_failure 是否已被触发
+        )
+
+        try:
+            # 4.1 先等初始化本身（最多 timeout 秒）
+            await asyncio.wait_for(init_task, timeout=timeout)
+
+            # 4.2 初始化没抛异常，再等待看会不会触发 on_failure
+            #     如果 on_failure 已经执行过，event 会被立即 set
+            try:
+                await asyncio.wait_for(failure_event.wait(), timeout=max_wait_failure)
+            except asyncio.TimeoutError:
+                # 5 秒内没收到失败回调，认为成功
+                pass
+
+            # 5. 最终判定
             if first_error:
                 return server_name, None, first_error
             return server_name, mcp_client, None
 
         except asyncio.TimeoutError:
+            # 初始化阶段就超时
             logger.error("%s initialize timed out", server_name)
             return server_name, None, "timeout"
-        except Exception as e:
+
+        except Exception as exc:
+            # 任何其他异常
             logger.exception("%s initialize crashed", server_name)
-            return server_name, None, str(e)
+            return server_name, None, str(exc)
+
+        finally:
+            # 如果任务还活着，保险起见取消掉
+            if not init_task.done():
+                init_task.cancel()
+                try:
+                    await init_task
+                except asyncio.CancelledError:
+                    pass
 
     if settings:
         # 创建所有初始化任务
@@ -4444,35 +4487,78 @@ async def get_mcp_status(mcp_id: str):
     return {"mcp_id": mcp_id, "status": status, "tools": []}
 
 async def process_mcp(mcp_id: str):
+    """
+    初始化单个 MCP 服务器，带失败回调同步，无需 sleep。
+    """
     global mcp_client_list, mcp_status
 
+    # 1. 同步原语：事件 + 失败原因
+    init_done = asyncio.Event()
+    fail_reason: str | None = None
+
     async def on_failure(error_message: str):
+        nonlocal fail_reason
+        # 仅第一次生效
+        if fail_reason is not None:
+            return
+        fail_reason = error_message
         mcp_status[mcp_id] = f"failed: {error_message}"
+
         # 容错：只有客户端已创建才标记 disabled
         if mcp_id in mcp_client_list:
             mcp_client_list[mcp_id].disabled = True
             await mcp_client_list[mcp_id].close()
             print(f"关闭MCP服务器: {mcp_id}")
 
+        init_done.set()          # 唤醒主协程
+
+    # 2. 开始初始化
     mcp_status[mcp_id] = "initializing"
     try:
-        # 获取对应服务器的配置
         cur_settings = await load_settings()
-        server_config = cur_settings['mcpServers'][mcp_id]
-        
-        # 执行初始化逻辑
-        mcp_client_list[mcp_id] = McpClient()    
-        await asyncio.wait_for(mcp_client_list[mcp_id].initialize(mcp_id, server_config, on_failure_callback=on_failure), timeout=6)
-        # 等待1秒
-        await asyncio.sleep(5)
-        if mcp_status[mcp_id] == "initializing":
-            mcp_status[mcp_id] = "ready"
-            mcp_client_list[mcp_id].disabled = False
-        
+        server_config = cur_settings["mcpServers"][mcp_id]
+
+        mcp_client_list[mcp_id] = McpClient()
+        init_task = asyncio.create_task(
+            mcp_client_list[mcp_id].initialize(
+                mcp_id,
+                server_config,
+                on_failure_callback=on_failure
+            )
+        )
+        # 2.1 先等初始化本身（最多 6 秒）
+        await asyncio.wait_for(init_task, timeout=6)
+
+        # 2.2 再等看 on_failure 会不会被触发（最多 5 秒）
+        try:
+            await asyncio.wait_for(init_done.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            # 5 秒内没收到失败回调，认为成功
+            pass
+
+        # 3. 最终状态判定
+        if fail_reason:
+            # 回调里已经关过 client，这里只需保证状态一致
+            mcp_client_list[mcp_id].disabled = True
+            return
+
+        mcp_status[mcp_id] = "ready"
+        mcp_client_list[mcp_id].disabled = False
+
     except Exception as e:
-        mcp_client_list[mcp_id].disabled = True
+        # 任何异常（超时、崩溃）都走这里
         mcp_status[mcp_id] = f"failed: {str(e)}"
+        mcp_client_list[mcp_id].disabled = True
         await mcp_client_list[mcp_id].close()
+
+    finally:
+        # 如果任务还活着，保险起见取消掉
+        if "init_task" in locals() and not init_task.done():
+            init_task.cancel()
+            try:
+                await init_task
+            except asyncio.CancelledError:
+                pass
 
 @app.delete("/remove_mcp")
 async def remove_mcp_server(request: Request):
