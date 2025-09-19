@@ -3334,10 +3334,10 @@ let vue_methods = {
       }
     },
     getVendorLogo(vendor) {
-      return this.vendorLogoList[vendor] || "source/providers/custom.png";
+      return this.vendorLogoList[vendor] || "source/providers/logo.png";
     },
     getMCPVendorLogo(vendor) {
-      return this.MCPvendorLogoList[vendor] || "source/providers/custom.png";
+      return this.MCPvendorLogoList[vendor] || "source/providers/logo.png";
     },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;

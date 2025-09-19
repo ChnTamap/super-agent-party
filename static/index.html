@@ -97,7 +97,7 @@ if ('serviceWorker' in navigator) {
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
         <div v-show="settings?.model!==''" class="model-info" @click="showModelDialog = true" >
-          <el-alert type="info" :closable="false" class="model-info">
+          <el-alert type="primary" :closable="false" class="model-info">
             <span>{{settings.model}}</span>  
           </el-alert>
         </div>
@@ -496,12 +496,19 @@ if ('serviceWorker' in navigator) {
             width="600px">
             <div class="knowledge-dialog-content">
               <!-- 服务器列表 -->
-              <div v-for="provider in modelProviders" 
-                :key="provider.id" 
-                class="knowledge-item" 
-                @click="settings.selectedProvider=provider.id;selectMainProvider(provider.id); showModelDialog = false">
-                <img 
-                  :src="getVendorLogo(provider.vendor)" 
+              <div
+                v-for="provider in modelProviders"
+                :key="provider.id"
+                class="knowledge-item"
+                :class="{ active: settings.selectedProvider === provider.id }"
+                @click="
+                  settings.selectedProvider = provider.id;
+                  selectMainProvider(provider.id);
+                  showModelDialog = false;
+                "
+              >
+                <img
+                  :src="getVendorLogo(provider.vendor)"
                   class="mini-vendor-logo"
                 />
                 <span>{{ provider.modelId }}</span>
@@ -737,11 +744,18 @@ if ('serviceWorker' in navigator) {
 
             <el-tooltip :content="t('mainModel')" placement="top">
               <el-button
+                plain
+                circle
+                class="icon-btn model-btn"
                 @click="showModelDialog = true"
-                class="icon-btn knowledge-base-btn"
-                type='info'
-                circle>
-                <i class="fa-solid fa-microchip"></i>
+              >
+                <template #icon>
+                  <img
+                    :src="getVendorLogo(selectedVendor?.vendor || 'unknown')"
+                    class="model-vendor-logo"
+                    draggable="false"
+                  />
+                </template>
               </el-button>
             </el-tooltip>
 
@@ -749,7 +763,7 @@ if ('serviceWorker' in navigator) {
               <el-button
                 @click="showHistoryDialog = true"
                 class="icon-btn history-btn"
-                :type="'info'"
+                :type="conversations.length === 0 ? 'default' : 'primary'"
                 circle>
                 <i class="fa-solid fa-clock-rotate-left"></i>
               </el-button>
@@ -1336,7 +1350,7 @@ if ('serviceWorker' in navigator) {
                             >
                               <div class="provider-option">
                                 <img 
-                                  src="source/providers/custom.png" 
+                                  src="source/providers/logo.png" 
                                   class="mini-vendor-logo"
                                 />
                                 <span class="model-id">{{ t("NoLongTermMemory") }}</span>

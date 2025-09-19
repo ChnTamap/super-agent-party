@@ -1217,7 +1217,7 @@ let vue_data = {
       'modelscope', 'tencent'
     ],
     vendorLogoList: {
-      'custom': 'source/providers/custom.png',
+      'custom': 'source/providers/logo.png',
       'OpenAI': 'source/providers/openai.jpeg',
       'Ollama': 'source/providers/ollama.png',
       'Vllm': 'source/providers/vllm.png',

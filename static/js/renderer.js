@@ -490,6 +490,11 @@ const app = Vue.createApp({
         voice.gender === this.newTTSConfig.edgettsGender
       );
     },
+    selectedVendor() {
+      return this.modelProviders.find(
+        p => p.id === this.settings.selectedProvider
+      );
+    },
   },
   methods: vue_methods
 });
