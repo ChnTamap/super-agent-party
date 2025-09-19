@@ -2469,13 +2469,26 @@ if (isElectron) {
             box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s ease;
             user-select: none; pointer-events: auto; backdrop-filter: blur(10px);`;
         
-
+        let vmcApp = null;          // Vue 实例
+        let vmcWrapper = null;      // 挂载的 DOM 节点
         vmcButton.addEventListener('click', async () => {
+            // 如果已经打开，直接关掉并返回
+            if (vmcApp) {
+                vmcApp.unmount();
+                document.body.removeChild(vmcWrapper);
+                vmcApp  = null;
+                vmcWrapper = null;
+                return;
+            }
+
+            // 否则正常创建
             const cfg = await window.electronAPI.getVMCConfig();
-            
             const { ElDialog, ElForm, ElFormItem, ElInput, ElSwitch, ElButton, ElInputNumber } = ElementPlus;
-            
-            const app = Vue.createApp({
+
+            vmcWrapper = document.createElement('div');
+            document.body.appendChild(vmcWrapper);
+
+            vmcApp = Vue.createApp({
                 data() {
                     return {
                         dialogVisible: true,
@@ -2515,24 +2528,21 @@ if (isElectron) {
                     this.translations.saveButton = await t('save');
                 },
                 methods: {
-                    async saveConfig() {
-                        const newCfg = {
-                            receive: {
-                                enable: this.form.receive.enable,
-                                port: this.form.receive.port
-                            },
-                            send: {
-                                enable: this.form.send.enable,
-                                host: this.form.send.host,
-                                port: this.form.send.port
-                            }
-                        };
-                        await window.electronAPI.setVMCConfig(newCfg);
-                        this.dialogVisible = false;
-                    },
-                    cancel() {
-                        this.dialogVisible = false;
-                    }
+                async saveConfig() {
+                    await window.electronAPI.setVMCConfig({
+                    receive: { enable: this.form.receive.enable, port: this.form.receive.port },
+                    send:    { enable: this.form.send.enable,    host: this.form.send.host, port: this.form.send.port }
+                    });
+                    this.close();
+                },
+                cancel() { this.close(); },
+                close() {
+                    this.dialogVisible = false;
+                    vmcApp.unmount();
+                    document.body.removeChild(vmcWrapper);
+                    vmcApp  = null;
+                    vmcWrapper = null;
+                }
                 },
                 template: `
                     <el-dialog
@@ -2543,10 +2553,12 @@ if (isElectron) {
                         :close-on-click-modal="false"
                         append-to-body
                         custom-class="vmc-dialog"
+                        @close="close"
+                        style="  background: rgba(255, 255, 255, 0.25) !important;backdrop-filter: blur(20px);border-radius: 20px !important;"
                     >
                         <div style="padding: 0 10px;">
                             <!-- 接收设置 -->
-                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.75)!important; border-radius: 20px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                     <el-switch v-model="form.receive.enable"></el-switch>
                                     <span style="margin-left: 10px; font-weight: 500;">{{ translations.receiveEnable }}</span>
@@ -2564,7 +2576,7 @@ if (isElectron) {
                             </div>
                             
                             <!-- 发送设置 -->
-                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.6); border-radius: 10px;">
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.75)!important; border-radius: 20px;">
                                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                     <el-switch v-model="form.send.enable"></el-switch>
                                     <span style="margin-left: 10px;margin-right:30px; font-weight: 500;">{{ translations.sendEnable }}</span>
@@ -2599,18 +2611,8 @@ if (isElectron) {
                 `
             });
             
-            app.use(ElementPlus);
-            const dialogContainer = document.createElement('div');
-            document.body.appendChild(dialogContainer);
-            app.mount(dialogContainer);
-            
-            // 监听对话框关闭
-            const unwatch = app.watch(() => app._instance.data.dialogVisible, (newVal) => {
-                if (!newVal) {
-                    document.body.removeChild(dialogContainer);
-                    unwatch();
-                }
-            });
+            vmcApp.use(ElementPlus);
+            vmcApp.mount(vmcWrapper);
         });
 
 
@@ -2781,7 +2783,7 @@ if (isElectron) {
         document.body.appendChild(controlPanel);
 
         // 为每个按钮添加悬浮提示
-        addHoverEffect(vmcButton, await t('VMCSettings') || 'VMC Settings');
+        addHoverEffect(vmcButton, await t('vmcSettings') || 'VMC Settings');
         addHoverEffect(dragButton, await t('dragWindow'));
         addHoverEffect(lockButton, isMouseLocked ? await t('UnlockWindow') : await t('LockWindow'));
         addHoverEffect(wsStatusButton, wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'));
