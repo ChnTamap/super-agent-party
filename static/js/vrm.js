@@ -1958,10 +1958,11 @@ async function setVMCReceive (enable, syncExpr = false) {
       vmcBoneBuffer.clear();
       vmcBlendBuffer.clear();
     } else {
+      // 回到默认姿势
+      if (idleAnimationManager) idleAnimationManager.startAllAnimations();
       // 退出 VMC 模式：恢复本地动画
       if (breathAction) breathAction.play();
       if (blinkAction)  blinkAction.play();
-      startIdleAnimationLoop();   // 重新启动闲置动画
     }
   };
 

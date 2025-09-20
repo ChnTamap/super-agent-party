@@ -27,21 +27,39 @@ function startVMCReceiver(cfg) {
   vmcUdpPort.open();
   vmcUdpPort.on('message', (oscMsg) => {
 
-    // 2. 参数不足直接 return
-    if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 8) return;
+    /* -------- 1. 骨骼 -------- */
+    if (oscMsg.address === '/VMC/Ext/Bone/Pos') {
+      if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 8) return;
+      const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args.map(v => v.value ?? v);
+      if (typeof boneName !== 'string') return;
 
-    // 3. 再读数据
-    const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args.map(v => v.value ?? v);
-    if (typeof boneName !== 'string') return;
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) {
+          w.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
+          w.webContents.send('vmc-osc-raw', oscMsg);
+        }
+      });
+      return;
+    }
 
-    // 4. 广播给所有 VRM 窗口
-    vrmWindows.forEach(w => {
-      if (!w.isDestroyed()) {
-        w.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
-        w.webContents.send('vmc-osc-raw', oscMsg);
-      }
-    });
+    /* -------- 2. 表情 -------- */
+    if (oscMsg.address === '/VMC/Ext/Blend/Val') {
+      if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 2) return;
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-osc-raw', oscMsg);
+      });
+      return;
+    }
+
+    /* -------- 3. 表情 Apply -------- */
+    if (oscMsg.address === '/VMC/Ext/Blend/Apply') {
+      // Apply 不带参数，长度 0 也合法
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-osc-raw', oscMsg);
+      });
+    }
   });
+
 
   vmcReceiverActive = true;
   console.log(`[VMC] 接收已启动 @ ${cfg.receive.port}`);
