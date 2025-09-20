@@ -2540,7 +2540,8 @@ if (isElectron) {
                         form: {
                             receive: {
                                 enable: cfg.receive.enable,
-                                port: cfg.receive.port
+                                port: cfg.receive.port,
+                                syncExpression: cfg.receive.syncExpression
                             },
                             send: {
                                 enable: cfg.send.enable,
@@ -3007,6 +3008,25 @@ function initTTSWebSocket() {
 }
 initTTSWebSocket();
 
+const VMCToVRMBlend = {
+  Joy:      'happy',
+  Angry:    'angry',
+  Sorrow:   'sad',
+  Fun:      'relaxed',
+  A:        'aa',
+  I:        'ih',
+  U:        'ou',
+  E:        'ee',
+  O:        'oh',
+  Blink:    'blink',
+  Blink_L:  'blinkLeft',
+  Blink_R:  'blinkRight',
+  Surprised:'surprised',
+  LookDown:   'lookDown',
+  LookUp:     'lookUp',
+  LookLeft:   'lookLeft',
+  LookRight:  'lookRight'
+};
 let vmcReceiveEnabled = false;   // 是否正在 VMC 接收模式
 let vmcSyncExpression = false;   // 是否同步表情（面板开关）
 let vmcBoneBuffer = new Map();   // 缓存最新骨骼数据
@@ -3050,7 +3070,7 @@ if (window.vmcAPI) {
     if (address === '/VMC/Ext/Blend/Apply') {
       if (!currentVrm?.expressionManager || !vmcSyncExpression) return;
       for (const [vmcName, w] of vmcBlendBuffer) {
-        const vrmName = vmcToVRMBlend[vmcName];   // 官方表情映射表
+        const vrmName = VMCToVRMBlend[vmcName];   // 官方表情映射表
         if (vrmName) currentVrm.expressionManager.setValue(vrmName, w);
       }
     }
@@ -3058,25 +3078,6 @@ if (window.vmcAPI) {
 }
 
 
-const vmcToVRMBlend = {
-  Joy:      'happy',
-  Angry:    'angry',
-  Sorrow:   'sad',
-  Fun:      'relaxed',
-  A:        'aa',
-  I:        'ih',
-  U:        'ou',
-  E:        'ee',
-  O:        'oh',
-  Blink:    'blink',
-  Blink_L:  'blinkLeft',
-  Blink_R:  'blinkRight',
-  Surprised:'surprised',
-  LookDown:   'lookDown',
-  LookUp:     'lookUp',
-  LookLeft:   'lookLeft',
-  LookRight:  'lookRight'
-};
 
 // 发送消息到主界面
 function sendToMain(type, data) {
@@ -3436,7 +3437,7 @@ function getPrevModelInfo() {
 window.setVMCReceive = (enable, syncExpr = false) => {
   vmcReceiveEnabled = enable;
   vmcSyncExpression = syncExpr;
-
+    console.log(`VMC receive enabled: ${enable}, sync expression: ${syncExpr}`);
   if (enable) {
     // 进入 VMC 模式：停止本地一切动画
     if (idleAnimationManager) idleAnimationManager.stopAllAnimations();

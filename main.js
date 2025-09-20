@@ -463,10 +463,14 @@ app.whenReady().then(async () => {
   try {
       // 默认配置
     global.vmcCfg = {
-      receive: { enable: false, port: 39539 },
+      receive: { enable: false, port: 39539,syncExpression: false },
       send:    { enable: false, host: '127.0.0.1', port: 39540 }
     };
-    ipcMain.handle('get-vmc-config', () => global.vmcCfg);
+    ipcMain.handle('get-vmc-config', () => {
+      // 保证字段存在，避免 undefined
+      global.vmcCfg.receive.syncExpression ??= false;
+      return global.vmcCfg;
+    });
     // 创建骨架屏窗口
     createSkeletonWindow()
     if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);

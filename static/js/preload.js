@@ -4,7 +4,7 @@ const { remote } = require('@electron/remote/main')
 
 
 // 缓存最后一次 VMC 配置（默认关闭）
-let vmcCfg = { receive:{enable:false,port:39539}, send:{enable:false,host:'127.0.0.1',port:39540} };
+let vmcCfg = { receive:{enable:false,port:39539,syncExpression: false}, send:{enable:false,host:'127.0.0.1',port:39540} };
 
 // 主进程推送最新配置
 ipcRenderer.on('vmc-config-changed', (_, cfg) => { vmcCfg = cfg; });
