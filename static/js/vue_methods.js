@@ -1871,6 +1871,15 @@ let vue_methods = {
           showNotification(this.t('copy_fail'), 'error');
         });
     },
+    copyURL(url) {
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          showNotification(this.t('copy_success'), 'success');
+        })
+        .catch(() => {
+          showNotification(this.t('copy_fail'), 'error');
+        });
+    },
     copyModel() {
       navigator.clipboard.writeText('super-model')
         .then(() => {

@@ -8080,7 +8080,7 @@ if ('serviceWorker' in navigator) {
                         {{ t('superAPIInstructions') }}
                       </el-alert>
                       <!-- 模型名称 -->
-                      <el-form-item :label="t('modelName')" class="form-item-align">
+                      <el-form-item :label="t('modelName')" class="form-item-align" label-position="top">
                         <el-input
                           :value="'super-model'"
                           readonly
@@ -8098,7 +8098,7 @@ if ('serviceWorker' in navigator) {
                       </el-form-item>
 
                       <!-- API端点 -->
-                      <el-form-item :label="t('apiEndpoint')" class="form-item-align">
+                      <el-form-item :label="t('apiEndpoint')" class="form-item-align" label-position="top">
                         <el-input
                           :value="partyURL+'/v1'"
                           readonly
@@ -8115,7 +8115,7 @@ if ('serviceWorker' in navigator) {
                         </el-input>
                       </el-form-item>
                       <!-- 在index.html的API配置区块内添加 -->
-                      <el-form-item :label="t('exampleLanguage')" class="form-item-align">
+                      <el-form-item :label="t('exampleLanguage')" class="form-item-align" label-position="top">
                         <el-select
                           v-model="selectedCodeLang"
                           @change="autoSaveSettings"
@@ -8169,7 +8169,7 @@ if ('serviceWorker' in navigator) {
                         {{ t('MCPAPIInstructions') }}
                       </el-alert>
                       <!-- API端点 -->
-                      <el-form-item :label="t('apiEndpoint')" class="form-item-align">
+                      <el-form-item :label="t('apiEndpoint')" class="form-item-align" label-position="top">
                         <el-input
                           :value="partyURL+'/mcp'"
                           readonly
@@ -8209,7 +8209,7 @@ if ('serviceWorker' in navigator) {
                         {{ t('vrmAPIInstructions') }}
                       </el-alert>
                       <!-- API端点 -->
-                      <el-form-item :label="t('apiEndpoint')" class="form-item-align">
+                      <el-form-item :label="t('apiEndpoint')" class="form-item-align" label-position="top">
                         <el-input
                           :value="partyURL+'/vrm.html'"
                           readonly
@@ -8225,6 +8225,46 @@ if ('serviceWorker' in navigator) {
                           </template>
                         </el-input>
                       </el-form-item>
+                      <!-- API端点 -->
+                      <el-form-item :label="t('vmcpReceive')" class="form-item-align" label-position="top">
+                        <el-input
+                          value="http://127.0.0.1:39539"
+                          readonly
+                          class="full-width-input"
+                        >
+                          <template #append>
+                            <el-button
+                              @click="copyURL('http://127.0.0.1:39539')"
+                              class="copy-btn"
+                            >
+                            <i class="fa-solid fa-copy"></i>
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </el-form-item>
+                      <el-form-item :label="t('vmcpSend')" class="form-item-align" label-position="top">
+                        <el-input
+                          value="http://127.0.0.1:39540"
+                          readonly
+                          class="full-width-input"
+                        >
+                          <template #append>
+                            <el-button
+                              @click="copyURL('http://127.0.0.1:39540')"
+                              class="copy-btn"
+                            >
+                            <i class="fa-solid fa-copy"></i>
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </el-form-item>
+                        <el-alert
+                          type="info"
+                          :closable="false"
+                          class="mb-2"
+                        >
+                          {{ t('vmcpInstructions') }}
+                        </el-alert>
                     </div>
                   </div>
                 </el-form>
