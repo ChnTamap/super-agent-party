@@ -1958,11 +1958,7 @@ async function setVMCReceive (enable, syncExpr = false) {
       vmcBoneBuffer.clear();
       vmcBlendBuffer.clear();
     } else {
-      // 回到默认姿势
-      if (idleAnimationManager) idleAnimationManager.startAllAnimations();
-      // 退出 VMC 模式：恢复本地动画
-      if (breathAction) breathAction.play();
-      if (blinkAction)  blinkAction.play();
+      switchToModel(currentModelIndex, true);
     }
   };
 
@@ -3221,7 +3217,7 @@ async function getAllModels() {
 }
 
 // 切换到指定索引的模型（纯前端切换）
-async function switchToModel(index) {
+async function switchToModel(index,isRefresh = false) {
     if (!modelsInitialized) {
         await getAllModels();
     }
@@ -3235,7 +3231,7 @@ async function switchToModel(index) {
     const newIndex = ((index % allModels.length) + allModels.length) % allModels.length;
     
     // 如果是同一个模型，不需要切换
-    if (newIndex === currentModelIndex) {
+    if (newIndex === currentModelIndex && !isRefresh) {
         console.log('Same model selected, no need to switch');
         return;
     }
