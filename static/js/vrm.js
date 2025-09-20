@@ -2639,7 +2639,7 @@ if (isElectron) {
                                     <span style="margin-left:10px;font-size:14px;">{{ translations.syncExpression }}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="width: 70px;margin-right:30px; font-size: 14px;">{{ translations.receivePort }}:</span>
+                                    <span style="width: 100px;margin-right:30px; font-size: 14px;">{{ translations.receivePort }}:</span>
                                     <el-input-number 
                                         v-model="form.receive.port" 
                                         :min="1024" 
@@ -2657,14 +2657,14 @@ if (isElectron) {
                                     <span style="margin-left: 10px;margin-right:30px; font-weight: 500;">{{ translations.sendEnable }}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                                    <span style="width: 70px; margin-right:30px;font-size: 14px;">{{ translations.sendHost }}:</span>
+                                    <span style="width: 100px; margin-right:30px;font-size: 14px;">{{ translations.sendHost }}:</span>
                                     <el-input 
                                         v-model="form.send.host" 
                                         style="width: 200px;"
                                     ></el-input>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="width: 70px;margin-right:30px; font-size: 14px;">{{ translations.sendPort }}:</span>
+                                    <span style="width: 100px;margin-right:30px; font-size: 14px;">{{ translations.sendPort }}:</span>
                                     <el-input-number 
                                         v-model="form.send.port" 
                                         :min="1024" 

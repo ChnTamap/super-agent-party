@@ -5584,7 +5584,8 @@ async def delete_workflow(filename: str):
 @app.get("/cur_language")
 async def cur_language():
     settings = await load_settings()
-    return {"language": settings.get("language", "zh-CN")}
+    target_language = settings["currentLanguage"]
+    return {"language": target_language}
 
 @app.get("/vrm_config")
 async def vrm_config():
