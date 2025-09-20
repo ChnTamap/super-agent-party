@@ -1915,6 +1915,9 @@ function animate() {
 
             /* ===== 3. 让 SpringBone / LookAt 等生效 ===== */
             currentVrm.update(deltaTime);
+              if (currentMixer) {
+                  currentMixer.update(deltaTime);
+              }
             }else {
                 // 只需要更新 VRM 和 Mixer
                 currentVrm.update(deltaTime);
@@ -1957,6 +1960,20 @@ async function setVMCReceive (enable, syncExpr = false) {
       // 清空缓存，防止旧数据“跳变”
       vmcBoneBuffer.clear();
       vmcBlendBuffer.clear();
+
+      // 开启程序化呼吸和眨眼
+      currentMixer = new THREE.AnimationMixer(currentVrm.scene);
+      const breathClip = createBreathClip(currentVrm);
+      breathAction = currentMixer.clipAction(breathClip);
+      breathAction.setLoop(THREE.LoopRepeat);
+      breathAction.play();
+
+      const blinkClip = createBlinkClip(currentVrm);
+      blinkAction = currentMixer.clipAction(blinkClip);
+      blinkAction.setLoop(THREE.LoopRepeat);
+      blinkAction.play();
+
+
     } else {
       switchToModel(currentModelIndex, true);
     }
