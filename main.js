@@ -8,6 +8,123 @@ const { download } = require('electron-dl');
 const fs = require('fs')
 const os = require('os')
 const net = require('net') // 添加 net 模块用于端口检测
+const dgram = require('dgram');
+const osc = require('osc');
+
+// ★ VMC：UDP 收发资源
+let vmcUdpPort = null;          // osc.UDPPort 实例
+let vmcReceiverActive = false;  // 接收是否运行
+let vrmWindows = []; 
+const vmcSendSocket = dgram.createSocket('udp4'); // 发送复用同一 socket
+// ★ 替换原来的 startVMCReceiver
+function startVMCReceiver(cfg) {
+  if (vmcReceiverActive) return;
+  vmcUdpPort = new osc.UDPPort({
+    localAddress: '0.0.0.0',
+    localPort: cfg.receive.port,
+    metadata: true,
+  });
+  vmcUdpPort.open();
+  vmcUdpPort.on('message', (oscMsg) => {
+
+    /* -------- 1. 骨骼 -------- */
+    if (oscMsg.address === '/VMC/Ext/Bone/Pos') {
+      if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 8) return;
+      const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args.map(v => v.value ?? v);
+      if (typeof boneName !== 'string') return;
+
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) {
+          w.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
+          w.webContents.send('vmc-osc-raw', oscMsg);
+        }
+      });
+      return;
+    }
+
+    /* -------- 2. 表情 -------- */
+    if (oscMsg.address === '/VMC/Ext/Blend/Val') {
+      if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 2) return;
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-osc-raw', oscMsg);
+      });
+      return;
+    }
+
+    /* -------- 3. 表情 Apply -------- */
+    if (oscMsg.address === '/VMC/Ext/Blend/Apply') {
+      // Apply 不带参数，长度 0 也合法
+      vrmWindows.forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-osc-raw', oscMsg);
+      });
+    }
+  });
+
+
+  vmcReceiverActive = true;
+  console.log(`[VMC] 接收已启动 @ ${cfg.receive.port}`);
+}
+function stopVMCReceiver() {
+  if (!vmcReceiverActive) return;
+  vmcUdpPort.close();
+  vmcUdpPort = null;
+  vmcReceiverActive = false;
+  console.log('[VMC] 接收已停止');
+}
+
+// 发送 VMC Bone -------------------------------------------------
+function sendVMCBoneMain(data) {
+  if (!data) return;
+  const { boneName, position, rotation } = data;
+  if (!boneName || !position || !rotation) return;
+
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: `/VMC/Ext/Bone/Pos`,
+    args: [
+      { type: 's', value: boneName },
+      { type: 'f', value: position.x || 0 },
+      { type: 'f', value: position.y || 0 },
+      { type: 'f', value: position.z || 0 },
+      { type: 'f', value: rotation.x || 0 },
+      { type: 'f', value: rotation.y || 0 },
+      { type: 'f', value: rotation.z || 0 },
+      { type: 'f', value: rotation.w || 1 },
+    ],
+  });
+  vmcSendSocket.send(oscMsg, port, host, (err) => {
+    if (err) console.error('VMC send error:', err);
+  });
+}
+
+// 发送 VMC Blend ------------------------------------------------
+function sendVMCBlendMain(data) {
+  if (!data) return;
+  const { blendName, weight } = data;
+  if (typeof blendName !== 'string' || typeof weight !== 'number') return;
+
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: '/VMC/Ext/Blend/Val',
+    args: [
+      { type: 's', value: blendName },
+      { type: 'f', value: Math.max(0, Math.min(1, weight)) },
+    ],
+  });
+  vmcSendSocket.send(oscMsg, port, host, (err) => {
+    if (err) console.error('VMC blend send error:', err);
+  });
+}
+
+// 发送 VMC Blend Apply ------------------------------------------
+function sendVMCBlendApplyMain() {
+  const { host, port } = global.vmcCfg.send;          // ← 面板配置
+  const oscMsg = osc.writePacket({
+    address: '/VMC/Ext/Blend/Apply',
+    args: [],
+  });
+  vmcSendSocket.send(oscMsg, port, host);
+}
 
 let pythonExec;
 let isQuitting = false;
@@ -362,9 +479,19 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
 // 只有在获得锁（第一个实例）时才执行初始化
 app.whenReady().then(async () => {
   try {
+      // 默认配置
+    global.vmcCfg = {
+      receive: { enable: false, port: 39539,syncExpression: false },
+      send:    { enable: false, host: '127.0.0.1', port: 39540 }
+    };
+    ipcMain.handle('get-vmc-config', () => {
+      // 保证字段存在，避免 undefined
+      global.vmcCfg.receive.syncExpression ??= false;
+      return global.vmcCfg;
+    });
     // 创建骨架屏窗口
     createSkeletonWindow()
-    
+    if (global.vmcCfg.receive.enable) startVMCReceiver(global.vmcCfg);
     // 启动后端服务（现在会自动查找可用端口）
     const actualPort = await startBackend()
     
@@ -392,8 +519,6 @@ app.whenReady().then(async () => {
       app.exit();
     })
 
-    let vrmWindows = []; 
-
     ipcMain.handle('start-vrm-window', async (_, windowConfig = {}) => {
       const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -415,7 +540,6 @@ app.whenReady().then(async () => {
         alwaysOnTop: true,
         skipTaskbar: true,
         hasShadow: false,
-        focusable: false,
         acceptFirstMouse: true,
         backgroundColor: 'rgba(0, 0, 0, 0)',
         webPreferences: {
@@ -537,6 +661,39 @@ app.whenReady().then(async () => {
     // 创建系统托盘
     createTray();
     updatecontextMenu();
+    // ★ 下面这段就是你要放的「主进程 IPC + 默认配置」
+    ipcMain.handle('set-vmc-config', async (_, cfg) => {
+      if (cfg.receive.enable) {
+        if (!vmcReceiverActive || cfg.receive.port !== global.vmcCfg?.receive.port) {
+          if (vmcReceiverActive) stopVMCReceiver();
+          startVMCReceiver(cfg);
+        }
+      } else {
+        stopVMCReceiver();
+      }
+      global.vmcCfg = cfg;
+      BrowserWindow.getAllWindows().forEach(w => {
+        if (!w.isDestroyed()) w.webContents.send('vmc-config-changed', cfg);
+      });
+      return { success: true };
+    });
+
+    ['send-vmc-bone','send-vmc-blend','send-vmc-blend-apply'].forEach(method => {
+      ipcMain.removeHandler(method);          // 清掉旧注册
+      ipcMain.handle(method, (e, data) => {
+        if (!global.vmcCfg?.send.enable) return;   // 总开关
+        // 下面就是原来的实现（直接写，或抽成函数调用都可）
+        switch (method) {
+          case 'send-vmc-bone':
+            return sendVMCBoneMain(data);      // 你自己已有的实现
+          case 'send-vmc-blend':
+            return sendVMCBlendMain(data);
+          case 'send-vmc-blend-apply':
+            return sendVMCBlendApplyMain();
+        }
+      });
+    });
+
     // 窗口控制事件
     ipcMain.handle('window-action', (_, action) => {
       switch (action) {

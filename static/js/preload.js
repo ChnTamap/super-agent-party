@@ -2,6 +2,13 @@ const { contextBridge, shell, ipcRenderer } = require('electron');
 const path = require('path');
 const { remote } = require('@electron/remote/main')
 
+
+// 缓存最后一次 VMC 配置（默认关闭）
+let vmcCfg = { receive:{enable:false,port:39539,syncExpression: false}, send:{enable:false,host:'127.0.0.1',port:39540} };
+
+// 主进程推送最新配置
+ipcRenderer.on('vmc-config-changed', (_, cfg) => { vmcCfg = cfg; });
+
 // 与 main.js 保持一致的服务器配置
 const HOST = '127.0.0.1'
 const PORT = 3456
@@ -71,20 +78,43 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIgnoreMouseEvents: (ignore, options) => ipcRenderer.invoke('set-ignore-mouse-events', ignore, options),
   getIgnoreMouseStatus: () => ipcRenderer.invoke('get-ignore-mouse-status'),
   downloadFile: (payload) => ipcRenderer.invoke('download-file', payload),
-    // 修改：添加回调参数
-    getWindowConfig: (callback) => {
-        if (windowConfig.windowName !== "default") {
-            // 如果配置已更新，直接返回
-            callback(windowConfig);
-        } else {
-            // 如果配置未更新，监听更新事件
-            const handler = (event) => {
-                callback(event.detail);
-                window.removeEventListener('window-config-updated', handler);
-            };
-            window.addEventListener('window-config-updated', handler);
-        }
-    },
+  // 修改：添加回调参数
+  getWindowConfig: (callback) => {
+      if (windowConfig.windowName !== "default") {
+          // 如果配置已更新，直接返回
+          callback(windowConfig);
+      } else {
+          // 如果配置未更新，监听更新事件
+          const handler = (event) => {
+              callback(event.detail);
+              window.removeEventListener('window-config-updated', handler);
+          };
+          window.addEventListener('window-config-updated', handler);
+      }
+  },
+
+  setVMCConfig: (cfg) => ipcRenderer.invoke('set-vmc-config', cfg),
+  getVMCConfig: () => ipcRenderer.invoke('get-vmc-config'),
+  onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg))
+});
+
+contextBridge.exposeInMainWorld('vmcAPI', {
+  onVMCBone: (callback) => ipcRenderer.on('vmc-bone', (_, data) => callback(data)),
+
+  onVMCOscRaw: (cb) => ipcRenderer.on('vmc-osc-raw', (_, oscMsg) => cb(oscMsg)),
+
+  sendVMCBone: (data) => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-bone', data);
+  },
+  sendVMCBlend: (data) => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-blend', data);
+  },
+  sendVMCBlendApply: () => {
+    if (!vmcCfg.send.enable) return;
+    return ipcRenderer.invoke('send-vmc-blend-apply');
+  }
 });
 
 // 在文件末尾添加以下代码来接收主进程传递的配置

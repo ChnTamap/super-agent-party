@@ -1069,7 +1069,7 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
-          this.currentLanguage = this.systemSettings.language || 'zh-CN';
+          this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
           this.memories = data.data.memories || this.memories;
@@ -1771,6 +1771,7 @@ let vue_methods = {
           knowledgeBases: this.knowledgeBases,
           modelProviders: this.modelProviders,
           systemSettings: this.systemSettings,
+          currentLanguage: this.currentLanguage,
           mcpServers: this.mcpServers,
           a2aServers: this.a2aServers,
           isdocker: this.isdocker,
@@ -1864,6 +1865,15 @@ let vue_methods = {
     },
     copyVrmEndpoint(){
       navigator.clipboard.writeText(`${this.partyURL}/vrm.html`)
+        .then(() => {
+          showNotification(this.t('copy_success'), 'success');
+        })
+        .catch(() => {
+          showNotification(this.t('copy_fail'), 'error');
+        });
+    },
+    copyURL(url) {
+      navigator.clipboard.writeText(url)
         .then(() => {
           showNotification(this.t('copy_success'), 'success');
         })
@@ -3334,10 +3344,10 @@ let vue_methods = {
       }
     },
     getVendorLogo(vendor) {
-      return this.vendorLogoList[vendor] || "source/providers/custom.png";
+      return this.vendorLogoList[vendor] || "source/providers/logo.png";
     },
     getMCPVendorLogo(vendor) {
-      return this.MCPvendorLogoList[vendor] || "source/providers/custom.png";
+      return this.MCPvendorLogoList[vendor] || "source/providers/logo.png";
     },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;

@@ -3382,8 +3382,9 @@ body {
 .model-info {
   border-radius: 16px!important;
   margin: 1px!important;
-  background-color: var(--el-bg-color-page);
+  background-color: var(--el-input-bg-color);
   color: var(--el-text-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .model-info:hover {
@@ -3394,4 +3395,18 @@ body {
   display: flex;
   justify-content: flex-end; /* 靠右对齐 */
   margin-bottom: 10px;
+}
+
+.knowledge-item.active {
+  background: var(--el-color-primary-light-9);
+  border: 1px solid #1890ff; /* 边框高亮 */
+  border-color: var(--el-color-primary);
+  color: var(--el-text-color-primary);
+}
+
+.model-vendor-logo{
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 50%; /* 圆形 */
 }

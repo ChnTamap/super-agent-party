@@ -1748,6 +1748,141 @@ function clearSubtitle() {
     }
 }
 
+
+let vmcLastSent = 0;
+const VMC_SEND_INTERVAL = 1000 / 30;          // 30 fps
+const VMC_BONES = [                           // VMC 标准骨骼列表
+  'hips','spine','chest','upperChest','neck','head',
+  'leftShoulder','leftUpperArm','leftLowerArm','leftHand',
+  'rightShoulder','rightUpperArm','rightLowerArm','rightHand',
+  'leftUpperLeg','leftLowerLeg','leftFoot','leftToes',
+  'rightUpperLeg','rightLowerLeg','rightFoot','rightToes',
+  // 手指（可选）
+  'leftThumbProximal','leftThumbIntermediate','leftThumbDistal',
+  'leftIndexProximal','leftIndexIntermediate','leftIndexDistal',
+  'leftMiddleProximal','leftMiddleIntermediate','leftMiddleDistal',
+  'leftRingProximal','leftRingIntermediate','leftRingDistal',
+  'leftLittleProximal','leftLittleIntermediate','leftLittleDistal',
+  'rightThumbProximal','rightThumbIntermediate','rightThumbDistal',
+  'rightIndexProximal','rightIndexIntermediate','rightIndexDistal',
+  'rightMiddleProximal','rightMiddleIntermediate','rightMiddleDistal',
+  'rightRingProximal','rightRingIntermediate','rightRingDistal',
+  'rightLittleProximal','rightLittleIntermediate','rightLittleDistal'
+];
+
+/**
+ * 把当前 VRM 骨骼打成 VMC-OSC 消息发出去
+ * 自动 30 fps 节流，仅 Electron 有效
+ */
+function sendVMCBones() {
+  if (!window.vmcAPI || !currentVrm?.humanoid) return;
+
+  const now = performance.now();
+  if (now - vmcLastSent < VMC_SEND_INTERVAL) return;
+  vmcLastSent = now;
+
+  for (const name of VMC_BONES) {
+    const node = currentVrm.humanoid.getNormalizedBoneNode(name);
+    if (!node || !node.position || !node.quaternion) continue;
+
+    window.vmcAPI.sendVMCBone({
+      boneName: name,
+      position: {
+        x: node.position.x,
+        y: node.position.y,
+        z: node.position.z
+      },
+      rotation: {
+        x: node.quaternion.x,
+        y: - node.quaternion.y,
+        z: - node.quaternion.z,
+        w: node.quaternion.w
+      }
+    });
+  }
+}
+
+// VRM1 → VRM0（VMC 事实标准）
+const VRM1_TO_VMC0 = {
+  happy:  'Joy',
+  angry:  'Angry',
+  sad:    'Sorrow',
+  relaxed:'Fun',
+  aa:     'A',
+  ih:     'I',
+  ou:     'U',
+  ee:     'E',
+  oh:     'O',
+  blinkLeft:  'Blink_L',
+  blinkRight: 'Blink_R',
+  blink:      'Blink',
+  surprised:  'Surprised',
+  neutral:    'Neutral',
+  lookDown:   'LookDown',
+  lookUp:     'LookUp',
+  lookLeft:   'LookLeft',
+  lookRight:  'LookRight'
+};
+
+// 需要同步的表情（按需删减）
+const VMC_BLEND_SHAPES = [
+  // 五元音
+  'aa','ee','ih','oh','ou',
+  'blink', 'blinkLeft', 'blinkRight',
+  'surprised','happy','angry', 'sad', 'neutral', 'relaxed',
+  'lookDown','lookUp','lookLeft','lookRight'
+];
+
+let lastBlendWeights = {}; // 节流：变化了才发
+
+
+
+function sendVMCBlends() {
+  if (!window.vmcAPI || !currentVrm?.expressionManager) return;
+
+  const mgr = currentVrm.expressionManager;
+  for (const vrmName of VMC_BLEND_SHAPES) {
+    const weight = mgr.getValue(vrmName);
+    if (weight === undefined) continue;
+
+    // 转换名字
+    const vmcName = VRM1_TO_VMC0[vrmName];
+    if (!vmcName) continue;          // 没有对应就跳过
+    // 节流
+    if (Math.abs(weight - (lastBlendWeights[vmcName] ?? 0)) < 0.01) continue;
+    lastBlendWeights[vmcName] = weight;
+    window.vmcAPI.sendVMCBlend({
+      blendName: vmcName,
+      weight
+    });
+  }
+  window.vmcAPI.sendVMCBlendApply(); // 应用
+}
+const vmcToVrmBone = {
+  LeftIndexIntermediate: 'leftIndexIntermediate',
+  RightIndexIntermediate:'rightIndexIntermediate',
+  LeftMiddleIntermediate:'leftMiddleIntermediate',
+  RightMiddleIntermediate:'rightMiddleIntermediate',
+  LeftRingIntermediate:  'leftRingIntermediate',
+  RightRingIntermediate: 'rightRingIntermediate',
+  LeftLittleIntermediate:'leftLittleIntermediate',
+  RightLittleIntermediate:'rightLittleIntermediate',
+  LeftThumbIntermediate: 'leftThumbIntermediate',
+  RightThumbIntermediate:'rightThumbIntermediate',
+  LeftUpperArm:  'leftUpperArm',
+  LeftLowerArm:  'leftLowerArm',
+  LeftHand:      'leftHand',
+  RightUpperArm: 'rightUpperArm',
+  RightLowerArm: 'rightLowerArm',
+  RightHand:     'rightHand',
+  UpperChest:    'upperChest',
+  Chest:         'chest',
+  Spine:         'spine',
+  Hips:          'hips',
+  Neck:          'neck',
+  Head:          'head',
+};
+
 // animate
 const clock = new THREE.Clock();
 clock.start();
@@ -1759,17 +1894,42 @@ function animate() {
     const deltaTime = clock.getDelta();
     
     if (currentVrm) {
-        // 只需要更新 VRM 和 Mixer
-        currentVrm.update(deltaTime);
-        if (currentVrm.lookAt) {
-            currentVrm.lookAt.update(deltaTime);
+        if (vmcReceiveEnabled) {
+            for (const [vmcName, data] of vmcBoneBuffer) {
+                // 2.1 转官方名
+                let boneName = vmcToVrmBone[vmcName] ??
+                            vmcName.charAt(0).toLowerCase() + vmcName.slice(1);
+
+                // 2.2 拿节点
+                const node = currentVrm.humanoid.getNormalizedBoneNode(boneName);
+                if (!node) {
+                // 调试用：看哪些名字还没对齐（正式版可删掉）
+                // console.warn('⚠️ 未映射骨骼:', vmcName, '->', boneName);
+                continue;
+                }
+
+                // 2.3 真正写数据
+                node.position.copy(data.position);
+                node.quaternion.copy(data.rotation);
+            }
+
+            /* ===== 3. 让 SpringBone / LookAt 等生效 ===== */
+            currentVrm.update(deltaTime);
+            }else {
+                // 只需要更新 VRM 和 Mixer
+                currentVrm.update(deltaTime);
+                if (currentVrm.lookAt) {
+                    currentVrm.lookAt.update(deltaTime);
+                }
+                if (currentMixer) {
+                    currentMixer.update(deltaTime);
+                }
         }
     }
     
-    if (currentMixer) {
-        currentMixer.update(deltaTime);
-    }
-    
+
+    sendVMCBones();
+    sendVMCBlends();  // 表情
     renderer.render(scene, camera);
     
     // 处理窗口大小变化时字幕位置
@@ -1786,6 +1946,29 @@ function animate() {
     }
 }
      
+async function setVMCReceive (enable, syncExpr = false) {
+  if (vmcReceiveEnabled!= enable){
+    if (enable) {
+      // 进入 VMC 模式：停止本地一切动画
+      if (idleAnimationManager) idleAnimationManager.stopAllAnimations();
+      if (breathAction) breathAction.stop();
+      if (blinkAction)  blinkAction.stop();
+      if (currentMixer) currentMixer.stopAllAction();
+      // 清空缓存，防止旧数据“跳变”
+      vmcBoneBuffer.clear();
+      vmcBlendBuffer.clear();
+    } else {
+      switchToModel(currentModelIndex, true);
+    }
+  };
+
+  vmcReceiveEnabled = enable;
+  vmcSyncExpression = syncExpr;
+	console.log(`VMC receive enabled: ${enable}, sync expression: ${syncExpr}`);
+
+
+};
+
 if (isElectron) {
     // 等待一小段时间确保页面完全加载
     setTimeout(async () => {
@@ -2340,6 +2523,174 @@ if (isElectron) {
             closeButton.title = await t('closeWindow');
         }
         initbutton();
+
+
+        // ★ VMC：VMC 协议管理按钮
+        const vmcButton = document.createElement('div');
+        vmcButton.id = 'vmc-handle';
+        vmcButton.innerHTML = '<i class="fas fa-broadcast-tower"></i>';
+        vmcButton.style.cssText = `
+            width: 36px; height: 36px; background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333;
+            cursor: pointer; -webkit-app-region: no-drag; display: flex;
+            align-items: center; justify-content: center; font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s ease;
+            user-select: none; pointer-events: auto; backdrop-filter: blur(10px);`;
+        
+        let vmcApp = null;          // Vue 实例
+        let vmcWrapper = null;      // 挂载的 DOM 节点
+        vmcButton.addEventListener('click', async () => {
+            // 如果已经打开，直接关掉并返回
+            if (vmcApp) {
+                vmcApp.unmount();
+                document.body.removeChild(vmcWrapper);
+                vmcApp  = null;
+                vmcWrapper = null;
+                return;
+            }
+
+            // 否则正常创建
+            const cfg = await window.electronAPI.getVMCConfig();
+            const { ElDialog, ElForm, ElFormItem, ElInput, ElSwitch, ElButton, ElInputNumber } = ElementPlus;
+
+            vmcWrapper = document.createElement('div');
+            document.body.appendChild(vmcWrapper);
+
+            vmcApp = Vue.createApp({
+                data() {
+                    return {
+                        dialogVisible: true,
+                        form: {
+                            receive: {
+                                enable: cfg.receive.enable,
+                                port: cfg.receive.port,
+                                syncExpression: cfg.receive.syncExpression
+                            },
+                            send: {
+                                enable: cfg.send.enable,
+                                host: cfg.send.host,
+                                port: cfg.send.port
+                            }
+                        },
+                        // 翻译文本
+                        translations: {
+                            title: '',
+                            receiveEnable: '',
+                            receivePort: '',
+                            sendEnable: '',
+                            sendHost: '',
+                            sendPort: '',
+                            cancelButton: '',
+                            saveButton: ''
+                        }
+                    }
+                },
+                async mounted() {
+                    // 初始化翻译文本
+                    this.translations.title = await t('vmcSettings');
+                    this.translations.receiveEnable = await t('vmcReceiveEnable');
+                    this.translations.receivePort = await t('vmcReceivePort');
+                    this.translations.sendEnable = await t('vmcSendEnable');
+                    this.translations.sendHost = await t('vmcSendHost');
+                    this.translations.sendPort = await t('vmcSendPort');
+                    this.translations.cancelButton = await t('cancel');
+                    this.translations.saveButton = await t('save');
+                    this.translations.syncExpression =  await t('syncExpression')
+                },
+                methods: {
+                async saveConfig() {
+                    await window.electronAPI.setVMCConfig({
+                    receive: { enable: this.form.receive.enable, port: this.form.receive.port ,syncExpression: this.form.receive.syncExpression },
+                    send:    { enable: this.form.send.enable,    host: this.form.send.host, port: this.form.send.port }
+                    });
+                    setVMCReceive(this.form.receive.enable, this.form.receive.syncExpression);
+                    this.close();
+                },
+                cancel() { this.close(); },
+                close() {
+                    this.dialogVisible = false;
+                    vmcApp.unmount();
+                    document.body.removeChild(vmcWrapper);
+                    vmcApp  = null;
+                    vmcWrapper = null;
+                }
+                },
+                template: `
+                    <el-dialog
+                        v-model="dialogVisible"
+                        :title="translations.title"
+                        width="420px"
+                        :modal="false"
+                        :close-on-click-modal="false"
+                        append-to-body
+                        custom-class="vmc-dialog"
+                        @close="close"
+                        style="  background: rgba(255, 255, 255, 0.25) !important;backdrop-filter: blur(20px);border-radius: 20px !important;"
+                    >
+                        <div style="padding: 0 10px;">
+                            <!-- 接收设置 -->
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.75)!important; border-radius: 20px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                    <el-switch v-model="form.receive.enable"></el-switch>
+                                    <span style="margin-left: 10px; font-weight: 500;">{{ translations.receiveEnable }}</span>
+                                </div>
+                                <div style="display:flex;align-items:center;margin-top:8px;">
+                                    <el-switch v-model="form.receive.syncExpression"></el-switch>
+                                    <span style="margin-left:10px;font-size:14px;">{{ translations.syncExpression }}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="width: 100px;margin-right:30px; font-size: 14px;">{{ translations.receivePort }}:</span>
+                                    <el-input-number 
+                                        v-model="form.receive.port" 
+                                        :min="1024" 
+                                        :max="65535"
+                                        controls-position="right"
+                                        style="width: 200px;"
+                                    ></el-input-number>
+                                </div>
+                            </div>
+                            
+                            <!-- 发送设置 -->
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(245, 247, 250, 0.75)!important; border-radius: 20px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                    <el-switch v-model="form.send.enable"></el-switch>
+                                    <span style="margin-left: 10px;margin-right:30px; font-weight: 500;">{{ translations.sendEnable }}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                    <span style="width: 100px; margin-right:30px;font-size: 14px;">{{ translations.sendHost }}:</span>
+                                    <el-input 
+                                        v-model="form.send.host" 
+                                        style="width: 200px;"
+                                    ></el-input>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="width: 100px;margin-right:30px; font-size: 14px;">{{ translations.sendPort }}:</span>
+                                    <el-input-number 
+                                        v-model="form.send.port" 
+                                        :min="1024" 
+                                        :max="65535"
+                                        controls-position="right"
+                                        style="width: 200px;"
+                                    ></el-input-number>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <template #footer>
+                            <div style="text-align: right;">
+                                <el-button @click="cancel" style="margin-right: 10px;">{{ translations.cancelButton }}</el-button>
+                                <el-button type="primary" @click="saveConfig">{{ translations.saveButton }}</el-button>
+                            </div>
+                        </template>
+                    </el-dialog>
+                `
+            });
+            
+            vmcApp.use(ElementPlus);
+            vmcApp.mount(vmcWrapper);
+        });
+
+
         // 保存所有需要隐藏的按钮引用
         const controlButtons = [];
         // 鼠标穿透锁定按钮
@@ -2482,17 +2833,18 @@ if (isElectron) {
         // 组装控制面板
         controlPanel.appendChild(dragButton);
         controlPanel.appendChild(lockButton);
-        controlPanel.appendChild(wsStatusButton);
         controlPanel.appendChild(subtitleButton);
         controlPanel.appendChild(idleAnimationButton);
         controlPanel.appendChild(prevModelButton);
         controlPanel.appendChild(nextModelButton);
+        controlPanel.appendChild(vmcButton);
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
         // 收集所有需要隐藏的按钮（除了锁定按钮）
         controlButtons.push(
             dragButton, 
+            vmcButton,
             wsStatusButton, 
             subtitleButton, 
             idleAnimationButton, 
@@ -2506,6 +2858,7 @@ if (isElectron) {
         document.body.appendChild(controlPanel);
 
         // 为每个按钮添加悬浮提示
+        addHoverEffect(vmcButton, await t('vmcSettings') || 'VMC Settings');
         addHoverEffect(dragButton, await t('dragWindow'));
         addHoverEffect(lockButton, isMouseLocked ? await t('UnlockWindow') : await t('LockWindow'));
         addHoverEffect(wsStatusButton, wsConnected ? await t('WebSocketConnected') : await t('WebSocketDisconnected'));
@@ -2675,6 +3028,77 @@ function initTTSWebSocket() {
 }
 initTTSWebSocket();
 
+const VMCToVRMBlend = {
+  Joy:      'happy',
+  Angry:    'angry',
+  Sorrow:   'sad',
+  Fun:      'relaxed',
+  A:        'aa',
+  I:        'ih',
+  U:        'ou',
+  E:        'ee',
+  O:        'oh',
+  Blink:    'blink',
+  Blink_L:  'blinkLeft',
+  Blink_R:  'blinkRight',
+  Surprised:'surprised',
+  LookDown:   'lookDown',
+  LookUp:     'lookUp',
+  LookLeft:   'lookLeft',
+  LookRight:  'lookRight'
+};
+let vmcReceiveEnabled = false;   // 是否正在 VMC 接收模式
+let vmcSyncExpression = false;   // 是否同步表情（面板开关）
+let vmcBoneBuffer = new Map();   // 缓存最新骨骼数据
+let vmcBlendBuffer = new Map();  // 缓存最新表情数据
+
+/* ========== VMC 接收：骨骼 + 表情 一次性完整版 ========== */
+if (window.vmcAPI) {
+  window.vmcAPI.onVMCOscRaw((oscMsg) => {
+    if (!vmcReceiveEnabled) return;          // 总开关
+
+    const { address, args } = oscMsg;
+
+    /* -------- 1. 骨骼 /VMC/Ext/Bone/Pos -------- */
+    if (address === '/VMC/Ext/Bone/Pos') {
+      // 兼容两种常见 osc 库格式：{type,value} 或直接原始值
+      const boneName = args[0].value ?? args[0];
+      const x   = args[1].value ?? args[1];
+      const y   = args[2].value ?? args[2];
+      const z   = args[3].value ?? args[3];
+      const qx  = args[4].value ?? args[4];
+      const qy  = - args[5].value ?? args[5];
+      const qz  = - args[6].value ?? args[6];
+      const qw  = args[7].value ?? args[7];
+
+      vmcBoneBuffer.set(boneName, {
+        position: new THREE.Vector3(x, y, z),
+        rotation: new THREE.Quaternion(qx, qy, qz, qw)
+      });
+      return;
+    }
+
+    /* -------- 2. 表情 /VMC/Ext/Blend/Val -------- */
+    if (address === '/VMC/Ext/Blend/Val') {
+      const blendName = args[0].value ?? args[0];
+      const weight  = args[1].value ?? args[1];
+      vmcBlendBuffer.set(blendName, weight);
+      return;
+    }
+
+    /* -------- 3. 表情 Apply -------- */
+    if (address === '/VMC/Ext/Blend/Apply') {
+      if (!currentVrm?.expressionManager || !vmcSyncExpression) return;
+      for (const [vmcName, w] of vmcBlendBuffer) {
+        const vrmName = VMCToVRMBlend[vmcName];   // 官方表情映射表
+        if (vrmName) currentVrm.expressionManager.setValue(vrmName, w);
+      }
+    }
+  });
+}
+
+
+
 // 发送消息到主界面
 function sendToMain(type, data) {
     if (ttsWebSocket && wsConnected) {
@@ -2793,7 +3217,7 @@ async function getAllModels() {
 }
 
 // 切换到指定索引的模型（纯前端切换）
-async function switchToModel(index) {
+async function switchToModel(index,isRefresh = false) {
     if (!modelsInitialized) {
         await getAllModels();
     }
@@ -2807,7 +3231,7 @@ async function switchToModel(index) {
     const newIndex = ((index % allModels.length) + allModels.length) % allModels.length;
     
     // 如果是同一个模型，不需要切换
-    if (newIndex === currentModelIndex) {
+    if (newIndex === currentModelIndex && !isRefresh) {
         console.log('Same model selected, no need to switch');
         return;
     }
