@@ -1916,14 +1916,14 @@ function animate() {
             /* ===== 3. 让 SpringBone / LookAt 等生效 ===== */
             currentVrm.update(deltaTime);
             }else {
-            // 只需要更新 VRM 和 Mixer
-            currentVrm.update(deltaTime);
-            if (currentVrm.lookAt) {
-                currentVrm.lookAt.update(deltaTime);
-            }
-            if (currentMixer) {
-                currentMixer.update(deltaTime);
-            }
+                // 只需要更新 VRM 和 Mixer
+                currentVrm.update(deltaTime);
+                if (currentVrm.lookAt) {
+                    currentVrm.lookAt.update(deltaTime);
+                }
+                if (currentMixer) {
+                    currentMixer.update(deltaTime);
+                }
         }
     }
     
@@ -1946,6 +1946,32 @@ function animate() {
     }
 }
      
+async function setVMCReceive (enable, syncExpr = false) {
+  if (vmcReceiveEnabled!= enable){
+    if (enable) {
+      // 进入 VMC 模式：停止本地一切动画
+      if (idleAnimationManager) idleAnimationManager.stopAllAnimations();
+      if (breathAction) breathAction.stop();
+      if (blinkAction)  blinkAction.stop();
+      if (currentMixer) currentMixer.stopAllAction();
+      // 清空缓存，防止旧数据“跳变”
+      vmcBoneBuffer.clear();
+      vmcBlendBuffer.clear();
+    } else {
+      // 退出 VMC 模式：恢复本地动画
+      if (breathAction) breathAction.play();
+      if (blinkAction)  blinkAction.play();
+      startIdleAnimationLoop();   // 重新启动闲置动画
+    }
+  };
+
+  vmcReceiveEnabled = enable;
+  vmcSyncExpression = syncExpr;
+	console.log(`VMC receive enabled: ${enable}, sync expression: ${syncExpr}`);
+
+
+};
+
 if (isElectron) {
     // 等待一小段时间确保页面完全加载
     setTimeout(async () => {
@@ -2573,10 +2599,6 @@ if (isElectron) {
                     this.translations.cancelButton = await t('cancel');
                     this.translations.saveButton = await t('save');
                     this.translations.syncExpression =  await t('syncExpression')
-                    window.electronAPI.onVMCConfigChanged((cfg) => {
-                        // 把最新开关状态写回表单，界面就保持同步
-                        this.form.receive.syncExpression = cfg.receive.syncExpression;
-                    });
                 },
                 methods: {
                 async saveConfig() {
@@ -2584,6 +2606,7 @@ if (isElectron) {
                     receive: { enable: this.form.receive.enable, port: this.form.receive.port ,syncExpression: this.form.receive.syncExpression },
                     send:    { enable: this.form.send.enable,    host: this.form.send.host, port: this.form.send.port }
                     });
+                    setVMCReceive(this.form.receive.enable, this.form.receive.syncExpression);
                     this.close();
                 },
                 cancel() { this.close(); },
@@ -3434,33 +3457,5 @@ function getPrevModelInfo() {
     const prevIndex = ((currentModelIndex - 1) % allModels.length + allModels.length) % allModels.length;
     return allModels[prevIndex];
 }
-window.setVMCReceive = (enable, syncExpr = false) => {
-  vmcReceiveEnabled = enable;
-  vmcSyncExpression = syncExpr;
-    console.log(`VMC receive enabled: ${enable}, sync expression: ${syncExpr}`);
-  if (enable) {
-    // 进入 VMC 模式：停止本地一切动画
-    if (idleAnimationManager) idleAnimationManager.stopAllAnimations();
-    if (breathAction) breathAction.stop();
-    if (blinkAction)  blinkAction.stop();
-    if (currentMixer) currentMixer.stopAllAction();
-    // 清空缓存，防止旧数据“跳变”
-    vmcBoneBuffer.clear();
-    vmcBlendBuffer.clear();
-  } else {
-    // 退出 VMC 模式：恢复本地动画
-    if (breathAction) breathAction.play();
-    if (blinkAction)  blinkAction.play();
-    startIdleAnimationLoop();   // 重新启动闲置动画
-  }
-};
 
-if(window.electronAPI){
-    window.electronAPI.onVMCConfigChanged((cfg) => {
-    // cfg 里已经有 receive.enable / receive.syncExpression
-    if (window.setVMCReceive) {
-        window.setVMCReceive(cfg.receive.enable, cfg.receive.syncExpression);
-    }
-    });
-}
 animate();
