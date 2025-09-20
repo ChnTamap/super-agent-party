@@ -14,6 +14,7 @@ const osc = require('osc');
 // ★ VMC：UDP 收发资源
 let vmcUdpPort = null;          // osc.UDPPort 实例
 let vmcReceiverActive = false;  // 接收是否运行
+let vrmWindows = []; 
 const vmcSendSocket = dgram.createSocket('udp4'); // 发送复用同一 socket
 // ★ 替换原来的 startVMCReceiver
 function startVMCReceiver(cfg) {
@@ -25,11 +26,23 @@ function startVMCReceiver(cfg) {
   });
   vmcUdpPort.open();
   vmcUdpPort.on('message', (oscMsg) => {
-    if (!oscMsg.address.startsWith('/VMC/Ext/Bone/Pos')) return;
-    const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args;
-    if (mainWindow && !mainWindow.isDestroyed())
-      mainWindow.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
+
+    // 2. 参数不足直接 return
+    if (!Array.isArray(oscMsg.args) || oscMsg.args.length < 8) return;
+
+    // 3. 再读数据
+    const [boneName, x, y, z, qx, qy, qz, qw] = oscMsg.args.map(v => v.value ?? v);
+    if (typeof boneName !== 'string') return;
+
+    // 4. 广播给所有 VRM 窗口
+    vrmWindows.forEach(w => {
+      if (!w.isDestroyed()) {
+        w.webContents.send('vmc-bone', { boneName, position:{x,y,z}, rotation:{x:qx,y:qy,z:qz,w:qw} });
+        w.webContents.send('vmc-osc-raw', oscMsg);
+      }
+    });
   });
+
   vmcReceiverActive = true;
   console.log(`[VMC] 接收已启动 @ ${cfg.receive.port}`);
 }
@@ -483,8 +496,6 @@ app.whenReady().then(async () => {
       app.relaunch();
       app.exit();
     })
-
-    let vrmWindows = []; 
 
     ipcMain.handle('start-vrm-window', async (_, windowConfig = {}) => {
       const { width, height } = screen.getPrimaryDisplay().workAreaSize;

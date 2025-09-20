@@ -1815,7 +1815,6 @@ const VRM1_TO_VMC0 = {
   oh:     'O',
   blinkLeft:  'Blink_L',
   blinkRight: 'Blink_R',
-  // 其余没有官方映射的，按原名发
   blink:      'Blink',
   surprised:  'Surprised',
   neutral:    'Neutral',
@@ -1852,7 +1851,6 @@ function sendVMCBlends() {
     // 节流
     if (Math.abs(weight - (lastBlendWeights[vmcName] ?? 0)) < 0.01) continue;
     lastBlendWeights[vmcName] = weight;
-    console.log('[VMC-OUT]', vmcName, weight); // 发送
     window.vmcAPI.sendVMCBlend({
       blendName: vmcName,
       weight
@@ -1860,7 +1858,30 @@ function sendVMCBlends() {
   }
   window.vmcAPI.sendVMCBlendApply(); // 应用
 }
-
+const vmcToVrmBone = {
+  LeftIndexIntermediate: 'leftIndexIntermediate',
+  RightIndexIntermediate:'rightIndexIntermediate',
+  LeftMiddleIntermediate:'leftMiddleIntermediate',
+  RightMiddleIntermediate:'rightMiddleIntermediate',
+  LeftRingIntermediate:  'leftRingIntermediate',
+  RightRingIntermediate: 'rightRingIntermediate',
+  LeftLittleIntermediate:'leftLittleIntermediate',
+  RightLittleIntermediate:'rightLittleIntermediate',
+  LeftThumbIntermediate: 'leftThumbIntermediate',
+  RightThumbIntermediate:'rightThumbIntermediate',
+  LeftUpperArm:  'leftUpperArm',
+  LeftLowerArm:  'leftLowerArm',
+  LeftHand:      'leftHand',
+  RightUpperArm: 'rightUpperArm',
+  RightLowerArm: 'rightLowerArm',
+  RightHand:     'rightHand',
+  UpperChest:    'upperChest',
+  Chest:         'chest',
+  Spine:         'spine',
+  Hips:          'hips',
+  Neck:          'neck',
+  Head:          'head',
+};
 
 // animate
 const clock = new THREE.Clock();
@@ -1873,16 +1894,40 @@ function animate() {
     const deltaTime = clock.getDelta();
     
     if (currentVrm) {
-        // 只需要更新 VRM 和 Mixer
-        currentVrm.update(deltaTime);
-        if (currentVrm.lookAt) {
-            currentVrm.lookAt.update(deltaTime);
+        if (vmcReceiveEnabled) {
+            for (const [vmcName, data] of vmcBoneBuffer) {
+                // 2.1 转官方名
+                let boneName = vmcToVrmBone[vmcName] ??
+                            vmcName.charAt(0).toLowerCase() + vmcName.slice(1);
+
+                // 2.2 拿节点
+                const node = currentVrm.humanoid.getNormalizedBoneNode(boneName);
+                if (!node) {
+                // 调试用：看哪些名字还没对齐（正式版可删掉）
+                // console.warn('⚠️ 未映射骨骼:', vmcName, '->', boneName);
+                continue;
+                }
+
+                // 2.3 真正写数据
+                node.position.copy(data.position);
+                node.quaternion.copy(data.rotation);
+            }
+
+            /* ===== 3. 让 SpringBone / LookAt 等生效 ===== */
+            currentVrm.update(deltaTime);
+            }else {
+            // 只需要更新 VRM 和 Mixer
+            currentVrm.update(deltaTime);
+            if (currentVrm.lookAt) {
+                currentVrm.lookAt.update(deltaTime);
+            }
+            if (currentMixer) {
+                currentMixer.update(deltaTime);
+            }
         }
     }
     
-    if (currentMixer) {
-        currentMixer.update(deltaTime);
-    }
+
     sendVMCBones();
     sendVMCBlends();  // 表情
     renderer.render(scene, camera);
@@ -2526,11 +2571,16 @@ if (isElectron) {
                     this.translations.sendPort = await t('vmcSendPort');
                     this.translations.cancelButton = await t('cancel');
                     this.translations.saveButton = await t('save');
+                    this.translations.syncExpression =  await t('syncExpression')
+                    window.electronAPI.onVMCConfigChanged((cfg) => {
+                        // 把最新开关状态写回表单，界面就保持同步
+                        this.form.receive.syncExpression = cfg.receive.syncExpression;
+                    });
                 },
                 methods: {
                 async saveConfig() {
                     await window.electronAPI.setVMCConfig({
-                    receive: { enable: this.form.receive.enable, port: this.form.receive.port },
+                    receive: { enable: this.form.receive.enable, port: this.form.receive.port ,syncExpression: this.form.receive.syncExpression },
                     send:    { enable: this.form.send.enable,    host: this.form.send.host, port: this.form.send.port }
                     });
                     this.close();
@@ -2562,6 +2612,10 @@ if (isElectron) {
                                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
                                     <el-switch v-model="form.receive.enable"></el-switch>
                                     <span style="margin-left: 10px; font-weight: 500;">{{ translations.receiveEnable }}</span>
+                                </div>
+                                <div style="display:flex;align-items:center;margin-top:8px;">
+                                    <el-switch v-model="form.receive.syncExpression"></el-switch>
+                                    <span style="margin-left:10px;font-size:14px;">{{ translations.syncExpression }}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span style="width: 70px;margin-right:30px; font-size: 14px;">{{ translations.receivePort }}:</span>
@@ -2953,6 +3007,77 @@ function initTTSWebSocket() {
 }
 initTTSWebSocket();
 
+let vmcReceiveEnabled = false;   // 是否正在 VMC 接收模式
+let vmcSyncExpression = false;   // 是否同步表情（面板开关）
+let vmcBoneBuffer = new Map();   // 缓存最新骨骼数据
+let vmcBlendBuffer = new Map();  // 缓存最新表情数据
+
+/* ========== VMC 接收：骨骼 + 表情 一次性完整版 ========== */
+if (window.vmcAPI) {
+  window.vmcAPI.onVMCOscRaw((oscMsg) => {
+    if (!vmcReceiveEnabled) return;          // 总开关
+
+    const { address, args } = oscMsg;
+
+    /* -------- 1. 骨骼 /VMC/Ext/Bone/Pos -------- */
+    if (address === '/VMC/Ext/Bone/Pos') {
+      // 兼容两种常见 osc 库格式：{type,value} 或直接原始值
+      const boneName = args[0].value ?? args[0];
+      const x   = args[1].value ?? args[1];
+      const y   = args[2].value ?? args[2];
+      const z   = args[3].value ?? args[3];
+      const qx  = args[4].value ?? args[4];
+      const qy  = - args[5].value ?? args[5];
+      const qz  = - args[6].value ?? args[6];
+      const qw  = args[7].value ?? args[7];
+
+      vmcBoneBuffer.set(boneName, {
+        position: new THREE.Vector3(x, y, z),
+        rotation: new THREE.Quaternion(qx, qy, qz, qw)
+      });
+      return;
+    }
+
+    /* -------- 2. 表情 /VMC/Ext/Blend/Val -------- */
+    if (address === '/VMC/Ext/Blend/Val') {
+      const blendName = args[0].value ?? args[0];
+      const weight  = args[1].value ?? args[1];
+      vmcBlendBuffer.set(blendName, weight);
+      return;
+    }
+
+    /* -------- 3. 表情 Apply -------- */
+    if (address === '/VMC/Ext/Blend/Apply') {
+      if (!currentVrm?.expressionManager || !vmcSyncExpression) return;
+      for (const [vmcName, w] of vmcBlendBuffer) {
+        const vrmName = vmcToVRMBlend[vmcName];   // 官方表情映射表
+        if (vrmName) currentVrm.expressionManager.setValue(vrmName, w);
+      }
+    }
+  });
+}
+
+
+const vmcToVRMBlend = {
+  Joy:      'happy',
+  Angry:    'angry',
+  Sorrow:   'sad',
+  Fun:      'relaxed',
+  A:        'aa',
+  I:        'ih',
+  U:        'ou',
+  E:        'ee',
+  O:        'oh',
+  Blink:    'blink',
+  Blink_L:  'blinkLeft',
+  Blink_R:  'blinkRight',
+  Surprised:'surprised',
+  LookDown:   'lookDown',
+  LookUp:     'lookUp',
+  LookLeft:   'lookLeft',
+  LookRight:  'lookRight'
+};
+
 // 发送消息到主界面
 function sendToMain(type, data) {
     if (ttsWebSocket && wsConnected) {
@@ -3308,5 +3433,33 @@ function getPrevModelInfo() {
     const prevIndex = ((currentModelIndex - 1) % allModels.length + allModels.length) % allModels.length;
     return allModels[prevIndex];
 }
+window.setVMCReceive = (enable, syncExpr = false) => {
+  vmcReceiveEnabled = enable;
+  vmcSyncExpression = syncExpr;
 
+  if (enable) {
+    // 进入 VMC 模式：停止本地一切动画
+    if (idleAnimationManager) idleAnimationManager.stopAllAnimations();
+    if (breathAction) breathAction.stop();
+    if (blinkAction)  blinkAction.stop();
+    if (currentMixer) currentMixer.stopAllAction();
+    // 清空缓存，防止旧数据“跳变”
+    vmcBoneBuffer.clear();
+    vmcBlendBuffer.clear();
+  } else {
+    // 退出 VMC 模式：恢复本地动画
+    if (breathAction) breathAction.play();
+    if (blinkAction)  blinkAction.play();
+    startIdleAnimationLoop();   // 重新启动闲置动画
+  }
+};
+
+if(window.electronAPI){
+    window.electronAPI.onVMCConfigChanged((cfg) => {
+    // cfg 里已经有 receive.enable / receive.syncExpression
+    if (window.setVMCReceive) {
+        window.setVMCReceive(cfg.receive.enable, cfg.receive.syncExpression);
+    }
+    });
+}
 animate();

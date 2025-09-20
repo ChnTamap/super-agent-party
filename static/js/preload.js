@@ -95,10 +95,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setVMCConfig: (cfg) => ipcRenderer.invoke('set-vmc-config', cfg),
   getVMCConfig: () => ipcRenderer.invoke('get-vmc-config'),
+  onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg))
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {
   onVMCBone: (callback) => ipcRenderer.on('vmc-bone', (_, data) => callback(data)),
+
+  onVMCOscRaw: (cb) => ipcRenderer.on('vmc-osc-raw', (_, oscMsg) => cb(oscMsg)),
 
   sendVMCBone: (data) => {
     if (!vmcCfg.send.enable) return;
