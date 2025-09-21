@@ -1440,6 +1440,8 @@ let vue_methods = {
           total_tokens: 0,
           first_token_latency: 0,
           elapsedTime: 0,
+          first_sentence_latency: 0,
+          TTSelapsedTime: 0,
         });
         if (this.allBriefly){
           this.messages[this.messages.length - 1].briefly = true;
@@ -5332,6 +5334,8 @@ let vue_methods = {
       if (!lastMessage || lastMessage.isPlaying) return;
       if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
         console.log('All audio chunks played');
+          this.stopTimer();
+          lastMessage.TTSelapsedTime = this.elapsedTime/1000;
         lastMessage.currentChunk = 0;
         this.TTSrunning = false;
         this.cur_audioDatas = [];
@@ -5356,7 +5360,11 @@ let vue_methods = {
       if (audioChunk && !lastMessage.isPlaying) {
         lastMessage.isPlaying = true;
         console.log(`Playing audio chunk ${currentIndex}`);
-        
+        if (currentIndex == 0){
+          this.stopTimer();
+          lastMessage.first_sentence_latency = this.elapsedTime;
+        }
+            
         try {
           this.currentAudio = new Audio(audioChunk.url);
           
@@ -5388,9 +5396,12 @@ let vue_methods = {
         } finally {
           lastMessage.currentChunk++;
           lastMessage.isPlaying = false;
+          this.stopTimer();
+          lastMessage.TTSelapsedTime = this.elapsedTime / 1000; // 更新TTSelapsedTime
           setTimeout(() => {
             this.checkAudioPlayback();
           }, 0);
+          this.autoSaveSettings();
         }
       }
     },

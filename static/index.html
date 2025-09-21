@@ -276,6 +276,9 @@ if ('serviceWorker' in navigator) {
                 <span class="tts-status" v-else>
                   {{ t('initializing') }}
                 </span>
+                <span class="tts-status" v-if="message.role === 'assistant' && !isMobile">
+                  {{ t('first_sentence_latency')+': '+message?.first_sentence_latency +'ms,    '+ t('TTSelapsedTime')+': '+message?.TTSelapsedTime + 's'}}
+                </span>
               </div>
               <div class="message-content">
                 <!-- 用户消息内容 -->
