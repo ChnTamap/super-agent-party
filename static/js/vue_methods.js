@@ -1125,9 +1125,9 @@ let vue_methods = {
     },
 
     async handleKeyDown(event) {
-      if (event.repeat) return;
-      if (event.key === 'Enter' && this.activeMenu === 'home') {
-        if (event.shiftKey) {
+      if (event?.repeat) return;
+      if (event?.key === 'Enter' && this.activeMenu === 'home') {
+        if (event?.shiftKey) {
           // 如果同时按下了Shift键，则不阻止默认行为，允许换行
           return;
         } else {
@@ -1136,15 +1136,15 @@ let vue_methods = {
           await this.sendMessage();
         }
       }
-      if (event.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
+      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
         event.preventDefault();
         this.asrSettings.enabled = false;
         await this.toggleASR();
       }
     },
     async handleKeyUp(event) {
-      if (event.repeat) return;
-      if (event.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
+      if (event?.repeat) return;
+      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
         event.preventDefault();
         this.asrSettings.enabled = true;
         await this.toggleASR();
