@@ -22,7 +22,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.max(1, window.devicePixelRatio));
 renderer.setClearColor(0x00000000, 0);
-
+renderer.xr.enabled = true;
 // 用fetch查询/cur_language的值
 async function fetchLanguage() {
     try {
@@ -2540,6 +2540,39 @@ function addcontrolPanel() {
         }
         initbutton();
 
+        // ↓↓↓ 新增：XR 自动按钮
+        const xrAutoBtn = document.createElement('div');
+        xrAutoBtn.id = 'xr-auto-btn';
+        xrAutoBtn.innerHTML = '<i class="fa-solid fa-vr-cardboard"></i>';
+        xrAutoBtn.style.cssText = `
+            width: 36px; height: 36px; background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333;
+            cursor: pointer; -webkit-app-region: no-drag; display: flex;
+            align-items: center; justify-content: center; font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.2s ease;
+            user-select: none; pointer-events: auto; backdrop-filter: blur(10px);`;
+
+        // 自动检测能力
+        let canAR = false, canVR = false;
+        Promise.all([
+            navigator.xr.isSessionSupported('immersive-ar').then(yes=>{ canAR=yes; console.log('AR?',yes); }),
+            navigator.xr.isSessionSupported('immersive-vr').then(yes=>{ canVR=yes; console.log('VR?',yes); })
+        ]).then(()=>{
+            console.log('final AR',canAR,'VR',canVR);
+            xrAutoBtn.style.display = (canAR || canVR) ? 'flex' : 'none';
+        });
+
+        // 点击自动选模式
+        xrAutoBtn.addEventListener('click', async () => {
+            const mode = canAR ? 'immersive-ar' : 'immersive-vr';
+            if (renderer.xr.getSession()) await renderer.xr.getSession().end(); // 退出旧会话
+            const opts = mode === 'immersive-ar'
+                ? { optionalFeatures: ['local-floor', 'hit-test', 'dom-overlay'], domOverlay: { root: document.body } }
+                : { optionalFeatures: ['local-floor'] };
+            const session = await navigator.xr.requestSession(mode, opts);
+            renderer.xr.setSession(session);
+        });
+        
 
         // ★ VMC：VMC 协议管理按钮
         const vmcButton = document.createElement('div');
@@ -2857,7 +2890,7 @@ function addcontrolPanel() {
         if (isElectron) {
             controlPanel.appendChild(vmcButton);
         }
-        
+        controlPanel.appendChild(xrAutoBtn); // 新增：XR 自动按钮
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
@@ -2871,7 +2904,8 @@ function addcontrolPanel() {
             prevModelButton, 
             nextModelButton, 
             refreshButton, 
-            closeButton
+            closeButton,
+            xrAutoBtn
         );
 
         // 添加到页面
@@ -2886,7 +2920,7 @@ function addcontrolPanel() {
         addHoverEffect(idleAnimationButton, useVRMAIdleAnimations ? 
             await t('UsingVRMAAnimations') : 
             await t('UsingProceduralAnimations'));
-        
+        addHoverEffect(xrAutoBtn, await t('EnterXR') || 'Enter XR');
         // 模型切换按钮
         const prevModel = getPrevModelInfo();
         const nextModel = getNextModelInfo();
