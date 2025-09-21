@@ -1437,6 +1437,9 @@ let vue_methods = {
           chunks_voice:[],
           audioChunks: [],
           isPlaying:false,
+          total_tokens: 0,
+          first_token_latency: 0,
+          elapsedTime: 0,
         });
         if (this.allBriefly){
           this.messages[this.messages.length - 1].briefly = true;
@@ -1477,6 +1480,7 @@ let vue_methods = {
                   // 结束计时并打印时间
                   this.stopTimer();
                   console.log(`first token processed in ${this.elapsedTime}ms`);
+                  lastMessage.first_token_latency = this.elapsedTime;
                 }
                 if (parsed.choices?.[0]?.delta?.content) {
                   tts_buffer += parsed.choices[0].delta.content;
@@ -1522,7 +1526,7 @@ let vue_methods = {
                     // 追加内容时直接拼接
                     lastMessage.content += newContent;
                   }
-                  
+
                   this.scrollToBottom();
                 }
                 // 处理 content 逻辑
@@ -1536,6 +1540,13 @@ let vue_methods = {
                   lastMessage.pure_content += parsed.choices[0].delta.content;
                   this.scrollToBottom();
                 }
+                if (parsed.usage && parsed.usage?.total_tokens) {
+                  // 这里 lastMessage 就是你当前这条 AI 消息
+                  const lastMessage = this.messages[this.messages.length - 1];
+                  lastMessage.total_tokens  = parsed.usage.total_tokens;
+                }
+                  this.stopTimer(); // 结束计时并打印时间
+                  lastMessage.elapsedTime = this.elapsedTime;
                 if (parsed.choices?.[0]?.delta?.async_tool_id) {
                     // 判断parsed.choices[0].delta.async_tool_id是否在this.asyncToolsID中
                     if (this.asyncToolsID.includes(parsed.choices[0].delta.async_tool_id)) {
