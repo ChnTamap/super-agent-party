@@ -1985,8 +1985,7 @@ async function setVMCReceive (enable, syncExpr = false) {
 
 
 };
-
-if (isElectron) {
+function addcontrolPanel() {
     // 等待一小段时间确保页面完全加载
     setTimeout(async () => {
         // 创建控制面板容器
@@ -2854,7 +2853,11 @@ if (isElectron) {
         controlPanel.appendChild(idleAnimationButton);
         controlPanel.appendChild(prevModelButton);
         controlPanel.appendChild(nextModelButton);
-        controlPanel.appendChild(vmcButton);
+
+        if (isElectron) {
+            controlPanel.appendChild(vmcButton);
+        }
+        
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
@@ -2995,8 +2998,9 @@ if (isElectron) {
 
         console.log('控制面板已添加到页面');
     }, 1000);
-}
 
+}
+addcontrolPanel();
 // 在全局变量区域添加
 let ttsWebSocket = null;
 let wsConnected = false;
