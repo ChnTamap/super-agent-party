@@ -443,7 +443,7 @@ let vue_data = {
       maxConcurrency: 2,
       enabledInterruption: false,
       bufferWordList: [],
-      SampleText: '请给super agent party点点星标吧！',
+      SampleText: 'super agent party链接一切！',
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',
       edgettsVoice: 'XiaoyiNeural',
@@ -472,7 +472,7 @@ let vue_data = {
     newTTSConfig: {
       name: '',
       enabled: false,
-      SampleText: '请给super agent party点点星标吧！',
+      SampleText: 'super agent party链接一切！',
       engine: 'edgetts',
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',

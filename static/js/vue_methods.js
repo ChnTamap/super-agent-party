@@ -6798,7 +6798,7 @@ let vue_methods = {
 
     async ClickToListen(SampleText,voice='default') {
       if (!SampleText) {
-        SampleText ='请给super agent party点点星标吧！'
+        SampleText ='super agent party链接一切！'
       }
 
       try {
@@ -7265,7 +7265,7 @@ let vue_methods = {
     this.newTTSConfig = {
       name: '',
       enabled: true,
-      SampleText: '请给super agent party点点星标吧！',
+      SampleText: 'super agent party链接一切！',
       engine: 'edgetts',
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',
