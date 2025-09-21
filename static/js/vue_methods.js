@@ -1546,7 +1546,7 @@ let vue_methods = {
                   lastMessage.total_tokens  = parsed.usage.total_tokens;
                 }
                   this.stopTimer(); // 结束计时并打印时间
-                  lastMessage.elapsedTime = this.elapsedTime;
+                  lastMessage.elapsedTime = this.elapsedTime / 1000;
                 if (parsed.choices?.[0]?.delta?.async_tool_id) {
                     // 判断parsed.choices[0].delta.async_tool_id是否在this.asyncToolsID中
                     if (this.asyncToolsID.includes(parsed.choices[0].delta.async_tool_id)) {
