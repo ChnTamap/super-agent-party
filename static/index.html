@@ -276,6 +276,9 @@ if ('serviceWorker' in navigator) {
                 <span class="tts-status" v-else>
                   {{ t('initializing') }}
                 </span>
+                <span class="tts-status" v-if="message.role === 'assistant' && !isMobile">
+                  {{ t('first_sentence_latency')+': '+message?.first_sentence_latency +'ms,    '+ t('TTSelapsedTime')+': '+message?.TTSelapsedTime + 's'}}
+                </span>
               </div>
               <div class="message-content">
                 <!-- 用户消息内容 -->
@@ -348,7 +351,7 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-rotate"></i>
                   </el-button>
                 </el-tooltip>
-                <span class="msg-status" v-if="message.role === 'assistant'">
+                <span class="msg-status" v-if="message.role === 'assistant' && !isMobile">
                   {{ t('total_tokens')+': '+message?.total_tokens +',    '+ t('first_token_latency')+': '+message?.first_token_latency +'ms,    '+ t('elapsedTime')+': '+message?.elapsedTime + 's'}}
                 </span>
               </div>

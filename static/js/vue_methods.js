@@ -1440,6 +1440,8 @@ let vue_methods = {
           total_tokens: 0,
           first_token_latency: 0,
           elapsedTime: 0,
+          first_sentence_latency: 0,
+          TTSelapsedTime: 0,
         });
         if (this.allBriefly){
           this.messages[this.messages.length - 1].briefly = true;
@@ -5044,11 +5046,23 @@ let vue_methods = {
     splitTTSBuffer(buffer) {
       // 0. 清理
       buffer = buffer
+        // 移除标题标记（#、##、###等）
+        .replace(/#{1,6}\s/gm, '')  // 匹配行首的1-6个#后跟空格
+        // 移除单个Markdown格式字符（*_~`），但改为全局匹配连续出现（例如***）
+        .replace(/[*_~`]+/g, '')  // 使用"+"匹配连续出现的字符
+        // 移除列表项标记（如"- "或"* "）
+        .replace(/^\s*[-*]\s/gm, '')
+        .replace(/[\u{2600}-\u{27BF}\u{2700}-\u{27BF}\u{1F300}-\u{1F9FF}]/gu, '')   // 移除所有Unicode代理对（如表情符号）
+        // 移除所有Unicode代理对（如表情符号）
         .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
-        .replace(/[*_~`]/g, '')
-        .replace(/^\s*-\s/gm, '')
+        // 移除图片标记（![alt](url)）
         .replace(/!\[.*?\]\(.*?\)/g, '')
-        .replace(/\[.*?\]\(.*?\)/g, '');
+        // 移除链接标记（[text](url)）
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+        // 移除多余的空格（连续多个空格或制表符）
+        .replace(/(?<!\>)\s+(?!\<)/g, ' ') 
+        // 移除首尾空格
+        .trim();
 
       if (!buffer || buffer.trim() === '') {
         return {
@@ -5332,6 +5346,8 @@ let vue_methods = {
       if (!lastMessage || lastMessage.isPlaying) return;
       if ((!lastMessage || (lastMessage?.currentChunk ?? 0) >= (lastMessage?.ttsChunks?.length ?? 0)) && !this.isTyping) {
         console.log('All audio chunks played');
+          this.stopTimer();
+          lastMessage.TTSelapsedTime = this.elapsedTime/1000;
         lastMessage.currentChunk = 0;
         this.TTSrunning = false;
         this.cur_audioDatas = [];
@@ -5356,7 +5372,11 @@ let vue_methods = {
       if (audioChunk && !lastMessage.isPlaying) {
         lastMessage.isPlaying = true;
         console.log(`Playing audio chunk ${currentIndex}`);
-        
+        if (currentIndex == 0){
+          this.stopTimer();
+          lastMessage.first_sentence_latency = this.elapsedTime;
+        }
+            
         try {
           this.currentAudio = new Audio(audioChunk.url);
           
@@ -5388,9 +5408,12 @@ let vue_methods = {
         } finally {
           lastMessage.currentChunk++;
           lastMessage.isPlaying = false;
+          this.stopTimer();
+          lastMessage.TTSelapsedTime = this.elapsedTime / 1000; // 更新TTSelapsedTime
           setTimeout(() => {
             this.checkAudioPlayback();
           }, 0);
+          this.autoSaveSettings();
         }
       }
     },

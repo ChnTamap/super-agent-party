@@ -1269,6 +1269,11 @@ body {
     flex-shrink: 0; /* 防止按钮缩小 */
     margin: 2px !important; /* 覆盖可能存在的边距 */
   }
+
+  .el-main {
+    padding: 0!important;
+    margin: 4px!important;
+  }
 }
 
 
