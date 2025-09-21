@@ -348,6 +348,9 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-rotate"></i>
                   </el-button>
                 </el-tooltip>
+                <span class="msg-status" v-if="message.role === 'assistant'">
+                  {{ t('total_tokens')+': '+message?.total_tokens +',    '+ t('first_token_latency')+': '+message?.first_token_latency +'ms,    '+ t('elapsedTime')+': '+message?.elapsedTime + 's'}}
+                </span>
               </div>
             </div>
           </div>
