@@ -1581,6 +1581,9 @@ if ('serviceWorker' in navigator) {
                     <div class="card-header">
                       <el-switch v-model="config.enabled" @change="autoSaveSettings"></el-switch>
                       <div class="card-actions">
+                        <el-button @click="ClickToListen(config.SampleText,name)" type="primary" circle size="small">
+                          <i class="fa-solid fa-headphones"></i>
+                        </el-button>
                         <el-button @click="editTTS(name)" type="primary" circle size="small">
                           <i class="fa-solid fa-pen-to-square"></i>
                         </el-button>
@@ -1637,6 +1640,26 @@ if ('serviceWorker' in navigator) {
                         <el-option :label="t('openaiLike')" value="openai"></el-option>
                         <el-option :label="t('customTTS')" value="customTTS"></el-option>
                       </el-select>
+                    </el-form-item>
+
+                    <el-form-item :label="t('SampleText')" class="server-item">
+                      <el-input 
+                        v-model="newTTSConfig.SampleText" 
+                        :placeholder="t('SampleTextPlaceholder')"
+                        class="full-width-input"
+                        style="margin-right: 10px;"
+                        @change="autoSaveSettings"
+                      >
+                      </el-input>
+                      <el-tooltip :content="t('ClickToListen')" placement="top">
+                        <el-button 
+                          type="primary" 
+                          @click="ClickToListen(newTTSConfig.SampleText)" 
+                          circle
+                        >
+                          <i class="fa-solid fa-headphones"></i>
+                        </el-button>
+                      </el-tooltip>
                     </el-form-item>
 
                     <div class="tool-item" v-show="newTTSConfig.engine === 'openai'">
@@ -3681,6 +3704,25 @@ if ('serviceWorker' in navigator) {
                         @change="autoSaveSettings"
                       >
                       </el-select>
+                    </el-form-item>
+                    <el-form-item :label="t('SampleText')" class="server-item">
+                      <el-input 
+                        v-model="ttsSettings.SampleText" 
+                        :placeholder="t('SampleTextPlaceholder')"
+                        class="full-width-input"
+                        style="margin-right: 10px;"
+                        @change="autoSaveSettings"
+                      >
+                      </el-input>
+                      <el-tooltip :content="t('ClickToListen')" placement="top">
+                        <el-button 
+                          type="primary" 
+                          @click="ClickToListen(ttsSettings.SampleText)" 
+                          circle
+                        >
+                          <i class="fa-solid fa-headphones"></i>
+                        </el-button>
+                      </el-tooltip>
                     </el-form-item>
                     </div>
                   </div>

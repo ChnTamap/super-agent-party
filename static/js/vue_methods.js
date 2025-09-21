@@ -6796,6 +6796,43 @@ let vue_methods = {
       }
     },
 
+    async ClickToListen(SampleText,voice='default') {
+      if (!SampleText) {
+        SampleText ='请给super agent party点点星标吧！'
+      }
+
+      try {
+        let Settings = this.ttsSettings;
+        if (this.showAddTTSDialog){
+          Settings = {...this.ttsSettings, ...this.newTTSConfig};
+        }
+
+        const res = await fetch('/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ttsSettings: Settings,
+            text: SampleText,
+            index: 0,          // 随便给个 index，后端不关心
+            voice: voice || 'default'
+          })
+        });
+        if (!res.ok) throw new Error('TTS failed');
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        /* 直接播放 */
+        const audio = new Audio(url);
+        audio.play().catch(console.error);
+
+        /* 播放完清掉内存 */
+        audio.onended = () => URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('ClickToListen error', e);
+      }
+    },
+
     // 添加下载方法
     downloadAudio() {
       // 确保有音频片段可以下载
@@ -7228,6 +7265,7 @@ let vue_methods = {
     this.newTTSConfig = {
       name: '',
       enabled: true,
+      SampleText: '请给super agent party点点星标吧！',
       engine: 'edgetts',
       edgettsLanguage: 'zh-CN',
       edgettsGender: 'Female',
