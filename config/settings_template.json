@@ -200,6 +200,7 @@
       "maxConcurrency": 2,
       "enabledInterruption": false,
       "bufferWordList": [],
+      "SampleText": "请给super agent party点点星标吧！",
       "edgettsLanguage": "zh-CN",
       "edgettsGender": "Female",
       "edgettsVoice": "XiaoyiNeural",
