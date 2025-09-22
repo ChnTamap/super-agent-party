@@ -95,7 +95,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setVMCConfig: (cfg) => ipcRenderer.invoke('set-vmc-config', cfg),
   getVMCConfig: () => ipcRenderer.invoke('get-vmc-config'),
-  onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg))
+  onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg)),
+  captureDesktop: () => ipcRenderer.invoke('capture-desktop'), // 👈 桌面截图
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {

@@ -3232,6 +3232,12 @@ if ('serviceWorker' in navigator) {
                           @input="autoSaveSettings"
                         />
                       </el-form-item>
+                      <el-form-item :label="t('desktopVision')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="visionSettings.desktopVision" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
                     </div>
                   </div>
                 </el-form>
