@@ -1069,6 +1069,7 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
+          this.MoreButtonDict = data.data.MoreButtonDict || this.MoreButtonDict;
           this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
@@ -1784,6 +1785,7 @@ let vue_methods = {
           knowledgeBases: this.knowledgeBases,
           modelProviders: this.modelProviders,
           systemSettings: this.systemSettings,
+          MoreButtonDict: this.MoreButtonDict,
           currentLanguage: this.currentLanguage,
           mcpServers: this.mcpServers,
           a2aServers: this.a2aServers,

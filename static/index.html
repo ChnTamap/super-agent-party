@@ -658,6 +658,20 @@ if ('serviceWorker' in navigator) {
             </div>
           </el-dialog>
           <el-dialog
+            v-model="showMoreButtonDialog"
+            :title="t('showMoreButton')"
+            width="600px">
+            <div class="knowledge-dialog-content">
+              <div v-for="(value, key) in MoreButtonDict" :key="key" class="knowledge-item">
+                <el-switch v-model="MoreButtonDict[key]" @change="autoSaveSettings"></el-switch>
+                <div class="knowledge-info">
+                  <div class="knowledge-name">{{ t(key) }}</div>
+                </div>
+              </div>
+            </div>
+          </el-dialog>
+
+          <el-dialog
             v-model="showHistoryDialog"
             :title="t('chatHistory')"
             width="600px">
@@ -779,7 +793,7 @@ if ('serviceWorker' in navigator) {
               <el-button
                 @click="handleAllBriefly"
                 class="icon-btn history-btn"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.brieflyButton"
                 :type="allBriefly ? 'primary' : 'default'"
                 circle>
                 <i class="fa-solid fa-asterisk"></i>
@@ -790,7 +804,7 @@ if ('serviceWorker' in navigator) {
                 <el-button 
                     @click="toggleInputExpand"
                     class="icon-btn expand-btn"
-                    v-if="!isBtnCollapse"
+                    v-if="MoreButtonDict.expandButton"
                     :type="isInputExpanded ? 'primary' : 'default'"
                     circle>
                     <i :class="isInputExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center'"></i>
@@ -802,7 +816,7 @@ if ('serviceWorker' in navigator) {
                 @click="sendFiles"
                 class="icon-btn file-btn"
                 :type="hasFiles ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.fileButton"
                 circle>
                 <i class="fa-solid fa-paperclip"></i>
               </el-button>
@@ -813,7 +827,7 @@ if ('serviceWorker' in navigator) {
                 @click="sendImages"
                 class="icon-btn image-btn"
                 :type="hasImages ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.imageButton"
                 circle>
                 <i class="fa-solid fa-image"></i>
               </el-button>
@@ -824,7 +838,7 @@ if ('serviceWorker' in navigator) {
                 @click="reasonerSettings.enabled = !reasonerSettings.enabled; autoSaveSettings()"
                 class="icon-btn deep-think-btn"
                 :type="reasonerSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.reasonerButton"
                 circle>
                 <i class="fa-solid fa-atom"></i>
               </el-button>
@@ -835,7 +849,7 @@ if ('serviceWorker' in navigator) {
                 @click="toolsSettings.deepsearch.enabled = !toolsSettings.deepsearch.enabled; autoSaveSettings()"
                 class="icon-btn deep-search-btn"
                 :type="toolsSettings.deepsearch.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.deepSearchButton"
                 circle>
                 <i class="fa-solid fa-flask"></i>
               </el-button>
@@ -846,7 +860,7 @@ if ('serviceWorker' in navigator) {
                 @click="visionSettings.enabled = !visionSettings.enabled; autoSaveSettings()"
                 class="icon-btn vision-btn"
                 :type="visionSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.visionButton"
                 circle>
                 <i class="fa-solid fa-camera"></i>
               </el-button>
@@ -857,7 +871,7 @@ if ('serviceWorker' in navigator) {
                 @click="text2imgSettings.enabled = !text2imgSettings.enabled; autoSaveSettings()"
                 class="icon-btn text2img-btn"
                 :type="text2imgSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.text2imgButton"
                 circle>
                 <i class="fa-solid fa-pencil"></i>
               </el-button>
@@ -868,7 +882,7 @@ if ('serviceWorker' in navigator) {
                 @click="toggleASR"
                 class="icon-btn asr-btn"
                 :type="asrSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.asrButton"
                 circle>
                 <i class="fa-solid fa-microphone"></i>
               </el-button>
@@ -879,7 +893,7 @@ if ('serviceWorker' in navigator) {
                 @click="ttsSettings.enabled=!ttsSettings.enabled;changeTTSstatus();"
                 class="icon-btn asr-btn"
                 :type="ttsSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.ttsButton"
                 circle>
                 <i v-if="ttsSettings.enabled" class="fa-solid fa-volume-high"></i>
                 <i v-else class="fa-solid fa-volume-xmark"></i>
@@ -891,7 +905,7 @@ if ('serviceWorker' in navigator) {
                 @click="showKnowledgeDialog = true"
                 class="icon-btn knowledge-base-btn"
                 :type="hasEnabledKnowledgeBases ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.knowledgeBaseButton"
                 circle>
                 <i class="fa-solid fa-book"></i>
               </el-button>
@@ -902,7 +916,7 @@ if ('serviceWorker' in navigator) {
                 @click="webSearchSettings.enabled = !webSearchSettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="webSearchSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.webSearchButton"
                 circle>
                 <i class="fa-solid fa-globe"></i>
               </el-button>
@@ -913,7 +927,7 @@ if ('serviceWorker' in navigator) {
                 @click="showMemoryDialog = true"
                 class="icon-btn web-search-btn"
                 :type="memorySettings.is_memory ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.memoryButton"
                 circle>
                 <i class="fa-solid fa-brain"></i>
               </el-button>
@@ -924,7 +938,7 @@ if ('serviceWorker' in navigator) {
                 @click="codeSettings.enabled = !codeSettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="codeSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.codeButton"
                 circle>
                 <i class="fa-solid fa-code"></i>
               </el-button>
@@ -935,7 +949,7 @@ if ('serviceWorker' in navigator) {
                 @click="showStickerPacksDialog = true"
                 class="icon-btn sticker-btn"
                 :type="hasEnabledStickerPacks ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.stickerButton"
                 circle>
                 <i class="fa-solid fa-face-smile"></i>
               </el-button>
@@ -946,7 +960,7 @@ if ('serviceWorker' in navigator) {
                 @click="HASettings.enabled = !HASettings.enabled; changeHAEnabled();"
                 class="icon-btn homeAssistant-btn"
                 :type="HASettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.haButton"
                 circle>
                 <i class="fa-solid fa-house"></i>
               </el-button>
@@ -957,7 +971,7 @@ if ('serviceWorker' in navigator) {
                 @click="chromeMCPSettings.enabled = !chromeMCPSettings.enabled; changeChromeMCPEnabled();"
                 class="icon-btn browserControl-btn"
                 :type="chromeMCPSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.chromeButton"
                 circle>
                 <i class="fa-brands fa-chrome"></i>
               </el-button>
@@ -968,7 +982,7 @@ if ('serviceWorker' in navigator) {
                 @click="showAgentDialog = true"
                 class="icon-btn agent-btn"
                 :type="hasAgentChanges ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.agentButton"
                 circle>
                 <i class="fa-solid fa-robot"></i>
               </el-button>
@@ -979,7 +993,7 @@ if ('serviceWorker' in navigator) {
                 @click="showLLMToolsDialog = true"
                 class="icon-btn llm-tool-btn"
                 :type="hasEnabledLLMTools ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.llmButton"
                 circle>
                 <i class="fa-solid fa-cube"></i>
               </el-button>
@@ -990,7 +1004,7 @@ if ('serviceWorker' in navigator) {
                 @click="showMCPServerDialog = true"
                 class="icon-btn mcp-btn"
                 :type="hasEnabledMCPServers ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.mcpButton"
                 circle>
                 <i class="fa-solid fa-server"></i>
               </el-button>
@@ -1001,7 +1015,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showA2AServerDialog = true"
                 class="icon-btn a2a-btn"
                 :type="hasEnabledA2AServers ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.a2aButton"
                 circle>
                 <i class="fa-solid fa-network-wired"></i>
               </el-button>
@@ -1012,7 +1026,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showHttpToolDialog = true"
                 class="icon-btn http-btn"
                 :type="hasEnabledHttpTools ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.httpButton"
                 circle>
                 <i class="fa-solid fa-wifi"></i>
               </el-button>
@@ -1023,7 +1037,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showComfyUIDialog = true"
                 class="icon-btn comfyui-btn"
                 :type="hasEnabledComfyUI ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.comfyuiButton"
                 circle>
                 <i class="fa-solid fa-palette"></i>
               </el-button>
@@ -1034,7 +1048,7 @@ if ('serviceWorker' in navigator) {
                 @click="startVRM"
                 class="icon-btn vrm-btn"
                 :type="'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.vrmButton"
                 circle>
                 <i :class='isVRMStarting? "fa-solid fa-spinner fa-spin" : "fa-solid fa-user-ninja"'></i>
               </el-button>
@@ -1045,7 +1059,7 @@ if ('serviceWorker' in navigator) {
                 @click="behaviorSettings.enabled=!behaviorSettings.enabled; autoSaveSettings();"
                 class="icon-btn behavior-btn"
                 :type="behaviorSettings.enabled ? 'primary' : 'default'"
-                v-if="!isBtnCollapse"
+                v-if="MoreButtonDict.behaviorBotton"
                 circle>
                 <i class="fa-solid fa-person-running"></i>
               </el-button>
@@ -1061,9 +1075,9 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
             <!--展开收起按钮-->
-            <el-tooltip :content="isBtnCollapse ? t('expand') : t('collapse')" placement="top">
-              <el-button @click="isBtnCollapse=!isBtnCollapse; autoSaveSettings()" class="icon-btn collapse-btn" circle>
-                <i :class="isBtnCollapse ? 'fa-solid fa-angle-right' : 'fa-solid fa-angle-left'"></i>
+            <el-tooltip :content="t('moreButton')" placement="top">
+              <el-button @click="showMoreButtonDialog = true" class="icon-btn collapse-btn" circle>
+                <i class="fa-solid fa-ellipsis"></i>
               </el-button>
             </el-tooltip>
           </div>

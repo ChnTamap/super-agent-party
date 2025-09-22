@@ -2562,16 +2562,59 @@ function addcontrolPanel() {
             xrAutoBtn.style.display = (canAR || canVR) ? 'flex' : 'none';
         });
 
-        // 点击自动选模式
+        let xrSession = null;
+        let xrRefSpace  = null; 
+        // 1. 启动会话时切到 XR 循环
         xrAutoBtn.addEventListener('click', async () => {
-            const mode = canAR ? 'immersive-ar' : 'immersive-vr';
-            if (renderer.xr.getSession()) await renderer.xr.getSession().end(); // 退出旧会话
-            const opts = mode === 'immersive-ar'
-                ? { optionalFeatures: ['local-floor', 'hit-test', 'dom-overlay'], domOverlay: { root: document.body } }
-                : { optionalFeatures: ['local-floor'] };
-            const session = await navigator.xr.requestSession(mode, opts);
-            renderer.xr.setSession(session);
+          if (renderer.xr.isPresenting) {           // 再按一次退出
+            await renderer.xr.getSession().end();
+            return;
+          }
+          const mode = canAR ?  'immersive-ar':'immersive-vr' ;
+          const session = await navigator.xr.requestSession(mode, {
+            optionalFeatures: ['local-floor', 'hit-test', 'dom-overlay'],
+            domOverlay: { root: document.body }      // 把整个 body 作为叠加层
+          });
+          renderer.xr.setSession(session);
+          xrSession = session;
+          session.requestReferenceSpace('local-floor').then(refSpace => {
+            xrRefSpace = refSpace;
+            // 关键：让浏览器把鼠标交给 XR
+            if (document.pointerLockElement !== renderer.domElement) {
+              renderer.domElement.requestPointerLock();
+            }
+          });
+          if (xrSession && document.pointerLockElement !== renderer.domElement) {
+                renderer.domElement.requestPointerLock();
+          }
+          // 重要：让 three 用 XR 帧循环，而不是 requestAnimationFrame
+          renderer.setAnimationLoop(xrAnimate);
+
+          if (currentVrm) {
+            currentVrm.scene.position.set(0, 0, -1);   // ← 关键：移动模型，不是相机
+          }
         });
+
+        // 2. 会话结束回到普通循环
+        renderer.xr.addEventListener('sessionend', () => {
+          renderer.setAnimationLoop(null);          // 关掉 XR 循环
+          animate();                                // 重新用 RAF
+          xrSession = null;
+        });
+
+        // 3. XR 帧循环（直接把原 animate 内容搬过来）
+        function xrAnimate(time, frame) {
+          const delta = clock.getDelta();
+
+          if (currentVrm) currentVrm.update(delta);
+          if (currentMixer) currentMixer.update(delta);
+
+          // sendVMCBones();
+          // sendVMCBlends();
+
+          // 关键：必须调用 renderer.render，否则 XR 不提交画面
+          renderer.render(scene, camera);
+        }
         
 
         // ★ VMC：VMC 协议管理按钮
