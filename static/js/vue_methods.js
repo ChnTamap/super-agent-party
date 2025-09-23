@@ -3930,6 +3930,7 @@ let vue_methods = {
     },
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
+      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
       if(this.isMobile) this.sidebarVisible = false;
     },
     // 添加ComfyUI服务器
