@@ -1139,7 +1139,7 @@ if ('serviceWorker' in navigator) {
             <el-input
                 v-model="userInput"
                 type="textarea"
-                :rows="isMobile?(isInputExpanded ? 8 : 2):(isInputExpanded ? 16 : 4)"
+                :rows="isMobile?(isInputExpanded ? 8 : 3):(isInputExpanded ? 16 : 4)"
                 :placeholder="t('inputMessage')"
                 resize="none"
                 @keydown="isInputting=true;handleKeyDown()"
