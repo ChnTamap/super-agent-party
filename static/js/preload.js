@@ -98,6 +98,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onVMCConfigChanged: (cb) => ipcRenderer.on('vmc-config-changed', (_, cfg) => cb(cfg)),
   captureDesktop: () => ipcRenderer.invoke('capture-desktop'), // 👈 桌面截图
   toggleWindowSize: (width, height) => ipcRenderer.invoke('toggle-window-size', { width, height }),
+  setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {

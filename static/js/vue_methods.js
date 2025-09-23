@@ -3932,13 +3932,28 @@ let vue_methods = {
     },
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
-      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
+      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 680;
       if (this.isMobile) {
         this.MoreButtonDict = this.smallMoreButtonDict;
-        console.log(this.MoreButtonDict)
       }
       else{
         this.MoreButtonDict = this.largeMoreButtonDict;
+      }
+      if (this.isAssistantMode){
+        if(!this.isFixedWindow){
+          this.isFixedWindow = true;
+          if (isElectron){
+            window.electronAPI.setAlwaysOnTop(this.isFixedWindow);
+          }
+        }
+        
+      }else{
+        if(this.isFixedWindow){
+          this.isFixedWindow = false;
+          if (isElectron){
+            window.electronAPI.setAlwaysOnTop(this.isFixedWindow);
+          }
+        }
       }
       if(this.isMobile) this.sidebarVisible = false;
     },
@@ -7706,7 +7721,21 @@ let vue_methods = {
     this.toolForShowInfo = tool;
     this.showToolInfoDialog = true;
   },
-toggleAssistantMode() {
-  window.electronAPI.toggleWindowSize(300, 600);
-}
+  toggleAssistantMode() {
+    if (this.isAssistantMode && !this.isMac) {
+      window.electronAPI.windowAction('maximize') // 恢复默认大小
+    } else{
+      window.electronAPI.toggleWindowSize(300, 630);
+    }
+    this.isAssistantMode = !this.isAssistantMode;
+  },
+    fixedWindow() {
+    // 把新状态取反
+    const next = !this.isFixedWindow;
+    // 告诉主进程设置置顶
+    window.electronAPI.setAlwaysOnTop(next);
+    // 本地状态同步
+    this.isFixedWindow = next;
+  }
+
 }

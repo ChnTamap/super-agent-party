@@ -14,6 +14,7 @@ const osc = require('osc');
 let vmcUdpPort = null;          // osc.UDPPort 实例
 let vmcReceiverActive = false;  // 接收是否运行
 let vrmWindows = []; 
+let isMac = process.platform === 'darwin';
 const vmcSendSocket = dgram.createSocket('udp4'); // 发送复用同一 socket
 // ★ 替换原来的 startVMCReceiver
 function startVMCReceiver(cfg) {
@@ -728,24 +729,39 @@ app.whenReady().then(async () => {
         // 1. 开始还原
         win.unmaximize();
 
-        // 2. 等到连续 50 ms 内尺寸不再变化，才算“真正还原完成”
-        let last = win.getNormalBounds();
-        for (let i = 0; i < 10; i++) {          // 最多 500 ms
-          await new Promise(r => setTimeout(r, 50));
-          const curr = win.getNormalBounds();
-          if (curr.width === last.width && curr.height === last.height) break;
-          last = curr;
+        if (isMac){
+          // 2. 等到连续 50 ms 内尺寸不再变化，才算“真正还原完成”
+          let last = win.getNormalBounds();
+          for (let i = 0; i < 10; i++) {          // 最多 500 ms
+            await new Promise(r => setTimeout(r, 50));
+            const curr = win.getNormalBounds();
+            if (curr.width === last.width && curr.height === last.height) break;
+            last = curr;
+          }
+        }else {
+          // 2. 等窗口“彻底”变成普通状态
+          for (let i = 0; i < 20; i++) {          // 最多 1 s
+            await new Promise(r => setTimeout(r, 50));
+            if (!win.isMaximized()) break;        // 真正退出后即可跳出
+          }
         }
+
 
         // 3. 现在再改助手尺寸，系统不会再覆盖
         win.setSize(width, height, true);
-        win.center();
       } else {
-        win.maximize();
+        if (isMac) {
+            win.maximize();
+        }else{
+            win.setSize(width, height, true);
+        }
       }
     });
 
-
+    ipcMain.handle('set-always-on-top', (e, flag) => {
+      const win = BrowserWindow.fromWebContents(e.sender);
+      win.setAlwaysOnTop(flag, 'screen-saver');
+    });
     // 窗口状态同步
     mainWindow.on('maximize', () => {
       mainWindow.webContents.send('window-state', 'maximized')
