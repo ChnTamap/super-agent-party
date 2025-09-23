@@ -3935,7 +3935,6 @@ let vue_methods = {
       this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
       if (this.isMobile) {
         this.MoreButtonDict = this.smallMoreButtonDict;
-        console.log(this.MoreButtonDict)
       }
       else{
         this.MoreButtonDict = this.largeMoreButtonDict;
