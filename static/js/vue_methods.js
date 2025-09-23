@@ -7695,5 +7695,13 @@ let vue_methods = {
   showToolInfo(tool) {
     this.toolForShowInfo = tool;
     this.showToolInfoDialog = true;
-  }
+  },
+    toggleAssistantMode() {
+      if (this.isAssistantMode) {
+        window.electronAPI.windowAction('maximize') // 恢复默认大小
+      } else {
+        window.electronAPI.toggleWindowSize(300, 600); // 小助手模式
+      }
+      this.isAssistantMode = !this.isAssistantMode;
+    },
 }

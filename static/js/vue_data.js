@@ -508,6 +508,7 @@ let vue_data = {
       reasonerButton: true,
       deepSearchButton: false,
       visionButton: false,
+      desktopVisionButton: false,
       text2imgButton: false,
       asrButton: true,
       ttsButton: true,

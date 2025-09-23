@@ -102,7 +102,7 @@ if ('serviceWorker' in navigator) {
           </el-alert>
         </div>
         <el-button 
-          v-if="updateAvailable"
+          v-if="updateAvailable&&!isAssistantMode&&!isMobile"
           @click="handleUpdateAction" 
           class="top-bar-btn update-btn"
           :class="{ 'installed': updateDownloaded }"
@@ -115,7 +115,7 @@ if ('serviceWorker' in navigator) {
             ({{ downloadProgress }}%)
           </span>
         </el-button>
-        <el-button  @click="restartDriverGuide" class="top-bar-btn" text id="driver-guide-btn">
+        <el-button  v-if="!isAssistantMode&&!isMobile" @click="restartDriverGuide" class="top-bar-btn" text id="driver-guide-btn" :title=" t('tutorial')">
           <el-icon>
             <i class="fa-solid fa-school"></i>
           </el-icon>
@@ -142,17 +142,26 @@ if ('serviceWorker' in navigator) {
             <i :class="isCollapse ? 'fa-solid fa-bars' : 'fa-solid fa-bars-staggered'"></i>
           </el-icon>
         </el-button>
-        <el-button v-if="!isMac&&!isMobile" @click="minimizeWindow" class="top-bar-btn" text>
+        <el-button 
+          @click="toggleAssistantMode"
+          class="top-bar-btn"
+          text
+          :title="isAssistantMode ? t('assistantMode') : t('maximize')">
+          <el-icon>
+            <i :class="isAssistantMode ? 'fa-solid fa-expand' : 'fa-solid fa-wand-magic-sparkles'"></i>
+          </el-icon>
+        </el-button>
+        <el-button v-if="!isMac&&!isMobile" @click="minimizeWindow" class="top-bar-btn" text :title="t('minimize')">
           <el-icon>
             <i class="fa-solid fa-minus"></i>
           </el-icon>
         </el-button>
-        <el-button v-if="!isMac&&!isMobile" @click="toggleIcon" class="top-bar-btn" text>
+        <el-button v-if="!isMac&&!isMobile" @click="toggleIcon" class="top-bar-btn" text :title="t('maximize')">
           <el-icon>
             <i :class="iconClass"></i>
           </el-icon>
         </el-button>
-        <el-button v-if="!isMac&&!isMobile" @click="closeWindow" class="top-bar-btn" text>
+        <el-button v-if="!isMac&&!isMobile" @click="closeWindow" class="top-bar-btn" text :title="t('close')">
           <el-icon>
             <i class="fa-solid fa-xmark"></i>
           </el-icon>
@@ -863,6 +872,17 @@ if ('serviceWorker' in navigator) {
                 v-if="MoreButtonDict.visionButton"
                 circle>
                 <i class="fa-solid fa-camera"></i>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip :content="t('desktopVision')" placement="top">
+              <el-button
+                @click="visionSettings.desktopVision = !visionSettings.desktopVision; autoSaveSettings()"
+                class="icon-btn vision-btn"
+                :type="visionSettings.desktopVision ? 'primary' : 'default'"
+                v-if="MoreButtonDict.desktopVisionButton"
+                circle>
+                <i class="fa-solid fa-eye"></i>
               </el-button>
             </el-tooltip>
 

@@ -717,7 +717,18 @@ app.whenReady().then(async () => {
           break
       }
     })
-
+    ipcMain.handle('toggle-window-size', (event, { width, height }) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win.isMaximized()) {
+        win.unmaximize();
+      }
+      if (win.getSize()[0] === width && win.getSize()[1] === height) {
+        win.maximize();
+      } else {
+        win.setSize(width, height, true);
+        win.center();
+      }
+    });
     // 窗口状态同步
     mainWindow.on('maximize', () => {
       mainWindow.webContents.send('window-state', 'maximized')
