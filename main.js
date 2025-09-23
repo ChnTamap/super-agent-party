@@ -1,6 +1,6 @@
 const remoteMain = require('@electron/remote/main')
 const { app, BrowserWindow, ipcMain, screen, shell, dialog, Tray, Menu } = require('electron')
-const { clipboard, nativeImage } = require('electron')
+const { clipboard, nativeImage,desktopCapturer  } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
@@ -10,7 +10,6 @@ const os = require('os')
 const net = require('net') // 添加 net 模块用于端口检测
 const dgram = require('dgram');
 const osc = require('osc');
-
 // ★ VMC：UDP 收发资源
 let vmcUdpPort = null;          // osc.UDPPort 实例
 let vmcReceiverActive = false;  // 接收是否运行
@@ -475,6 +474,10 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
     mainWindow.focus()
   }
 })
+ipcMain.handle('get-window-size', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return win.getSize();
+});
 
 // 只有在获得锁（第一个实例）时才执行初始化
 app.whenReady().then(async () => {
@@ -570,6 +573,16 @@ app.whenReady().then(async () => {
 
       return vrmWindow.id;  // 可选：返回窗口 ID 用于后续操作
     });
+    // 👈 桌面截图
+    ipcMain.handle('capture-desktop', async () => {
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: 1920, height: 1080 } // 可按需改
+      })
+      if (!sources.length) throw new Error('无法获取屏幕源')
+      const pngBuffer = sources[0].thumbnail.toPNG() // 返回原生 Buffer
+      return pngBuffer // 给渲染进程
+    })
     // 添加IPC处理器
     ipcMain.handle('set-ignore-mouse-events', (event, ignore, options) => {
         const win = BrowserWindow.fromWebContents(event.sender);
@@ -708,7 +721,18 @@ app.whenReady().then(async () => {
           break
       }
     })
-
+    ipcMain.handle('toggle-window-size', (event, { width, height }) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win.isMaximized()) {
+        win.unmaximize();
+      }
+      if (win.getSize()[0] === width && win.getSize()[1] === height) {
+        win.maximize();
+      } else {
+        win.setSize(width, height, true);
+        win.center();
+      }
+    });
     // 窗口状态同步
     mainWindow.on('maximize', () => {
       mainWindow.webContents.send('window-state', 'maximized')
@@ -726,6 +750,10 @@ app.whenReady().then(async () => {
       }
       return true
     })
+    mainWindow.on('resize', () => {
+      const size = mainWindow.getSize();
+      mainWindow.webContents.send('window-resized', size);
+    });
     // 修改 show-context-menu 的 IPC 处理
     ipcMain.handle('show-context-menu', async (event, { menuType, data }) => {
       let menuTemplate;

@@ -1069,6 +1069,8 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
+          this.largeMoreButtonDict = data.data.largeMoreButtonDict || this.largeMoreButtonDict;
+          this.smallMoreButtonDict = data.data.smallMoreButtonDict || this.smallMoreButtonDict;
           this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
@@ -1199,7 +1201,19 @@ let vue_methods = {
         }
         this.TTSrunning = false;
       }
-
+      // 👈 桌面截图：仅在 Electron 且 desktopVision 开启时
+      if (isElectron && this.visionSettings?.desktopVision) {
+        try {
+          const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
+          const blob = new Blob([pngBuffer], { type: 'image/png' })
+          const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+          // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
+          this.images.push({ file, name: file.name, path: '' })
+        } catch (e) {
+          console.error('桌面截图失败:', e)
+          showNotification(this.t('desktop_capture_failed'), 'error')
+        }
+      }
       // 声明变量并初始化为 null
       let ttsProcess = null;
       let audioProcess = null;
@@ -1784,6 +1798,8 @@ let vue_methods = {
           knowledgeBases: this.knowledgeBases,
           modelProviders: this.modelProviders,
           systemSettings: this.systemSettings,
+          largeMoreButtonDict: this.largeMoreButtonDict,
+          smallMoreButtonDict: this.smallMoreButtonDict,
           currentLanguage: this.currentLanguage,
           mcpServers: this.mcpServers,
           a2aServers: this.a2aServers,
@@ -3916,6 +3932,13 @@ let vue_methods = {
     },
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
+      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
+      if (this.isMobile) {
+        this.MoreButtonDict = this.smallMoreButtonDict;
+      }
+      else{
+        this.MoreButtonDict = this.largeMoreButtonDict;
+      }
       if(this.isMobile) this.sidebarVisible = false;
     },
     // 添加ComfyUI服务器
@@ -7681,5 +7704,14 @@ let vue_methods = {
   showToolInfo(tool) {
     this.toolForShowInfo = tool;
     this.showToolInfoDialog = true;
-  }
+  },
+    toggleAssistantMode() {
+      if (this.isAssistantMode) {
+        window.electronAPI.windowAction('maximize') // 恢复默认大小
+      } else {
+        window.electronAPI.toggleWindowSize(300, 600); // 小助手模式
+      }
+      this.isAssistantMode = !this.isAssistantMode;
+      
+    },
 }

@@ -641,7 +641,7 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
             request.messages[0]['content'] += language_message
         else:
             request.messages.insert(0, {'role': 'system', 'content': language_message})
-    if settings['ttsSettings']['newtts']:
+    if settings['ttsSettings']['newtts'] and settings['ttsSettings']['enabled']:
         # 遍历settings['ttsSettings']['newtts']，获取所有包含enabled: true的key
         for key in settings['ttsSettings']['newtts']:
             if settings['ttsSettings']['newtts'][key]['enabled']:
