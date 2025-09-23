@@ -7703,5 +7703,6 @@ let vue_methods = {
         window.electronAPI.toggleWindowSize(300, 600); // 小助手模式
       }
       this.isAssistantMode = !this.isAssistantMode;
+      
     },
 }

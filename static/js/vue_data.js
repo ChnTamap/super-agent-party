@@ -500,6 +500,7 @@ let vue_data = {
     cur_voice :'default',
     openaiVoices:['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
     showMoreButtonDialog: false,
+    isAssistantMode: false,
     MoreButtonDict: {
       brieflyButton: true,
       expandButton: true,

@@ -96,7 +96,7 @@ if ('serviceWorker' in navigator) {
     <!-- 顶部栏 -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
-        <div v-show="settings?.model!==''" class="model-info" @click="showModelDialog = true" >
+        <div v-show="!isAssistantMode&&settings?.model!==''" class="model-info" @click="showModelDialog = true" >
           <el-alert type="primary" :closable="false" class="model-info">
             <span>{{settings.model}}</span>  
           </el-alert>
@@ -123,7 +123,7 @@ if ('serviceWorker' in navigator) {
       <!-- 添加移动端菜单按钮 -->
       <el-button 
       class="top-bar-btn"
-       v-if="isMobile" 
+       v-if="!isAssistantMode&&isMobile" 
        @click="isCollapse = sidebarVisible;sidebarVisible = !sidebarVisible"
        text
        :title="isCollapse ? t('expandAside') : t('collapseAside')">
@@ -133,7 +133,7 @@ if ('serviceWorker' in navigator) {
       </el-button>
         <!-- 新增展开/收起按钮 -->
         <el-button 
-          v-if="!isMobile"
+          v-if="!isAssistantMode&&!isMobile"
           @click="isCollapse = !isCollapse"
           class="top-bar-btn"
           text
@@ -146,9 +146,9 @@ if ('serviceWorker' in navigator) {
           @click="toggleAssistantMode"
           class="top-bar-btn"
           text
-          :title="isAssistantMode ? t('assistantMode') : t('maximize')">
+          :title="isAssistantMode ?  t('maximize'):t('assistantMode')">
           <el-icon>
-            <i :class="isAssistantMode ? 'fa-solid fa-expand' : 'fa-solid fa-wand-magic-sparkles'"></i>
+            <i :class="isAssistantMode ?  'fa-solid fa-expand' : 'fa-solid fa-wand-magic-sparkles'"></i>
           </el-icon>
         </el-button>
         <el-button v-if="!isMac&&!isMobile" @click="minimizeWindow" class="top-bar-btn" text :title="t('minimize')">

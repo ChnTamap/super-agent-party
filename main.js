@@ -474,6 +474,10 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
     mainWindow.focus()
   }
 })
+ipcMain.handle('get-window-size', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return win.getSize();
+});
 
 // 只有在获得锁（第一个实例）时才执行初始化
 app.whenReady().then(async () => {
@@ -746,6 +750,10 @@ app.whenReady().then(async () => {
       }
       return true
     })
+    mainWindow.on('resize', () => {
+      const size = mainWindow.getSize();
+      mainWindow.webContents.send('window-resized', size);
+    });
     // 修改 show-context-menu 的 IPC 处理
     ipcMain.handle('show-context-menu', async (event, { menuType, data }) => {
       let menuTemplate;
