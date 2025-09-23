@@ -749,13 +749,11 @@ app.whenReady().then(async () => {
 
         // 3. 现在再改助手尺寸，系统不会再覆盖
         win.setSize(width, height, true);
-        win.center();
       } else {
         if (isMac) {
             win.maximize();
         }else{
             win.setSize(width, height, true);
-            win.center();
         }
       }
     });
