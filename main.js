@@ -751,12 +751,12 @@ app.whenReady().then(async () => {
         win.setSize(width, height, true);
         win.center();
       } else {
-        if (isMac) {
-            win.maximize();
-        }else{
-            win.setSize(width, height, true);
-            win.center();
-        }
+        if (isMac) {
+            win.maximize();
+        }else{
+            win.setSize(width, height, true);
+            win.center();
+        }
       }
     });
 
