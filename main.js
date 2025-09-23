@@ -758,7 +758,10 @@ app.whenReady().then(async () => {
       }
     });
 
-
+    ipcMain.handle('set-always-on-top', (e, flag) => {
+      const win = BrowserWindow.fromWebContents(e.sender);
+      win.setAlwaysOnTop(flag, 'screen-saver');
+    });
     // 窗口状态同步
     mainWindow.on('maximize', () => {
       mainWindow.webContents.send('window-state', 'maximized')

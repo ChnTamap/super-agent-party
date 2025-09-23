@@ -3939,6 +3939,22 @@ let vue_methods = {
       else{
         this.MoreButtonDict = this.largeMoreButtonDict;
       }
+      if (this.isAssistantMode){
+        if(!this.isFixedWindow){
+          this.isFixedWindow = true;
+          if (isElectron){
+            window.electronAPI.setAlwaysOnTop(this.isFixedWindow);
+          }
+        }
+        
+      }else{
+        if(this.isFixedWindow){
+          this.isFixedWindow = false;
+          if (isElectron){
+            window.electronAPI.setAlwaysOnTop(this.isFixedWindow);
+          }
+        }
+      }
       if(this.isMobile) this.sidebarVisible = false;
     },
     // 添加ComfyUI服务器
@@ -7712,6 +7728,14 @@ let vue_methods = {
       window.electronAPI.toggleWindowSize(300, 600);
     }
     this.isAssistantMode = !this.isAssistantMode;
+  },
+    fixedWindow() {
+    // 把新状态取反
+    const next = !this.isFixedWindow;
+    // 告诉主进程设置置顶
+    window.electronAPI.setAlwaysOnTop(next);
+    // 本地状态同步
+    this.isFixedWindow = next;
   }
 
 }

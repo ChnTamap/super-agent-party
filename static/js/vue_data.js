@@ -501,6 +501,7 @@ let vue_data = {
     openaiVoices:['alloy', 'ash', 'ballad', 'coral', 'echo', 'sage', 'shimmer', 'verse'],
     showMoreButtonDialog: false,
     isAssistantMode: false,
+    isFixedWindow: false,
     MoreButtonDict: [
       {"name": "brieflyButton", "enabled": true},
       {"name": "expandButton", "enabled": true},

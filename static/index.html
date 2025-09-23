@@ -143,6 +143,16 @@ if ('serviceWorker' in navigator) {
           </el-icon>
         </el-button>
         <el-button 
+          @click="fixedWindow"
+          v-if="isAssistantMode"
+          class="top-bar-btn"
+          text
+          :title="isFixedWindow ? t('unfixedWindow'):t('fixedWindow')">
+          <el-icon>
+            <i :class="isFixedWindow ? 'fa-solid fa-thumbtack-slash':'fa-solid fa-thumbtack'"></i>
+          </el-icon>
+        </el-button>
+        <el-button 
           @click="toggleAssistantMode"
           class="top-bar-btn"
           text
