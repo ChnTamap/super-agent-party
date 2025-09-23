@@ -3932,7 +3932,7 @@ let vue_methods = {
     },
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
-      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
+      this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 680;
       if (this.isMobile) {
         this.MoreButtonDict = this.smallMoreButtonDict;
       }
@@ -7725,7 +7725,7 @@ let vue_methods = {
     if (this.isAssistantMode && !this.isMac) {
       window.electronAPI.windowAction('maximize') // 恢复默认大小
     } else{
-      window.electronAPI.toggleWindowSize(300, 600);
+      window.electronAPI.toggleWindowSize(300, 630);
     }
     this.isAssistantMode = !this.isAssistantMode;
   },
