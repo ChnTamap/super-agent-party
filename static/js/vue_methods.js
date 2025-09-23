@@ -1069,7 +1069,8 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
-          this.MoreButtonDict = data.data.MoreButtonDict || this.MoreButtonDict;
+          this.largeMoreButtonDict = data.data.largeMoreButtonDict || this.largeMoreButtonDict;
+          this.smallMoreButtonDict = data.data.smallMoreButtonDict || this.smallMoreButtonDict;
           this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
@@ -1797,7 +1798,8 @@ let vue_methods = {
           knowledgeBases: this.knowledgeBases,
           modelProviders: this.modelProviders,
           systemSettings: this.systemSettings,
-          MoreButtonDict: this.MoreButtonDict,
+          largeMoreButtonDict: this.largeMoreButtonDict,
+          smallMoreButtonDict: this.smallMoreButtonDict,
           currentLanguage: this.currentLanguage,
           mcpServers: this.mcpServers,
           a2aServers: this.a2aServers,
@@ -3931,6 +3933,12 @@ let vue_methods = {
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
+      if (this.isMobile) {
+        this.MoreButtonDict = this.smallMoreButtonDict;
+      }
+      else{
+        this.MoreButtonDict = this.largeMoreButtonDict;
+      }
       if(this.isMobile) this.sidebarVisible = false;
     },
     // 添加ComfyUI服务器

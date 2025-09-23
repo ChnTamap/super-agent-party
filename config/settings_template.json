@@ -225,7 +225,7 @@
       "customTTSSpeed": 1.0,
       "newtts":{}
     },
-    "MoreButtonDict":{
+    "largeMoreButtonDict":{
       "brieflyButton": true,
       "expandButton": true,
       "fileButton": true,
@@ -251,6 +251,34 @@
       "httpButton": false,
       "comfyuiButton": false,
       "vrmButton":true,
+      "behaviorBotton":false
+    },
+    "smallMoreButtonDict":{
+      "brieflyButton": false,
+      "expandButton": false,
+      "fileButton": false,
+      "imageButton": false,
+      "reasonerButton": false,
+      "deepSearchButton": false,
+      "visionButton": false,
+      "desktopVisionButton":false,
+      "text2imgButton": false,
+      "asrButton": false,
+      "ttsButton": false,
+      "knowledgeBaseButton": false,
+      "webSearchButton": false,
+      "memoryButton": false,
+      "codeButton": false,
+      "stickerButton": false,
+      "haButton": false,
+      "chromeButton": false,
+      "agentButton": false,
+      "llmButton": false,
+      "mcpButton": false,
+      "a2aButton": false,
+      "httpButton": false,
+      "comfyuiButton": false,
+      "vrmButton":false,
       "behaviorBotton":false
     },
     "liveConfig": {
