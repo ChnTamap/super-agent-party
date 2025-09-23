@@ -7736,6 +7736,27 @@ let vue_methods = {
     window.electronAPI.setAlwaysOnTop(next);
     // 本地状态同步
     this.isFixedWindow = next;
-  }
+  },
+  async toggleScreenshot () {
+    try {
+      // 1. 调出遮罩并等待选区
+      const rect = await window.electronAPI.showScreenshotOverlay()
+      if (!rect) return          // 用户取消
+
+      // 2. 主进程裁剪
+      const buf = await window.electronAPI.cropDesktop({ rect })
+
+      // 3. 组装成 File 塞进 images
+      const blob = new Blob([buf], { type: 'image/png' })
+      const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+      this.images.push({ file, name: file.name, path: '' })
+    } catch (e) {
+      console.error(e)
+    } finally {
+      // 重新显示主窗口
+      await window.electronAPI.cancelScreenshotOverlay();
+      window.electronAPI.windowAction('show');
+    }
+  },
 
 }

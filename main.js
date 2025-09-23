@@ -5,6 +5,7 @@ const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
 const { download } = require('electron-dl');
+const sharp = require('sharp')   // 轻量裁剪库，npm i sharp
 const fs = require('fs')
 const os = require('os')
 const net = require('net') // 添加 net 模块用于端口检测
@@ -14,8 +15,35 @@ const osc = require('osc');
 let vmcUdpPort = null;          // osc.UDPPort 实例
 let vmcReceiverActive = false;  // 接收是否运行
 let vrmWindows = []; 
+let shotOverlay = null
 let isMac = process.platform === 'darwin';
 const vmcSendSocket = dgram.createSocket('udp4'); // 发送复用同一 socket
+
+async function cropDesktop(rect) {
+  // 字段检查
+  if (!rect || typeof rect.x !== 'number' || typeof rect.y !== 'number' ||
+      typeof rect.width !== 'number' || typeof rect.height !== 'number') {
+    throw new Error('cropDesktop 需要 {x,y,width,height} 且均为数字')
+  }
+
+  const { width, height } = screen.getPrimaryDisplay().bounds
+  const sources = await desktopCapturer.getSources({
+    types: ['screen'],
+    thumbnailSize: { width, height }
+  })
+  if (!sources.length) throw new Error('无法获取屏幕源')
+  const pngBuffer = sources[0].thumbnail.toPNG()
+
+  return sharp(pngBuffer)
+         .extract({               // 显式写成对象
+           left: Math.floor(rect.x),
+           top: Math.floor(rect.y),
+           width: Math.floor(rect.width),
+           height: Math.floor(rect.height)
+         })
+         .toBuffer()
+}
+
 // ★ 替换原来的 startVMCReceiver
 function startVMCReceiver(cfg) {
   if (vmcReceiverActive) return;
@@ -575,15 +603,46 @@ app.whenReady().then(async () => {
       return vrmWindow.id;  // 可选：返回窗口 ID 用于后续操作
     });
     // 👈 桌面截图
-    ipcMain.handle('capture-desktop', async () => {
-      const sources = await desktopCapturer.getSources({
-        types: ['screen'],
-        thumbnailSize: { width: 1920, height: 1080 } // 可按需改
+    ipcMain.handle('crop-desktop', async (e, { rect }) => cropDesktop(rect))
+
+    ipcMain.handle('show-screenshot-overlay', async () => {
+      // 1. 隐藏主窗口
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide()
+
+      // 2. 创建全屏无框透明窗口
+      const { width, height } = screen.getPrimaryDisplay().bounds
+      shotOverlay = new BrowserWindow({
+        x: 0, y: 0, width, height,
+        frame: false, transparent: true, alwaysOnTop: true,
+        skipTaskbar: true, resizable: false, movable: false,
+        enableLargerThanScreen: true,
+        webPreferences: {
+          contextIsolation: true,
+          preload: path.join(__dirname, 'static/js/shotPreload.js')
+        }
       })
-      if (!sources.length) throw new Error('无法获取屏幕源')
-      const pngBuffer = sources[0].thumbnail.toPNG() // 返回原生 Buffer
-      return pngBuffer // 给渲染进程
+      shotOverlay.setIgnoreMouseEvents(false)
+      shotOverlay.loadFile(path.join(__dirname, 'static/shotOverlay.html'))
+      shotOverlay.setVisibleOnAllWorkspaces(true)
+
+      return new Promise((resolve) => {
+        // 等待渲染进程把选区传回来
+        ipcMain.once('screenshot-selected', (e, rect) => {
+          shotOverlay.close()
+          shotOverlay = null
+          resolve(rect)   // {x,y,width,height}
+        })
+      })
     })
+
+    ipcMain.handle('cancel-screenshot-overlay', () => {
+      if (shotOverlay && !shotOverlay.isDestroyed()) {
+        shotOverlay.close()
+        shotOverlay = null
+      }
+    })
+
+
     // 添加IPC处理器
     ipcMain.handle('set-ignore-mouse-events', (event, ignore, options) => {
         const win = BrowserWindow.fromWebContents(event.sender);
@@ -711,6 +770,12 @@ app.whenReady().then(async () => {
     // 窗口控制事件
     ipcMain.handle('window-action', (_, action) => {
       switch (action) {
+        case 'show':
+          mainWindow.show()
+          break
+        case 'hide':
+          mainWindow.hide()
+          break
         case 'minimize':
           mainWindow.minimize()
           break
