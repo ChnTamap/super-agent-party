@@ -3935,6 +3935,7 @@ let vue_methods = {
       this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 650;
       if (this.isMobile) {
         this.MoreButtonDict = this.smallMoreButtonDict;
+        console.log(this.MoreButtonDict)
       }
       else{
         this.MoreButtonDict = this.largeMoreButtonDict;
@@ -7705,13 +7706,7 @@ let vue_methods = {
     this.toolForShowInfo = tool;
     this.showToolInfoDialog = true;
   },
-    toggleAssistantMode() {
-      if (this.isAssistantMode) {
-        window.electronAPI.windowAction('maximize') // 恢复默认大小
-      } else {
-        window.electronAPI.toggleWindowSize(300, 600); // 小助手模式
-      }
-      this.isAssistantMode = !this.isAssistantMode;
-      
-    },
+toggleAssistantMode() {
+  window.electronAPI.toggleWindowSize(300, 600);
+}
 }

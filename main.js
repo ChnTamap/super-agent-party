@@ -721,18 +721,31 @@ app.whenReady().then(async () => {
           break
       }
     })
-    ipcMain.handle('toggle-window-size', (event, { width, height }) => {
+    ipcMain.handle('toggle-window-size', async (event, { width, height }) => {
       const win = BrowserWindow.fromWebContents(event.sender);
+
       if (win.isMaximized()) {
+        // 1. 开始还原
         win.unmaximize();
-      }
-      if (win.getSize()[0] === width && win.getSize()[1] === height) {
-        win.maximize();
-      } else {
+
+        // 2. 等到连续 50 ms 内尺寸不再变化，才算“真正还原完成”
+        let last = win.getNormalBounds();
+        for (let i = 0; i < 10; i++) {          // 最多 500 ms
+          await new Promise(r => setTimeout(r, 50));
+          const curr = win.getNormalBounds();
+          if (curr.width === last.width && curr.height === last.height) break;
+          last = curr;
+        }
+
+        // 3. 现在再改助手尺寸，系统不会再覆盖
         win.setSize(width, height, true);
         win.center();
+      } else {
+        win.maximize();
       }
     });
+
+
     // 窗口状态同步
     mainWindow.on('maximize', () => {
       mainWindow.webContents.send('window-state', 'maximized')
