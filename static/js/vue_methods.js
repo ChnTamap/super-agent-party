@@ -4813,6 +4813,7 @@ let vue_methods = {
       this.vad = await vad.MicVAD.new({
         preSpeechPadFrames: 10,
         onSpeechStart: () => {
+          this.ASRrunning = true;
           // 语音开始时的处理
           this.handleSpeechStart();
         },
@@ -4828,7 +4829,6 @@ let vue_methods = {
               }
             }
             if (!this.currentAudio || this.currentAudio.paused) {
-              this.AsrRunning = true;
               if (this.asrSettings.engine === 'webSpeech') {
                 // Web Speech API模式：不处理音频帧，只是检测到语音
                 this.handleWebSpeechFrameProcessed();
