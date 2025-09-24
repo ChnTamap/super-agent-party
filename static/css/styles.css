@@ -1153,7 +1153,15 @@ body {
   scrollbar-width: 2px;
   overflow-y: auto;
 }
+/* Chrome, Edge, Safari 等 */
+.messages-container::-webkit-scrollbar {
+  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
+  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+}
 
+.messages-container::-webkit-scrollbar-thumb {
+  border-radius: 2px; /* 滚动条 thumb 圆角 */
+}
 /* 修复消息容器布局 */
 .message {
   margin-bottom: 20px;
@@ -1276,7 +1284,16 @@ body {
   }
 }
 
-
+@media (max-width: 680px) {
+  .message {
+    padding: 0!important;
+    margin: 4px!important;
+  }
+  .messages-container {
+    padding: 0!important;
+    margin: 0px!important;
+  }
+}
 /* 打字指示器样式 */
 .typing-indicator {
   display: flex;
@@ -1635,6 +1652,8 @@ body {
   min-width: 100%; /* 防止内容不足时收缩 */
   display: table; /* 恢复表格特性 */
   box-shadow: none; /* 移除阴影避免视觉干扰 */
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 
@@ -1658,6 +1677,8 @@ body {
   position: relative;
   margin: 1em 0;
   border-radius: 8px;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .code-header {
