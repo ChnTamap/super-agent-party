@@ -781,6 +781,19 @@ if ('serviceWorker' in navigator) {
 
           
           <div class="button-group">
+
+            <el-tooltip :content="isTyping?t('typing'):TTSrunning?t('speaking'):t('idle')" placement="top">
+              <el-button
+                v-if="isCapsuleMode"
+                class="icon-btn status-btn"
+                :type="TTSrunning||isTyping ?  'primary':'default' "
+                circle>
+                <i v-if="isTyping" class="fa-solid fa-heart-pulse"></i>
+                <i v-else-if="TTSrunning" class="fa-solid fa-head-side-cough"></i>
+                <i v-else class="fa-solid fa-heart"></i>
+              </el-button>
+            </el-tooltip>
+
             <el-tooltip :content="t('clearChat')" placement="top">
               <el-button
                 v-if="!isCapsuleMode"

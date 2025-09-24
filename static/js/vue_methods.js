@@ -3935,7 +3935,7 @@ let vue_methods = {
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
       this.isAssistantMode = window.innerWidth <= 350 && window.innerHeight <= 680;
-      this.isCapsuleMode = window.innerWidth <= 200 && window.innerHeight <= 100;
+      this.isCapsuleMode = window.innerWidth <= 230 && window.innerHeight <= 100;
       if (this.isMobile) {
         this.MoreButtonDict = this.smallMoreButtonDict;
       }
@@ -4828,7 +4828,7 @@ let vue_methods = {
               }
             }
             if (!this.currentAudio || this.currentAudio.paused) {
-              this.isAsrRunning = true;
+              this.AsrRunning = true;
               if (this.asrSettings.engine === 'webSpeech') {
                 // Web Speech API模式：不处理音频帧，只是检测到语音
                 this.handleWebSpeechFrameProcessed();
@@ -7767,7 +7767,7 @@ let vue_methods = {
     if (this.isCapsuleMode && !this.isMac) {
       window.electronAPI.windowAction('maximize') // 恢复默认大小
     } else{
-      window.electronAPI.toggleWindowSize(170, 75);
+      window.electronAPI.toggleWindowSize(220, 75);
     }
     this.isCapsuleMode = !this.isCapsuleMode;
   }
