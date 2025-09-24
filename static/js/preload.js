@@ -99,6 +99,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   captureDesktop: () => ipcRenderer.invoke('capture-desktop'), // 👈 桌面截图
   toggleWindowSize: (width, height) => ipcRenderer.invoke('toggle-window-size', { width, height }),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
+  showScreenshotOverlay: () => ipcRenderer.invoke('show-screenshot-overlay'),
+  cropDesktop:        (opts) => ipcRenderer.invoke('crop-desktop', opts),
+  cancelScreenshotOverlay: () => ipcRenderer.invoke('cancel-screenshot-overlay')
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {
