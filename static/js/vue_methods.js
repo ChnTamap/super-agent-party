@@ -1138,7 +1138,7 @@ let vue_methods = {
           await this.sendMessage();
         }
       }
-      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
+      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == "keyTriggered") {
         event.preventDefault();
         this.asrSettings.enabled = false;
         await this.toggleASR();
@@ -1146,9 +1146,11 @@ let vue_methods = {
     },
     async handleKeyUp(event) {
       if (event?.repeat) return;
-      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == 'wakeWord') {
+      if (event?.key === this.asrSettings.hotkey && this.asrSettings.interactionMethod == "keyTriggered") {
         event.preventDefault();
         this.asrSettings.enabled = true;
+        // 等待1.5秒后启动ASR
+        await new Promise(resolve => setTimeout(resolve, 1500));
         await this.toggleASR();
         await this.sendMessage();
       }  
@@ -4725,7 +4727,7 @@ let vue_methods = {
         showNotification(this.t('transcriptionFailed'), 'error');
       } else if (data.type === 'init_response') {
         if (data.status === 'ready') {
-          showNotification(this.t('asrReady'), 'success');
+          
         }
       }
     },
