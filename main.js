@@ -603,6 +603,16 @@ app.whenReady().then(async () => {
       return vrmWindow.id;  // 可选：返回窗口 ID 用于后续操作
     });
     // 👈 桌面截图
+    ipcMain.handle('capture-desktop', async () => {
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: 1920, height: 1080 } // 可按需改
+      })
+      if (!sources.length) throw new Error('无法获取屏幕源')
+      const pngBuffer = sources[0].thumbnail.toPNG() // 返回原生 Buffer
+      return pngBuffer // 给渲染进程
+    })
+
     ipcMain.handle('crop-desktop', async (e, { rect }) => cropDesktop(rect))
 
     ipcMain.handle('show-screenshot-overlay', async () => {
