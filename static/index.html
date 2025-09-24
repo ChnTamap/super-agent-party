@@ -153,6 +153,16 @@ if ('serviceWorker' in navigator) {
           </el-icon>
         </el-button>
         <el-button 
+          @click="toggleCapsuleMode"
+          v-if="!isCapsuleMode&&!isAssistantMode"
+          class="top-bar-btn"
+          text
+          :title="t('CapsuleMode')">
+          <el-icon>
+            <i class="fa-solid fa-capsules"></i>
+          </el-icon>
+        </el-button>
+        <el-button 
           @click="toggleAssistantMode"
           class="top-bar-btn"
           text
@@ -258,7 +268,7 @@ if ('serviceWorker' in navigator) {
         <!-- 聊天界面保持不变 -->
         <div v-show="activeMenu === 'home'" class="page chat-container">
           <!-- 聊天消息列表 -->
-          <div class="messages-container" ref="messagesContainer">
+          <div class="messages-container" ref="messagesContainer"   v-if="!isCapsuleMode">
             <div v-for="(message, index) in messages" :key="index" class="message" :class="message.role">
               <div v-if="ttsSettings.enabled && message.role === 'assistant'" class="tts-controls">
                 <el-tooltip :content="message.isPlaying || false ? t('pause') : t('play')">
@@ -773,6 +783,7 @@ if ('serviceWorker' in navigator) {
           <div class="button-group">
             <el-tooltip :content="t('clearChat')" placement="top">
               <el-button
+                v-if="!isCapsuleMode"
                 @click="clearMessages"
                 class="icon-btn clear-btn"
                 type="danger"
@@ -783,6 +794,7 @@ if ('serviceWorker' in navigator) {
 
             <el-tooltip :content="t('mainModel')" placement="top">
               <el-button
+                v-if="!isCapsuleMode"
                 plain
                 circle
                 class="icon-btn model-btn"
@@ -800,6 +812,7 @@ if ('serviceWorker' in navigator) {
 
             <el-tooltip :content="t('chatHistory')" placement="top">
               <el-button
+                v-if="!isCapsuleMode"
                 @click="showHistoryDialog = true"
                 class="icon-btn history-btn"
                 :type="conversations.length === 0 ? 'default' : 'primary'"
@@ -812,7 +825,7 @@ if ('serviceWorker' in navigator) {
               <el-button
                 @click="handleAllBriefly"
                 class="icon-btn history-btn"
-                v-if="MoreButtonDict.find(b => b.name === 'brieflyButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'brieflyButton')?.enabled&&!isCapsuleMode"
                 :type="allBriefly ? 'primary' : 'default'"
                 circle>
                 <i class="fa-solid fa-asterisk"></i>
@@ -823,7 +836,7 @@ if ('serviceWorker' in navigator) {
                 <el-button 
                     @click="toggleInputExpand"
                     class="icon-btn expand-btn"
-                    v-if="MoreButtonDict.find(b => b.name === 'expandButton')?.enabled"
+                    v-if="MoreButtonDict.find(b => b.name === 'expandButton')?.enabled&&!isCapsuleMode"
                     :type="isInputExpanded ? 'primary' : 'default'"
                     circle>
                     <i :class="isInputExpanded ? 'fa-solid fa-down-left-and-up-right-to-center' : 'fa-solid fa-up-right-and-down-left-from-center'"></i>
@@ -835,7 +848,7 @@ if ('serviceWorker' in navigator) {
                 @click="sendFiles"
                 class="icon-btn file-btn"
                 :type="hasFiles ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'fileButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'fileButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-paperclip"></i>
               </el-button>
@@ -846,7 +859,7 @@ if ('serviceWorker' in navigator) {
                 @click="sendImages"
                 class="icon-btn image-btn"
                 :type="hasImages ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'imageButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'imageButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-image"></i>
               </el-button>
@@ -857,7 +870,7 @@ if ('serviceWorker' in navigator) {
                 @click="reasonerSettings.enabled = !reasonerSettings.enabled; autoSaveSettings()"
                 class="icon-btn deep-think-btn"
                 :type="reasonerSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'reasonerButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'reasonerButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-atom"></i>
               </el-button>
@@ -868,7 +881,7 @@ if ('serviceWorker' in navigator) {
                 @click="toolsSettings.deepsearch.enabled = !toolsSettings.deepsearch.enabled; autoSaveSettings()"
                 class="icon-btn deep-search-btn"
                 :type="toolsSettings.deepsearch.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'deepSearchButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'deepSearchButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-flask"></i>
               </el-button>
@@ -879,18 +892,18 @@ if ('serviceWorker' in navigator) {
                 @click="visionSettings.enabled = !visionSettings.enabled; autoSaveSettings()"
                 class="icon-btn vision-btn"
                 :type="visionSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'visionButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'visionButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-camera"></i>
               </el-button>
             </el-tooltip>
 
-            <el-tooltip :content="t('desktopVision')" placement="top">
+            <el-tooltip :content="t('desktopVisionButton')" placement="top">
               <el-button
                 @click="visionSettings.desktopVision = !visionSettings.desktopVision; autoSaveSettings()"
                 class="icon-btn vision-btn"
                 :type="visionSettings.desktopVision ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'desktopVisionButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'desktopVisionButton')?.enabled||isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-eye"></i>
               </el-button>
@@ -901,7 +914,7 @@ if ('serviceWorker' in navigator) {
                 @click="toggleScreenshot"
                 class="icon-btn vision-btn"
                 type="default"
-                v-if="MoreButtonDict.find(b => b.name === 'screenshotButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'screenshotButton')?.enabled||isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-scissors"></i>
               </el-button>
@@ -912,7 +925,7 @@ if ('serviceWorker' in navigator) {
                 @click="text2imgSettings.enabled = !text2imgSettings.enabled; autoSaveSettings()"
                 class="icon-btn text2img-btn"
                 :type="text2imgSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'text2imgButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'text2imgButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-pencil"></i>
               </el-button>
@@ -923,7 +936,7 @@ if ('serviceWorker' in navigator) {
                 @click="toggleASR"
                 class="icon-btn asr-btn"
                 :type="asrSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'asrButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'asrButton')?.enabled||isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-microphone"></i>
               </el-button>
@@ -934,7 +947,7 @@ if ('serviceWorker' in navigator) {
                 @click="ttsSettings.enabled=!ttsSettings.enabled;changeTTSstatus();"
                 class="icon-btn asr-btn"
                 :type="ttsSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'ttsButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'ttsButton')?.enabled||isCapsuleMode"
                 circle>
                 <i v-if="ttsSettings.enabled" class="fa-solid fa-volume-high"></i>
                 <i v-else class="fa-solid fa-volume-xmark"></i>
@@ -946,7 +959,7 @@ if ('serviceWorker' in navigator) {
                 @click="showKnowledgeDialog = true"
                 class="icon-btn knowledge-base-btn"
                 :type="hasEnabledKnowledgeBases ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'knowledgeBaseButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'knowledgeBaseButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-book"></i>
               </el-button>
@@ -957,7 +970,7 @@ if ('serviceWorker' in navigator) {
                 @click="webSearchSettings.enabled = !webSearchSettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="webSearchSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'webSearchButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'webSearchButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-globe"></i>
               </el-button>
@@ -968,7 +981,7 @@ if ('serviceWorker' in navigator) {
                 @click="showMemoryDialog = true"
                 class="icon-btn web-search-btn"
                 :type="memorySettings.is_memory ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'memoryButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'memoryButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-brain"></i>
               </el-button>
@@ -979,7 +992,7 @@ if ('serviceWorker' in navigator) {
                 @click="codeSettings.enabled = !codeSettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="codeSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'codeButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'codeButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-code"></i>
               </el-button>
@@ -990,7 +1003,7 @@ if ('serviceWorker' in navigator) {
                 @click="showStickerPacksDialog = true"
                 class="icon-btn sticker-btn"
                 :type="hasEnabledStickerPacks ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'stickerButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'stickerButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-face-smile"></i>
               </el-button>
@@ -1001,7 +1014,7 @@ if ('serviceWorker' in navigator) {
                 @click="HASettings.enabled = !HASettings.enabled; changeHAEnabled();"
                 class="icon-btn homeAssistant-btn"
                 :type="HASettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'haButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'haButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-house"></i>
               </el-button>
@@ -1012,7 +1025,7 @@ if ('serviceWorker' in navigator) {
                 @click="chromeMCPSettings.enabled = !chromeMCPSettings.enabled; changeChromeMCPEnabled();"
                 class="icon-btn browserControl-btn"
                 :type="chromeMCPSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'chromeButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'chromeButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-brands fa-chrome"></i>
               </el-button>
@@ -1023,7 +1036,7 @@ if ('serviceWorker' in navigator) {
                 @click="showAgentDialog = true"
                 class="icon-btn agent-btn"
                 :type="hasAgentChanges ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'agentButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'agentButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-robot"></i>
               </el-button>
@@ -1034,7 +1047,7 @@ if ('serviceWorker' in navigator) {
                 @click="showLLMToolsDialog = true"
                 class="icon-btn llm-tool-btn"
                 :type="hasEnabledLLMTools ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'llmButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'llmButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-cube"></i>
               </el-button>
@@ -1045,7 +1058,7 @@ if ('serviceWorker' in navigator) {
                 @click="showMCPServerDialog = true"
                 class="icon-btn mcp-btn"
                 :type="hasEnabledMCPServers ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'mcpButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'mcpButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-server"></i>
               </el-button>
@@ -1056,7 +1069,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showA2AServerDialog = true"
                 class="icon-btn a2a-btn"
                 :type="hasEnabledA2AServers ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'a2aButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'a2aButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-network-wired"></i>
               </el-button>
@@ -1067,7 +1080,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showHttpToolDialog = true"
                 class="icon-btn http-btn"
                 :type="hasEnabledHttpTools ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'httpButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'httpButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-wifi"></i>
               </el-button>
@@ -1078,7 +1091,7 @@ if ('serviceWorker' in navigator) {
                 @click="this.showComfyUIDialog = true"
                 class="icon-btn comfyui-btn"
                 :type="hasEnabledComfyUI ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'comfyuiButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'comfyuiButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-palette"></i>
               </el-button>
@@ -1089,7 +1102,7 @@ if ('serviceWorker' in navigator) {
                 @click="startVRM"
                 class="icon-btn vrm-btn"
                 :type="'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'vrmButton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'vrmButton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i :class='isVRMStarting? "fa-solid fa-spinner fa-spin" : "fa-solid fa-user-ninja"'></i>
               </el-button>
@@ -1100,7 +1113,7 @@ if ('serviceWorker' in navigator) {
                 @click="behaviorSettings.enabled=!behaviorSettings.enabled; autoSaveSettings();"
                 class="icon-btn behavior-btn"
                 :type="behaviorSettings.enabled ? 'primary' : 'default'"
-                v-if="MoreButtonDict.find(b => b.name === 'behaviorBotton')?.enabled"
+                v-if="MoreButtonDict.find(b => b.name === 'behaviorBotton')?.enabled&&!isCapsuleMode"
                 circle>
                 <i class="fa-solid fa-person-running"></i>
               </el-button>
@@ -1108,6 +1121,7 @@ if ('serviceWorker' in navigator) {
 
             <el-tooltip :content="isSending ? t('stopGenerating') : t('sendMessage')" placement="top">
               <el-button
+                v-if="!isCapsuleMode"
                 @click="isSending ? stopGenerate() : sendMessage()"
                 :type="isSending ? 'danger' : 'primary'"
                 class="icon-btn send-btn"
@@ -1117,12 +1131,12 @@ if ('serviceWorker' in navigator) {
             </el-tooltip>
             <!--展开收起按钮-->
             <el-tooltip :content="t('moreButton')" placement="top">
-              <el-button @click="showMoreButtonDialog = true" class="icon-btn collapse-btn" circle>
+              <el-button v-if="!isCapsuleMode" @click="showMoreButtonDialog = true" class="icon-btn collapse-btn" circle>
                 <i class="fa-solid fa-ellipsis"></i>
               </el-button>
             </el-tooltip>
           </div>
-          <div class="input-container">
+          <div class="input-container"  v-if="!isCapsuleMode">
             <!-- 紧凑型文件列表 -->
             <div class="compact-file-list" v-if="allItems.length">
               <div v-for="(item, index) in allItems" :key="index" class="compact-file-item">
