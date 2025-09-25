@@ -1033,6 +1033,10 @@ body {
   background-color: var(--code-bg-color) !important;
   color: var(--code-text-color) !important;
 }
+.markdown-body code::-webkit-scrollbar {
+  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
+  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+}
 .markdown-body th {
   background-color: var(--el-color-primary-light-9) !important;
 }
@@ -1186,6 +1190,7 @@ body {
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+  max-width: 100%;
 }
 
 .user-content {
@@ -1196,6 +1201,7 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
   box-shadow: var(--el-box-shadow)!important;
+  max-width: 100%;
 }
 
 
@@ -1204,6 +1210,7 @@ body {
   color: #ffffff;
   border-radius: 12px 12px 0 12px;
   box-shadow: var(--el-box-shadow)!important;
+  max-width: 100%;
 }
 
 .system .message-content {
@@ -1217,6 +1224,7 @@ body {
   border-radius: 12px;
   padding: 5px;
   box-shadow: var(--el-box-shadow)!important;
+  max-width: 100%;
 }
 
 .assistant .message-content {
@@ -1225,6 +1233,7 @@ body {
   color: var(--el-text-color-primary) !important; /* 增加文字颜色定义 */
   border-radius: 12px 12px 12px 0;
   box-shadow: var(--el-box-shadow)!important;
+  max-width: 100%;
 }
 
 /* 增强AI消息样式 */
@@ -1680,7 +1689,10 @@ body {
   overflow-x: auto;
   max-width: 100%;
 }
-
+.code-block::-webkit-scrollbar {
+  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
+  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+}
 .code-header {
   display: flex;
   justify-content: space-between;
