@@ -158,7 +158,8 @@
       "secret": "",
       "separators": ["。", "\n", "？", "！"],
       "reasoningVisible": true,
-      "quickRestart": true
+      "quickRestart": true,
+      "is_sandbox": false
     },
     "allBriefly":false,
     "behaviorSettings": {

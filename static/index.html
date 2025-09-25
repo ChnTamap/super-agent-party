@@ -154,7 +154,7 @@ if ('serviceWorker' in navigator) {
         </el-button>
         <el-button 
           @click="toggleCapsuleMode"
-          v-if="!isCapsuleMode&&!isAssistantMode"
+          v-if="!isCapsuleMode&&!isAssistantMode&&!isMobile"
           class="top-bar-btn"
           text
           :title="t('CapsuleMode')">
@@ -164,6 +164,7 @@ if ('serviceWorker' in navigator) {
         </el-button>
         <el-button 
           @click="toggleAssistantMode"
+          v-if="!isMobile"
           class="top-bar-btn"
           text
           :title="isAssistantMode ?  t('maximize'):t('assistantMode')">
