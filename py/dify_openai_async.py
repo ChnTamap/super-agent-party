@@ -89,7 +89,7 @@ class DifyOpenAIAsync:
                 cid = data.get("conversation_id") or ""
                 answer = data.get("answer") or ""
                 if not conversation_id and cid:
-                    answer = f"<conversion id:{cid}>\n{answer}"
+                    answer = f"<conversion id:{cid}>\n\n{answer}"
 
                 return ChatCompletion(
                     id="super-agent-party",
@@ -132,7 +132,7 @@ class DifyOpenAIAsync:
                         if first and delta:
                             cid = event.get("conversation_id")
                             if cid and not conversation_id:
-                                delta = f"<conversion id:{cid}>\n{delta}"
+                                delta = f"<conversion id:{cid}>\n\n{delta}"
                             first = False
 
                         yield ChatCompletionChunk(
