@@ -40,19 +40,19 @@
 
 ### Windows portable package (Recommended! Installation-free source version, support one-click synchronization to the latest version of the warehouse, no need to wait for the desktop version to be packaged)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.9/super-agent-party-v0.2.9.zip)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/super-agent-party-v0.3.0.zip)
 
 ⭐Attention! You can double-click `一键更新(update).bat` to update the software, or you can double-click `一键启动(start).bat` to start the software.
 
 ### Windows Desktop Installation
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.9/Super-Agent-Party-Setup-0.2.9.exe)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-Setup-0.3.0.exe)
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
 
 ### MacOS Desktop Installation (Currently only M chips are supported.)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.9/Super-Agent-Party-0.2.9-Mac.dmg)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Mac.dmg)
 
 ⭐Attention! After downloading, drag the app file of the dmg file into the `/Applications` directory, then open end point, execute the following command and enter the root password to remove the attached Quarantine attribute from the network download:
 
@@ -68,11 +68,11 @@ We provide two mainstream Linux installation package formats for your convenienc
 
 `.AppImage` is a Linux application format that does not require installation and can be used immediately. Suitable for most Linux distributions.
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.9/Super-Agent-Party-0.2.9-Linux.AppImage)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.AppImage)
 
 #### 2. Install using `.deb` package (Suitable for Ubuntu/Debian systems)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.2.9/Super-Agent-Party-0.2.9-Linux.deb)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.deb)
 
 ### Docker Deployment (This version of the table pet can only be viewed through the browser.)
 
@@ -186,7 +186,7 @@ Please refer to the following document for the main functions:
 | Messaging Platform Bots | Currently supports QQ; more platforms will be supported in the future. |
 | Live Streaming Bots | Currently supports Bilibili; more platforms will be supported in the future. |
 | Announcer Bot | Supports long text narration, multi-voice narration, digital human video narration, batch conversion of ultra-long texts to speech (with download capability), and parsing of common ebook formats like EPUB. Chapter-based conversion will be developed later. |
-| Chat Interface | The chat interface supports front-end rendering features such as mathematical formulas, mermaid diagrams, and HTML code graphics. Images can be downloaded or copied. |
+| Chat Interface | The chat interface supports front-end rendering features such as mathematical formulas, mermaid diagrams, and HTML code graphics. Images can be downloaded or copied.Supports capsule mode and assistant mode, making it easy to shrink and dock the conversation interface. Combined with desktop vision and screenshots, it seamlessly integrates into work and entertainment |
 | Role-Playing | Supports uploading, editing, and downloading tavern character cards. Allows configuring different voices and avatars for different characters. Features long-term memory, multi-voice support when using character cards, narrator voice for non-character text, and supports emojis and memes. |
 | Extensive Native Tools | Tool calling supports asynchronous execution, including web search, knowledge base access, smart home control, browser control, code execution in sandbox environments, and controlling ComfyUI for image generation. |
 | Custom Tool Interfaces | Supports MCP, A2A, HTTP requests, and any LLM interface as tools for the main agent, enabling users to freely customize their agent's toolchain. |
