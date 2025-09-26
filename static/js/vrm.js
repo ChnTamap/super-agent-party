@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { createVRMAnimationClip, VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
 let isVRM1 = true;
@@ -1892,7 +1893,7 @@ function animate() {
     requestAnimationFrame(animate);
     
     const deltaTime = clock.getDelta();
-    
+    updatePointerLockMovement(deltaTime);
     if (currentVrm) {
         if (vmcReceiveEnabled) {
             for (const [vmcName, data] of vmcBoneBuffer) {
@@ -1985,6 +1986,57 @@ async function setVMCReceive (enable, syncExpr = false) {
 
 
 };
+let pointerLocked = false;          // 当前是否处于 PointerLock 模式
+let orbitControlsSaved = null;      // 保存 OrbitControls 实例
+let pointerLockControls = null;     // PointerLockControls 实例
+const keyState = {};               // 按键记录
+const moveSpeed = 5;               // 每秒移动速度（米/秒）
+
+// 监听按键
+function onKeyDown(e) {
+    keyState[e.code] = true;
+}
+function onKeyUp(e) {
+    keyState[e.code] = false;
+}
+
+// 每帧更新相机位置
+function updatePointerLockMovement(delta) {
+    if (!pointerLocked || !pointerLockControls) return;
+
+    const direction = new THREE.Vector3();
+    const head = pointerLockControls.getObject();   // 相机容器
+
+    // 前后
+    if (keyState['KeyW']) direction.z -= 1;
+    if (keyState['KeyS']) direction.z += 1;
+    // 左右
+    if (keyState['KeyA']) direction.x -= 1;
+    if (keyState['KeyD']) direction.x += 1;
+    // 上下
+    if (keyState['KeyQ']) direction.y -= 1;
+    if (keyState['KeyE']) direction.y += 1;
+
+    if (direction.lengthSq() === 0) return;
+
+    direction.normalize().applyQuaternion(head.quaternion); // 转成世界方向
+    head.position.addScaledVector(direction, moveSpeed * delta);
+}
+
+// 进入 PointerLock 时绑定事件
+function enablePointerLockMovement() {
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+}
+
+// 退出 PointerLock 时清理
+function disablePointerLockMovement() {
+    document.removeEventListener('keydown', onKeyDown);
+    document.removeEventListener('keyup', onKeyUp);
+    // 清空按键缓存
+    for (const k in keyState) delete keyState[k];
+}
+
 const btn_width = 28;
 const btn_height = 28;
 
@@ -2921,6 +2973,81 @@ function addcontrolPanel() {
         // 在组装控制面板时添加锁定按钮
         await initLockButton();
 
+        const switchCtrlBtn = document.createElement('div');
+        switchCtrlBtn.id = 'switch-controls-handle';
+        switchCtrlBtn.innerHTML = '<i class="fas fa-gamepad"></i>';
+        switchCtrlBtn.style.cssText = `
+            width: ${btn_width}px; height: ${btn_height}px;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 50%; color: #333;
+            cursor: pointer; -webkit-app-region: no-drag;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease; user-select: none;
+            pointer-events: auto; backdrop-filter: blur(10px);
+        `;
+
+        // 创建 PointerLockControls
+        function createPointerLockControls() {
+            pointerLockControls = new PointerLockControls(camera, renderer.domElement);
+            scene.add(pointerLockControls.getObject());   // 把相机容器放进场景
+        }
+
+        // 切换控制模式
+        function toggleControls() {
+            if (!pointerLockControls) createPointerLockControls();
+
+            if (!pointerLocked) {
+                // 进入 PointerLock
+                orbitControlsSaved = controls;           // 保存旧控制器
+                orbitControlsSaved.enabled = false;      // 先禁用
+                pointerLockControls.lock();              // 锁定鼠标
+                enablePointerLockMovement();
+                pointerLocked = true;
+                switchCtrlBtn.style.color = '#ffc73bff';
+            } else {
+                // 回到 OrbitControls
+                pointerLockControls.unlock();
+                disablePointerLockMovement(); 
+                pointerLocked = false;
+                switchCtrlBtn.style.color = '#333';
+                if (orbitControlsSaved) {
+                    orbitControlsSaved.enabled = true;
+                }
+            }
+        }
+
+        // 点击按钮切换
+        switchCtrlBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleControls();
+        });
+
+        // 悬停动画
+        switchCtrlBtn.addEventListener('mouseenter', async () => {
+            switchCtrlBtn.style.background = 'rgba(255,255,255,1)';
+            switchCtrlBtn.style.transform   = 'scale(1.1)';
+            switchCtrlBtn.style.boxShadow   = '0 6px 16px rgba(0,0,0,0.2)';
+            switchCtrlBtn.title = pointerLocked
+                ? await t('ExitFirstPerson') || 'Exit First-Person'
+                : await t('EnterFirstPerson') || 'Enter First-Person';
+        });
+        switchCtrlBtn.addEventListener('mouseleave', () => {
+            switchCtrlBtn.style.background = 'rgba(255,255,255,0.95)';
+            switchCtrlBtn.style.transform  = 'scale(1)';
+            switchCtrlBtn.style.boxShadow  = '0 4px 12px rgba(0,0,0,0.15)';
+        });
+
+        // 监听 PointerLock 事件（用户按 ESC 退出时同步按钮状态）
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement !== renderer.domElement && pointerLocked) {
+                // 用户 ESC 退出，强制切回 OrbitControls
+                toggleControls();
+            }
+        });
+
         // 组装控制面板
         controlPanel.appendChild(dragButton);
         controlPanel.appendChild(lockButton);
@@ -2933,6 +3060,7 @@ function addcontrolPanel() {
             controlPanel.appendChild(vmcButton);
         }
         controlPanel.appendChild(xrAutoBtn); // 新增：XR 自动按钮
+        controlPanel.appendChild(switchCtrlBtn);
         controlPanel.appendChild(refreshButton);
         controlPanel.appendChild(closeButton);
         
@@ -2947,7 +3075,8 @@ function addcontrolPanel() {
             nextModelButton, 
             refreshButton, 
             closeButton,
-            xrAutoBtn
+            xrAutoBtn,
+            switchCtrlBtn
         );
 
         // 添加到页面
@@ -2982,7 +3111,9 @@ function addcontrolPanel() {
             
             // 更新字幕按钮提示
             addHoverEffect(subtitleButton, isSubtitleEnabled ? await t('SubtitleEnabled') : await t('SubtitleDisabled'));
-            
+            addHoverEffect(switchCtrlBtn, pointerLocked
+                            ? await t('ExitFirstPerson') || 'Exit First-Person (WASD+QE)'
+                            : await t('EnterFirstPerson') || 'Enter First-Person (WASD+QE)');
             // 更新闲置动画按钮提示
             addHoverEffect(idleAnimationButton, useVRMAIdleAnimations ? 
                 await t('UsingVRMAAnimations') : 
