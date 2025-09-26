@@ -1985,6 +1985,9 @@ async function setVMCReceive (enable, syncExpr = false) {
 
 
 };
+const btn_width = 28;
+const btn_height = 28;
+
 function addcontrolPanel() {
     // 等待一小段时间确保页面完全加载
     setTimeout(async () => {
@@ -2077,8 +2080,8 @@ function addcontrolPanel() {
         const dragButton = document.createElement('div');
         dragButton.id = 'drag-handle';
         dragButton.style.cssText = `
-                width: 36px;
-                height: 36px;
+                width: ${btn_width}px;
+                height: ${btn_height}px;
                 background: rgba(255,255,255,0.95);
                 border: 2px solid rgba(0,0,0,0.1);
                 border-radius: 50%;
@@ -2144,8 +2147,8 @@ function addcontrolPanel() {
         wsStatusButton.id = 'ws-status-handle';
         wsStatusButton.innerHTML = '<i class="fas fa-wifi"></i>';
         wsStatusButton.style.cssText = `
-            width: 36px;
-            height: 36px;
+            width: ${btn_width}px;
+            height: ${btn_height}px;
             background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1);
             border-radius: 50%;
@@ -2205,8 +2208,8 @@ function addcontrolPanel() {
             subtitleButton.id = 'subtitle-handle';
             subtitleButton.innerHTML = '<i class="fas fa-closed-captioning"></i>';
             subtitleButton.style.cssText = `
-                width: 36px;
-                height: 36px;
+                width: ${btn_width}px;
+                height: ${btn_height}px;
                 background: rgba(255,255,255,0.95);
                 border: 2px solid rgba(0,0,0,0.1);
                 border-radius: 50%;
@@ -2260,8 +2263,8 @@ function addcontrolPanel() {
             '<i class="fas fa-stop"></i>' : 
             '<i class="fas fa-play"></i>';
         idleAnimationButton.style.cssText = `
-            width: 36px;
-            height: 36px;
+            width: ${btn_width}px;
+            height: ${btn_height}px;
             background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1);
             border-radius: 50%;
@@ -2315,8 +2318,8 @@ function addcontrolPanel() {
         refreshButton.id = 'refresh-handle';
         refreshButton.innerHTML = '<i class="fas fa-redo-alt"></i>';
         refreshButton.style.cssText = `
-                width: 36px;
-                height: 36px;
+                width: ${btn_width}px;
+                height: ${btn_height}px;
                 background: rgba(255,255,255,0.95);
                 border: 2px solid rgba(0,0,0,0.1);
                 border-radius: 50%;
@@ -2341,8 +2344,8 @@ function addcontrolPanel() {
         prevModelButton.id = 'prev-model-handle';
         prevModelButton.innerHTML = '<i class="fas fa-chevron-up"></i>';
         prevModelButton.style.cssText = `
-            width: 36px;
-            height: 36px;
+            width: ${btn_width}px;
+            height: ${btn_height}px;
             background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1);
             border-radius: 50%;
@@ -2365,8 +2368,8 @@ function addcontrolPanel() {
         nextModelButton.id = 'next-model-handle';
         nextModelButton.innerHTML = '<i class="fas fa-chevron-down"></i>';
         nextModelButton.style.cssText = `
-            width: 36px;
-            height: 36px;
+            width: ${btn_width}px;
+            height: ${btn_height}px;
             background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1);
             border-radius: 50%;
@@ -2474,8 +2477,8 @@ function addcontrolPanel() {
         closeButton.id = 'close-handle';
         closeButton.innerHTML = '<i class="fas fa-times"></i>';
         closeButton.style.cssText = `
-                width: 36px;
-                height: 36px;
+                width: ${btn_width}px;
+                height: ${btn_height}px;
                 background: rgba(255,255,255,0.95);
                 border: 2px solid rgba(0,0,0,0.1);
                 border-radius: 50%;
@@ -2545,7 +2548,7 @@ function addcontrolPanel() {
         xrAutoBtn.id = 'xr-auto-btn';
         xrAutoBtn.innerHTML = '<i class="fa-solid fa-vr-cardboard"></i>';
         xrAutoBtn.style.cssText = `
-            width: 36px; height: 36px; background: rgba(255,255,255,0.95);
+            width: ${btn_width}px; height: ${btn_height}px; background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333;
             cursor: pointer; -webkit-app-region: no-drag; display: flex;
             align-items: center; justify-content: center; font-size: 14px;
@@ -2622,7 +2625,7 @@ function addcontrolPanel() {
         vmcButton.id = 'vmc-handle';
         vmcButton.innerHTML = '<i class="fas fa-broadcast-tower"></i>';
         vmcButton.style.cssText = `
-            width: 36px; height: 36px; background: rgba(255,255,255,0.95);
+            width: ${btn_width}px; height: ${btn_height}px; background: rgba(255,255,255,0.95);
             border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; color: #333;
             cursor: pointer; -webkit-app-region: no-drag; display: flex;
             align-items: center; justify-content: center; font-size: 14px;
@@ -2794,8 +2797,8 @@ function addcontrolPanel() {
         async function initLockButton() {
             lockButton.innerHTML = '<i class="fas fa-lock-open"></i>';
             lockButton.style.cssText = `
-                width: 36px;
-                height: 36px;
+                width: ${btn_width}px; 
+                height: ${btn_height}px;
                 background: rgba(255,255,255,0.95);
                 border: 2px solid rgba(0,0,0,0.1);
                 border-radius: 50%;
@@ -2811,7 +2814,6 @@ function addcontrolPanel() {
                 user-select: none;
                 pointer-events: auto;
                 backdrop-filter: blur(10px);
-                margin-bottom: 8px;
             `;
             
             lockButton.title = await t('UnlockWindow');
@@ -2856,9 +2858,6 @@ function addcontrolPanel() {
                 button.style.transform = 'scale(1)';
             });
             
-            // 恢复锁定按钮位置
-            lockButton.style.marginBottom = '8px';
-            lockButton.style.marginTop = '0';
         }
 
         // 切换锁定状态
