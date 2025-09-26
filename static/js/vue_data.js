@@ -1385,14 +1385,16 @@ let vue_data = {
       'modelscope': 'https://modelscope.cn/my/myaccesstoken',
       'tencent': 'https://console.cloud.tencent.com/lkeap/api',
     },
-    MCPvendorValues:['MCP','awesome'],
+    MCPvendorValues:['MCP','awesome','docker'],
     MCPpage:{
       'MCP': 'https://github.com/modelcontextprotocol/servers',
-      'awesome': 'https://github.com/punkpeye/awesome-mcp-servers'
+      'awesome': 'https://github.com/punkpeye/awesome-mcp-servers',
+      'docker': 'https://hub.docker.com/mcp'
     },
     MCPvendorLogoList: {
       'MCP': 'source/providers/mcp.png',
-      'awesome': 'source/providers/github.png'
+      'awesome': 'source/providers/github.png',
+      'docker': 'source/providers/docker.png'
     },
     newProviderTemp: {
       vendor: '',
