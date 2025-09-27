@@ -447,6 +447,12 @@ const app = Vue.createApp({
         value
       }));
     },
+    CardOptions() {
+      return this.cardValues.map(value => ({
+        label: this.t(`card.${value}`), // 使用统一的翻译键
+        value
+      }));
+    },
     themeOptions() {
       return this.themeValues.map(value => ({
         label: this.t(`theme.${value}`),

@@ -3390,6 +3390,9 @@ let vue_methods = {
     getPromptVendorLogo(vendor) {
       return this.promptLogoList[vendor] || "source/providers/logo.png";
     },
+    getCardVendorLogo(vendor) {
+      return this.cardLogoList[vendor] || "source/providers/logo.png";
+    },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;
       this.handleVendorChange(vendor);
@@ -4228,6 +4231,14 @@ let vue_methods = {
     },
     goToPromptURL(value) {
         url = this.promptPage[value]
+        if (isElectron) {
+          window.electronAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+    },
+    goToCardURL(value) {
+        url = this.cardPage[value]
         if (isElectron) {
           window.electronAPI.openExternal(url);
         } else {
