@@ -71,7 +71,7 @@
       "artifactName": "${productName}-${version}-Linux.${ext}"
     },
     "mac": {
-      "icon": "static/source/icon.png",
+      "icon": "static/source/icon.icns",
       "target": [
         "dmg"
       ],
@@ -90,7 +90,7 @@
       "provisioningProfile": null
     },
     "dmg": {
-      "icon": "static/source/icon.png",
+      "icon": "static/source/icon.icns",
       "iconSize": 100,
       "contents": [
         {
