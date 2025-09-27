@@ -441,6 +441,12 @@ const app = Vue.createApp({
         value
       }));
     },
+    PromptOptions() {
+      return this.promptValues.map(value => ({
+        label: this.t(`prompt.${value}`), // 使用统一的翻译键
+        value
+      }));
+    },
     themeOptions() {
       return this.themeValues.map(value => ({
         label: this.t(`theme.${value}`),

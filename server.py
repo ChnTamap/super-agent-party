@@ -654,6 +654,12 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
                 request.messages[0]['content'] = newtts_messages + request.messages[0]['content']
             else:
                 request.messages.insert(0, {'role': 'system', 'content': newtts_messages})
+    if settings['vision']['desktopVision']:
+        desktop_message = "\n\n用户与你对话时，会自动发给你当前的桌面截图。\n\n"
+        if request.messages and request.messages[0]['role'] == 'system':
+            request.messages[0]['content'] += desktop_message
+        else:
+            request.messages.insert(0, {'role': 'system', 'content': desktop_message})
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'beforeThinking':
         time_message = f"消息发送时间：{local_timezone}  {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n\n"
         request.messages[-1]['content'] = time_message + request.messages[-1]['content']

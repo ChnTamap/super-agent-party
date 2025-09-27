@@ -398,6 +398,7 @@ if ('serviceWorker' in navigator) {
             ></el-input>
             <template #footer>
               <el-button @click="showEditDialog = false">{{ t('cancel') }}</el-button>
+              <el-button @click="switchToSystemPrompts" v-if="editType === 'system'">{{ t('addSystemPrompt') }}</el-button>
               <el-button type="primary" @click="saveEdit">{{ editType === 'user' ? t('modifyAndSend'):t('save') }}</el-button>
             </template>
           </el-dialog>
@@ -1370,297 +1371,393 @@ if ('serviceWorker' in navigator) {
                         <div style="color: #606266; margin-top: 10px;">{{ t('addNewMemory') }}</div>
                       </div>
                     </div>
-                  </el-tab-pane>
-                </el-tabs>
-                <!-- 添加记忆对话框 -->
-                <el-dialog v-model="showAddMemoryDialog" :title="t('memoryConfig')" width="80%">
-                  <el-form label-position="top">
-                    <el-form-item :label="t('memoryName')" required>
-                      <el-input v-model="newMemory.name" />
-                    </el-form-item>
+                    <!-- 添加记忆对话框 -->
+                    <el-dialog v-model="showAddMemoryDialog" :title="t('memoryConfig')" width="80%">
+                      <el-form label-position="top">
+                        <el-form-item :label="t('memoryName')" required>
+                          <el-input v-model="newMemory.name" />
+                        </el-form-item>
 
-                    <el-form-item :label="t('avatar')">
-                      <el-input v-model="newMemory.avatar" 
-                      :placeholder="t('avatarPlaceholder')"/>
-                    </el-form-item>
+                        <el-form-item :label="t('avatar')">
+                          <el-input v-model="newMemory.avatar" 
+                          :placeholder="t('avatarPlaceholder')"/>
+                        </el-form-item>
 
-                    <!-- 新增已有记忆选择框 -->
-                    <el-form-item :label="t('selectExistingMemory')">
-                      <el-select 
-                        v-model="selectedExistingMemoryId" 
-                        :placeholder="t('selectExistingMemoryPlaceholder')"
-                        @change="copyExistingMemoryData"
-                        class="full-width-input">
-                        <!-- 添加“无”选项，默认选中 -->
-                        <el-option
-                          :key="'none'"
-                          :label="t('none')"
-                          :value="null">
-                        </el-option>
-                        
-                        <el-option
-                          v-for="memory in memories"
-                          :key="memory.id"
-                          :label="memory.name"
-                          :value="memory.id">
-                        </el-option>
-                      </el-select>
-                    </el-form-item>
-                    <div class="upload-container">
-                      <div
-                        class="drop-zone"
-                        @dragover.prevent
-                        @drop.prevent="handleJsonDrop"
-                        @click="browseJsonFile"
-                      >
-                        <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
-                        <p>{{ t('clickOrDropCharacterCards') }}</p>
-                      </div>
-                    </div>
-                    <el-tabs type="border-card" v-model="activeMemoryTabName">
-
-                      <!-- 自动更新设定（供应商） -->
-                      <el-tab-pane name="autoUpdateSetting">
-                        <template #label>
-                          <span>{{ t('autoUpdateSetting') }}</span>
-                        </template>
-                        <el-form-item :label="t('embeddingProvider')">
-                          <el-select
-                            v-model="newMemory.providerId"
-                            :placeholder="t('selectProvider')"
-                            clearable
-                            class="full-width-input"
-                          >
+                        <!-- 新增已有记忆选择框 -->
+                        <el-form-item :label="t('selectExistingMemory')">
+                          <el-select 
+                            v-model="selectedExistingMemoryId" 
+                            :placeholder="t('selectExistingMemoryPlaceholder')"
+                            @change="copyExistingMemoryData"
+                            class="full-width-input">
                             <!-- 添加“无”选项，默认选中 -->
                             <el-option
                               :key="'none'"
                               :label="t('none')"
-                              :value="null"
-                            >
-                              <div class="provider-option">
-                                <img 
-                                  src="source/providers/logo.png" 
-                                  class="mini-vendor-logo"
-                                />
-                                <span class="model-id">{{ t("NoLongTermMemory") }}</span>
-                              </div>
+                              :value="null">
                             </el-option>
+                            
                             <el-option
-                              v-for="p in modelProviders"
-                              :key="p.id"
-                              :label="p.vendor + ' - ' + p.modelId"
-                              :value="p.id"
-                            >
-                              <div class="provider-option">
-                                <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
-                                <span class="model-id">{{ p.modelId }}</span>
-                              </div>
+                              v-for="memory in memories"
+                              :key="memory.id"
+                              :label="memory.name"
+                              :value="memory.id">
                             </el-option>
                           </el-select>
                         </el-form-item>
-                        <el-alert type="info" :closable="false" class="mb-2">
-                          <template #default>
-                            <div class="alert-content">
-                              {{ t('firstTimeUse') }}
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                class="font-medium"
-                                @click="switchToApiBox"
+                        <div class="upload-container">
+                          <div
+                            class="drop-zone"
+                            @dragover.prevent
+                            @drop.prevent="handleJsonDrop"
+                            @click="browseJsonFile"
+                          >
+                            <el-icon :size="50"><i class="fa-solid fa-upload"></i></el-icon>
+                            <p>{{ t('clickOrDropCharacterCards') }}</p>
+                          </div>
+                        </div>
+                        <el-tabs type="border-card" v-model="activeMemoryTabName">
+
+                          <!-- 自动更新设定（供应商） -->
+                          <el-tab-pane name="autoUpdateSetting">
+                            <template #label>
+                              <span>{{ t('autoUpdateSetting') }}</span>
+                            </template>
+                            <el-form-item :label="t('embeddingProvider')">
+                              <el-select
+                                v-model="newMemory.providerId"
+                                :placeholder="t('selectProvider')"
+                                clearable
+                                class="full-width-input"
                               >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>{{ t('keyBoxInterface') }}
-                              </el-link>
-                              {{ t('addProviderReturnSelect') }}
-                              {{ t('addemdNotice') }}
-                              {{ t('autoUpdateSettingNote') }}
+                                <!-- 添加“无”选项，默认选中 -->
+                                <el-option
+                                  :key="'none'"
+                                  :label="t('none')"
+                                  :value="null"
+                                >
+                                  <div class="provider-option">
+                                    <img 
+                                      src="source/providers/logo.png" 
+                                      class="mini-vendor-logo"
+                                    />
+                                    <span class="model-id">{{ t("NoLongTermMemory") }}</span>
+                                  </div>
+                                </el-option>
+                                <el-option
+                                  v-for="p in modelProviders"
+                                  :key="p.id"
+                                  :label="p.vendor + ' - ' + p.modelId"
+                                  :value="p.id"
+                                >
+                                  <div class="provider-option">
+                                    <img :src="getVendorLogo(p.vendor)" class="mini-vendor-logo" />
+                                    <span class="model-id">{{ p.modelId }}</span>
+                                  </div>
+                                </el-option>
+                              </el-select>
+                            </el-form-item>
+                            <el-alert type="info" :closable="false" class="mb-2">
+                              <template #default>
+                                <div class="alert-content">
+                                  {{ t('firstTimeUse') }}
+                                  <el-link
+                                    type="primary"
+                                    :underline="false"
+                                    class="font-medium"
+                                    @click="switchToApiBox"
+                                  >
+                                    <el-icon class="mr-1">
+                                      <i class="fa-solid fa-key"></i>
+                                    </el-icon>{{ t('keyBoxInterface') }}
+                                  </el-link>
+                                  {{ t('addProviderReturnSelect') }}
+                                  {{ t('addemdNotice') }}
+                                  {{ t('autoUpdateSettingNote') }}
+                                </div>
+                              </template>
+                            </el-alert>
+                          </el-tab-pane>
+
+                          <!-- 角色描述 -->
+                          <el-tab-pane name="description" :label="t('characterDescription')">
+                            <el-form-item>
+                              <el-input
+                                v-model="newMemory.description"
+                                type="textarea"
+                                :rows="8"
+                                :placeholder="t('characterDescriptionPlaceholder')"
+                              />
+                            </el-form-item>
+                          </el-tab-pane>
+
+                          <!-- 性格 -->
+                          <el-tab-pane name="personality" :label="t('personality')">
+                            <el-form-item>
+                              <el-input
+                                v-model="newMemory.personality"
+                                type="textarea"
+                                :rows="8"
+                                :placeholder="t('personalityPlaceholder')"
+                              />
+                            </el-form-item>
+                          </el-tab-pane>
+
+                          <!-- 对话示例（一问一答） -->
+                          <el-tab-pane name="mesExample" :label="t('mesExample')">
+                            <el-form-item>
+                              <el-input
+                                v-model="newMemory.mesExample"
+                                type="textarea"
+                                :rows="8"
+                                :placeholder="t('mesExamplePlaceholder')"
+                              />
+                            </el-form-item>
+                          </el-tab-pane>
+
+                          <!-- 系统提示 -->
+                          <el-tab-pane name="systemPrompt" :label="t('systemPrompt')">
+                            <el-form-item>
+                              <el-input
+                                v-model="newMemory.systemPrompt"
+                                type="textarea"
+                                :rows="8"
+                                :placeholder="t('systemPromptPlaceholder')"
+                              />
+                            </el-form-item>
+                          </el-tab-pane>
+
+                          <el-tab-pane name="characterBook" :label="t('characterBook')">
+                            <div
+                              v-for="(item, idx) in newMemory.characterBook"
+                              :key="idx"
+                              style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
+                            >
+                              <el-form-item :label="t('keys')">
+                                <el-input
+                                  v-model="item.keysRaw"
+                                  type="textarea"
+                                  :rows="3"
+                                  :placeholder="t('keysPlaceholder')"
+                                />
+                              </el-form-item>
+                              <el-form-item :label="t('content')">
+                                <el-input
+                                  v-model="item.content"
+                                  type="textarea"
+                                  :rows="4"
+                                  :placeholder="t('contentPlaceholder')"
+                                />
+                              </el-form-item>
+                              <div style="text-align:right">
+                                <el-button circle size="small" type="default" @click="clearBook(idx)">
+                                  <i class="fa-solid fa-eraser"></i>
+                                </el-button>
+                                <el-button
+                                  v-if="newMemory.characterBook.length>1"
+                                  circle
+                                  size="small"
+                                  type="danger"
+                                  @click="removeBook(idx)"
+                                >
+                                  <i class="fa-solid fa-trash"></i>
+                                </el-button>
+                                <el-button circle size="small" type="primary" @click="addBook">
+                                  <i class="fa-solid fa-plus"></i>
+                                </el-button>
+                              </div>
                             </div>
-                          </template>
-                        </el-alert>
-                      </el-tab-pane>
+                          </el-tab-pane>
 
-                      <!-- 角色描述 -->
-                      <el-tab-pane name="description" :label="t('characterDescription')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.description"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('characterDescriptionPlaceholder')"
-                          />
+                          <el-tab-pane name="firstGreeting" :label="t('firstGreeting')">
+                            <div
+                              class="param-row"
+                              style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
+                            >
+                              <el-form-item>
+                                <el-input
+                                  v-model="newMemory.firstMes"
+                                  type="textarea"
+                                  :rows="3"
+                                  :placeholder="t('firstMes')"
+                                  
+                                />
+                              </el-form-item>
+                              <div style="text-align:right">
+                                <el-button
+                                  @click="clearFirstMes"
+                                  type="default"
+                                  size="small"
+                                  circle
+                                >
+                                  <i class="fa-solid fa-eraser"></i>
+                                </el-button>
+                                <el-button
+                                  @click="addGreeting"
+                                  type="primary"
+                                  circle
+                                  size="small"
+                                  class="header-add-btn"
+                                >
+                                  <i class="fa-solid fa-plus"></i>
+                                </el-button>
+                              </div>
+                            </div>
+                            <div
+                              v-for="(g, idx) in newMemory.alternateGreetings"
+                              :key="idx"
+                              class="param-row"
+                              style="margin-bottom:12px;border:1px solid #dcdfe6;border-radius:4px;padding:8px"
+                            >
+                              <el-form-item>
+                                <el-input
+                                  v-model="newMemory.alternateGreetings[idx]"
+                                  type="textarea"
+                                  :rows="3"
+                                  :placeholder="t('alternateGreeting') + ' ' + (idx + 1)"
+                                  
+                                />
+                              </el-form-item>
+                              <div style="text-align:right">
+                                <el-button
+                                  @click="clearGreeting(idx)"
+                                  type="default"
+                                  size="small"
+                                  circle
+                                >
+                                  <i class="fa-solid fa-eraser"></i>
+                                </el-button>
+                                <el-button
+                                  @click="removeGreeting(idx)"
+                                  type="danger"
+                                  size="small"
+                                  circle
+                                >
+                                  <i class="fa-solid fa-trash"></i>
+                                </el-button>
+                                <el-button
+                                  @click="addGreeting"
+                                  type="primary"
+                                  circle
+                                  size="small"
+                                  class="header-add-btn"
+                                >
+                                  <i class="fa-solid fa-plus"></i>
+                                </el-button>
+                              </div>
+                            </div>
+                          </el-tab-pane>
+                        </el-tabs>
+                      </el-form>
+
+                      <template #footer>
+                        <el-button @click="showAddMemoryDialog = false">{{ t('cancel') }}</el-button>
+                        <el-button 
+                          type="primary" 
+                          @click="addMemory"
+                          :disabled="!newMemory.name">
+                          {{ t('confirmAdd') }}
+                        </el-button>
+                      </template>
+                    </el-dialog>
+                  </el-tab-pane>
+                  <!-- 系统提示词标签页 -->
+                  <el-tab-pane :label="t('addSystemPrompt')" name="prompts">
+                    <div class="provider-grid">
+                      <!-- 已有提示词磁贴 -->
+                      <div
+                        class="provider-card knowledge-card"
+                        v-for="(prompt, idx) in SystemPromptsList"
+                        :key="prompt.id || idx"
+                      >
+                        <div class="card-header">
+                          <el-tooltip :content="t('usePrompt')" placement="top">
+                            <el-button 
+                              type="primary" 
+                              @click="usePrompt(prompt.content)"
+                              circle
+                            >
+                              <i class="fa-solid fa-play"></i>
+                            </el-button>
+                          </el-tooltip>
+                          <div class="card-actions">
+                            <el-button
+                              @click="editPrompt(prompt)"
+                              type="default"
+                              circle
+                              size="small"
+                              :title="t('edit')"
+                            >
+                              <i class="fa-solid fa-pen-to-square"></i>
+                            </el-button>
+                            <el-button
+                              @click="removePrompt(prompt.id)"
+                              type="danger"
+                              circle
+                              size="small"
+                              :title="t('delete')"
+                            >
+                              <i class="fa-solid fa-trash"></i>
+                            </el-button>
+                          </div>
+                        </div>
+                        <h3>{{ prompt.name }}</h3>
+                        <span>{{ (prompt.content || '').substring(0, 50) }}...</span>
+                      </div>
+
+                      <!-- 新增磁贴 -->
+                      <div class="provider-card add-tile" @click="addPrompt">
+                        <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                        <div style="color: #606266; margin-top: 10px;">{{ t('addSystemPrompt') }}</div>
+                      </div>
+                    </div>
+
+                    <!-- 编辑/新增对话框 -->
+                    <el-dialog
+                      v-model="showPromptDialog"
+                      :title="t('editSystemPrompt')"
+                      width="60%"
+                    >
+                      <el-form label-position="top">
+                        <el-form-item :label="t('promptName')" required>
+                          <el-input v-model="promptForm.name" />
                         </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 性格 -->
-                      <el-tab-pane name="personality" :label="t('personality')">
-                        <el-form-item>
+                        <el-form-item :label="t('promptContent')" required>
                           <el-input
-                            v-model="newMemory.personality"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('personalityPlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 对话示例（一问一答） -->
-                      <el-tab-pane name="mesExample" :label="t('mesExample')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.mesExample"
-                            type="textarea"
-                            :rows="8"
-                            :placeholder="t('mesExamplePlaceholder')"
-                          />
-                        </el-form-item>
-                      </el-tab-pane>
-
-                      <!-- 系统提示 -->
-                      <el-tab-pane name="systemPrompt" :label="t('systemPrompt')">
-                        <el-form-item>
-                          <el-input
-                            v-model="newMemory.systemPrompt"
+                            v-model="promptForm.content"
                             type="textarea"
                             :rows="8"
                             :placeholder="t('systemPromptPlaceholder')"
                           />
                         </el-form-item>
-                      </el-tab-pane>
-
-                      <el-tab-pane name="characterBook" :label="t('characterBook')">
-                        <div
-                          v-for="(item, idx) in newMemory.characterBook"
-                          :key="idx"
-                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item :label="t('keys')">
-                            <el-input
-                              v-model="item.keysRaw"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('keysPlaceholder')"
+                      </el-form>
+                      <template #footer>
+                        <el-button @click="showPromptDialog = false">{{ t('cancel') }}</el-button>
+                        <el-button type="primary" @click="savePrompt" :disable="!promptForm.name || !promptForm.content">{{ t('confirm') }}</el-button>
+                      </template>
+                    </el-dialog>
+                  </el-tab-pane>
+                  <el-tab-pane :label="t('moreSystemPrompt')" name="market">
+                      <!-- 供应商选择区域 -->
+                      <el-form-item>
+                        <div class="vendor-grid">
+                          <div 
+                            v-for="item in PromptOptions" 
+                            :key="item.value"
+                            class="vendor-card"
+                            @click="goToPromptURL(item.value)"
+                          >
+                            <img 
+                              :src="getPromptVendorLogo(item.value)" 
+                              :alt="item.label"
+                              class="vendor-logo"
                             />
-                          </el-form-item>
-                          <el-form-item :label="t('content')">
-                            <el-input
-                              v-model="item.content"
-                              type="textarea"
-                              :rows="4"
-                              :placeholder="t('contentPlaceholder')"
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button circle size="small" type="default" @click="clearBook(idx)">
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              v-if="newMemory.characterBook.length>1"
-                              circle
-                              size="small"
-                              type="danger"
-                              @click="removeBook(idx)"
-                            >
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                            <el-button circle size="small" type="primary" @click="addBook">
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
+                            <div class="vendor-name">{{ t(item.label) }}</div>
                           </div>
                         </div>
-                      </el-tab-pane>
-
-                      <el-tab-pane name="firstGreeting" :label="t('firstGreeting')">
-                        <div
-                          class="param-row"
-                          style="margin-bottom:12px;border:1px solid;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item>
-                            <el-input
-                              v-model="newMemory.firstMes"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('firstMes')"
-                              
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button
-                              @click="clearFirstMes"
-                              type="default"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              @click="addGreeting"
-                              type="primary"
-                              circle
-                              size="small"
-                              class="header-add-btn"
-                            >
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                        <div
-                          v-for="(g, idx) in newMemory.alternateGreetings"
-                          :key="idx"
-                          class="param-row"
-                          style="margin-bottom:12px;border:1px solid #dcdfe6;border-radius:4px;padding:8px"
-                        >
-                          <el-form-item>
-                            <el-input
-                              v-model="newMemory.alternateGreetings[idx]"
-                              type="textarea"
-                              :rows="3"
-                              :placeholder="t('alternateGreeting') + ' ' + (idx + 1)"
-                              
-                            />
-                          </el-form-item>
-                          <div style="text-align:right">
-                            <el-button
-                              @click="clearGreeting(idx)"
-                              type="default"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-eraser"></i>
-                            </el-button>
-                            <el-button
-                              @click="removeGreeting(idx)"
-                              type="danger"
-                              size="small"
-                              circle
-                            >
-                              <i class="fa-solid fa-trash"></i>
-                            </el-button>
-                            <el-button
-                              @click="addGreeting"
-                              type="primary"
-                              circle
-                              size="small"
-                              class="header-add-btn"
-                            >
-                              <i class="fa-solid fa-plus"></i>
-                            </el-button>
-                          </div>
-                        </div>
-                      </el-tab-pane>
-                    </el-tabs>
-                  </el-form>
-
-                  <template #footer>
-                    <el-button @click="showAddMemoryDialog = false">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
-                      @click="addMemory"
-                      :disabled="!newMemory.name">
-                      {{ t('confirmAdd') }}
-                    </el-button>
-                  </template>
-                </el-dialog>
+                      </el-form-item>
+                  </el-tab-pane>
+                </el-tabs>
               </div>
               <!-- 角色语音 -->
               <div v-show="subMenu === 'voice'" class="page">
@@ -2417,7 +2514,7 @@ if ('serviceWorker' in navigator) {
               </div>
               <!-- 角色行为 -->
               <div v-show="subMenu === 'behavior'" class="page">
-                <el-tabs v-model="activeMemoryTab">
+                <el-tabs v-model="activeBehaviorTab">
                   <!-- 角色行为标签页 -->
                   <el-tab-pane :label="t('behaviorConfig')" name="config">
                     <el-form :model="behaviorSettings" class="settings-form"  label-position="top">

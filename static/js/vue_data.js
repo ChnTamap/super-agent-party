@@ -71,6 +71,13 @@ let vue_data = {
     updateInfo: null,
     updateIcon: 'fa-solid fa-download',
     system_prompt: ' ',
+    SystemPromptsList: [],          // 系统提示词数组
+    showPromptDialog: false,        // 对话框显隐
+    promptForm: {                   // 对话框绑定
+      id: null,
+      name: '',
+      content: ''
+    },
     isdocker: false,
     isExpanded: true,
     isElectron: isElectron,
@@ -1191,6 +1198,7 @@ let vue_data = {
     isStopping: false,      // 停止中状态
     isReloading: false,     // 重载中状态
     activeMemoryTab: 'config',
+    activeBehaviorTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     activeMCPTab: 'config',
     memories: [],
@@ -1395,6 +1403,17 @@ let vue_data = {
       'MCP': 'source/providers/mcp.png',
       'awesome': 'source/providers/github.png',
       'docker': 'source/providers/docker.png'
+    },
+    promptValues:['awesome', 'aiTool','leaked'],
+    promptPage:{
+      'awesome': 'https://github.com/f/awesome-chatgpt-prompts',
+      'aiTool': 'https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools',
+      'leaked': 'https://github.com/linexjlin/GPTs',
+    },
+    promptLogoList: {
+      'awesome': 'source/providers/github.png',
+      'aiTool': 'source/providers/github.png',
+      'leaked': 'source/providers/github.png',
     },
     newProviderTemp: {
       vendor: '',
