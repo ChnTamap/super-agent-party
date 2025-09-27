@@ -3,6 +3,7 @@
     "conversationId": null,
     "isdocker": false,
     "system_prompt": "",
+    "SystemPromptsList": [],
     "model": "",
     "base_url": "",
     "api_key": "",

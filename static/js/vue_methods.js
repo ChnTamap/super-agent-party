@@ -393,6 +393,10 @@ let vue_methods = {
       this.activeMenu = 'toolkit';
       this.subMenu = 'a2a';
     },
+    switchToSystemPrompts() {
+      this.activeMenu = 'role';
+      this.subMenu = 'memory';
+    },
     async syncProviderConfig(targetConfig) {
       // 当有选中供应商时执行同步
       if (targetConfig.selectedProvider) {
@@ -1044,6 +1048,7 @@ let vue_methods = {
           };
           this.isBtnCollapse = data.data.isBtnCollapse || false;
           this.system_prompt = data.data.system_prompt || '';
+          this.SystemPromptsList = data.data.SystemPromptsList || [];
           this.conversations = data.data.conversations || this.conversations;
           this.conversationId = data.data.conversationId || this.conversationId;
           this.agents = data.data.agents || this.agents;
@@ -1774,6 +1779,7 @@ let vue_methods = {
         const payload = {
           ...this.settings,
           system_prompt: this.system_prompt,
+          SystemPromptsList: this.SystemPromptsList,
           agents: this.agents,
           mainAgent: this.mainAgent,
           qqBotConfig : this.qqBotConfig,
@@ -7770,5 +7776,47 @@ let vue_methods = {
       window.electronAPI.toggleWindowSize(220, 75);
     }
     this.isCapsuleMode = !this.isCapsuleMode;
+  },
+  addPrompt() {
+    this.promptForm = { id: null, name: '', content: '' };
+    this.showPromptDialog = true;
+  },
+  editPrompt(row) {
+    this.promptForm = { ...row };
+    this.showPromptDialog = true;
+  },
+  savePrompt() {
+    if (!this.promptForm.name || !this.promptForm.content) {
+      ElMessage.warning(this.t('pleaseCompleteForm'))
+      return
+    }
+    if (!this.promptForm.id) {
+      // 新增
+      this.SystemPromptsList.push({
+        id: Date.now(),
+        name: this.promptForm.name,
+        content: this.promptForm.content
+      })
+    } else {
+      // 编辑：找到索引直接替换
+      const idx = this.SystemPromptsList.findIndex(p => p.id === this.promptForm.id)
+      if (idx > -1) {
+        // 直接赋值即可，不需要 $set
+        this.SystemPromptsList[idx] = { ...this.promptForm }
+      }
+    }
+    this.showPromptDialog = false
+    this.autoSaveSettings()
+  },
+
+  removePrompt(id) {
+    const idx = this.SystemPromptsList.findIndex(p => p.id === id);
+    if (idx > -1) this.SystemPromptsList.splice(idx, 1);
+    this.autoSaveSettings();
+  },
+  /* 点击“使用”按钮 */
+  usePrompt(content) {
+    this.messages[0].content = content;
+    this.activeMenu = 'home';      // 切换到主界面
   }
 }
