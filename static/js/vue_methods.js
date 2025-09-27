@@ -396,6 +396,7 @@ let vue_methods = {
     switchToSystemPrompts() {
       this.activeMenu = 'role';
       this.subMenu = 'memory';
+      this.activeMemoryTab = 'prompts';
     },
     async syncProviderConfig(targetConfig) {
       // 当有选中供应商时执行同步
@@ -3386,6 +3387,9 @@ let vue_methods = {
     getMCPVendorLogo(vendor) {
       return this.MCPvendorLogoList[vendor] || "source/providers/logo.png";
     },
+    getPromptVendorLogo(vendor) {
+      return this.promptLogoList[vendor] || "source/providers/logo.png";
+    },
     handleSelectVendor(vendor) {
       this.newProviderTemp.vendor = vendor;
       this.handleVendorChange(vendor);
@@ -4216,6 +4220,14 @@ let vue_methods = {
     },
     goToMCPURL(value) {
         url = this.MCPpage[value]
+        if (isElectron) {
+          window.electronAPI.openExternal(url);
+        } else {
+          window.open(url, '_blank');
+        }
+    },
+    goToPromptURL(value) {
+        url = this.promptPage[value]
         if (isElectron) {
           window.electronAPI.openExternal(url);
         } else {

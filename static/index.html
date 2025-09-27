@@ -1737,6 +1737,26 @@ if ('serviceWorker' in navigator) {
                       </template>
                     </el-dialog>
                   </el-tab-pane>
+                  <el-tab-pane :label="t('moreSystemPrompt')" name="market">
+                      <!-- 供应商选择区域 -->
+                      <el-form-item>
+                        <div class="vendor-grid">
+                          <div 
+                            v-for="item in PromptOptions" 
+                            :key="item.value"
+                            class="vendor-card"
+                            @click="goToPromptURL(item.value)"
+                          >
+                            <img 
+                              :src="getPromptVendorLogo(item.value)" 
+                              :alt="item.label"
+                              class="vendor-logo"
+                            />
+                            <div class="vendor-name">{{ t(item.label) }}</div>
+                          </div>
+                        </div>
+                      </el-form-item>
+                  </el-tab-pane>
                 </el-tabs>
               </div>
               <!-- 角色语音 -->
@@ -2494,7 +2514,7 @@ if ('serviceWorker' in navigator) {
               </div>
               <!-- 角色行为 -->
               <div v-show="subMenu === 'behavior'" class="page">
-                <el-tabs v-model="activeMemoryTab">
+                <el-tabs v-model="activeBehaviorTab">
                   <!-- 角色行为标签页 -->
                   <el-tab-pane :label="t('behaviorConfig')" name="config">
                     <el-form :model="behaviorSettings" class="settings-form"  label-position="top">
