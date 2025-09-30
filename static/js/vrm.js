@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { createVRMAnimationClip, VRMAnimationLoaderPlugin } from '@pixiv/three-vrm-animation';
+import { SplatMesh } from '@sparkjsdev/spark';
 let isVRM1 = true;
 let currentMixer = null;
 let idleAction = null;
@@ -1556,6 +1557,14 @@ loader.load(
         currentVrm = vrm;
         console.log( vrm );
         scene.add( vrm.scene );
+
+        // const splatURL = `${window.location.protocol}//${window.location.host}/vrm/scene/cyberpunk-h.spz`;
+        // const splat = new SplatMesh({ url: splatURL });
+        // splat.quaternion.set(1, 0, 0, 0);
+        // splat.position.set(0, 2.5, 2.5); 
+        // splat.scale.set(2.7, 2.7, 2.7);
+        // scene.add(splat);
+        
         // 让模型投射阴影
         vrm.scene.traverse((obj) => {
             if (obj.isMesh) {
