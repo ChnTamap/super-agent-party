@@ -591,7 +591,7 @@ app.whenReady().then(async () => {
       await vrmWindow.loadURL(`http://${HOST}:${PORT}/vrm.html`);
       // 默认设置（不穿透，可以交互）
       vrmWindow.setIgnoreMouseEvents(false);
-
+      vrmWindow.setAlwaysOnTop(true);
       // 保存窗口引用
       vrmWindows.push(vrmWindow);
 
