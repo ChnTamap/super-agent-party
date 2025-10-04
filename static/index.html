@@ -1274,43 +1274,6 @@ if ('serviceWorker' in navigator) {
                               class="full-width-input"
                             />
                           </el-form-item>
-                          <el-form-item :label="t('getCardLink')" class="form-item-align">
-                            <div style="display: flex; gap: 16px; align-items: center; flex-wrap: nowrap;">
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://chub.ai/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                chub.ai
-                              </el-link>
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://janitorai.com/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                janitorai.com
-                              </el-link>
-                              <el-link
-                                type="primary"
-                                :underline="false"
-                                href="https://pygmalion.chat/" 
-                                target="_blank"
-                              >
-                                <el-icon class="mr-1">
-                                  <i class="fa-solid fa-key"></i>
-                                </el-icon>
-                                pygmalion.chat
-                              </el-link>
-                            </div>
-                          </el-form-item>
                         </div>
                       </div>
                     </el-form>
@@ -1660,6 +1623,26 @@ if ('serviceWorker' in navigator) {
                         </el-button>
                       </template>
                     </el-dialog>
+                  </el-tab-pane>
+                  <el-tab-pane :label="t('moreCard')" name="card">
+                      <!-- 供应商选择区域 -->
+                      <el-form-item>
+                        <div class="vendor-grid">
+                          <div 
+                            v-for="item in CardOptions" 
+                            :key="item.value"
+                            class="vendor-card"
+                            @click="goToCardURL(item.value)"
+                          >
+                            <img 
+                              :src="getCardVendorLogo(item.value)" 
+                              :alt="item.label"
+                              class="vendor-logo"
+                            />
+                            <div class="vendor-name">{{ t(item.label) }}</div>
+                          </div>
+                        </div>
+                      </el-form-item>
                   </el-tab-pane>
                   <!-- 系统提示词标签页 -->
                   <el-tab-pane :label="t('addSystemPrompt')" name="prompts">

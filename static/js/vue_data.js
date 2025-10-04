@@ -1415,6 +1415,17 @@ let vue_data = {
       'aiTool': 'source/providers/github.png',
       'leaked': 'source/providers/github.png',
     },
+    cardValues: ['chub', 'janitorai','pygmalion'],
+    cardPage:{
+      'chub': 'https://chub.ai/',
+      'janitorai': 'https://janitorai.com/',
+      'pygmalion': 'https://pygmalion.chat/',
+    },
+    cardLogoList: {
+      'chub': 'source/providers/chub.png',
+      'janitorai': 'source/providers/janitorai.png',
+      'pygmalion': 'source/providers/pygmalion.svg',
+    },
     newProviderTemp: {
       vendor: '',
       url: '',
