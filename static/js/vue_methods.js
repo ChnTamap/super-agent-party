@@ -6894,20 +6894,42 @@ let vue_methods = {
         remaining,
         remaining_voice
       } = this.splitTTSBuffer(this.readConfig.longText);
-      
-      // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
+
+      // 追加 remaining
       if (remaining) {
         chunks.push(remaining);
         chunks_voice.push(remaining_voice);
       }
-      
+
+      /* ================= 新增：去标签 + 去空白并同步删除 ================= */
+      // 1. 去 HTML 标签
+      const cleanedChunks = chunks.map(txt => txt.replace(/<\/?[^>]+>/g, '').trim());
+
+      // 2. 过滤空白并同步删除 chunks_voice 对应项
+      const finalChunks       = [];
+      const finalChunksVoice  = [];
+
+      cleanedChunks.forEach((txt, idx) => {
+        if (txt) {                      // 非空才保留
+          finalChunks.push(txt);
+          finalChunksVoice.push(chunks_voice[idx]);
+        }
+      });
+
+      // 3. 覆盖原来的数组
+      chunks.length       = 0;
+      chunks_voice.length = 0;
+      chunks.push(...finalChunks);
+      chunks_voice.push(...finalChunksVoice);
+      /* ================================================================ */
+
       if (!chunks.length) {
         this.isReadRunning  = false;
         this.isReadStarting = false;
         return;
       }
-      
-      this.readState.ttsChunks = chunks;
+
+      this.readState.ttsChunks   = chunks;
       this.readState.chunks_voice = chunks_voice;
       
       /* 新增: 设置总片段数 */
