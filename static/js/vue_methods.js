@@ -540,7 +540,8 @@ let vue_methods = {
           });
         }
       }).join('');
-    
+      // 删除包含非ASCII码的HTML标签
+      processedContent = removeNonAsciiTags(processedContent)
       // 渲染Markdown
       let rendered = md.render(processedContent);
     
@@ -551,7 +552,7 @@ let vue_methods = {
     
       // 处理未闭合代码块的转义字符
       rendered = rendered.replace(/\\\`/g, '`').replace(/\\\$/g, '$');
-    
+
       this.$nextTick(() => {
         MathJax.typesetPromise()
           .then(() => {
