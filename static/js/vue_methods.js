@@ -1671,7 +1671,7 @@ let vue_methods = {
               }
             }
             let tts_msg = ""
-            if (newttsList?.length == 0){
+            if (newttsList?.length == 0 || !this.ttsSettings.enabled){
                 tts_msg = "如果被翻译的文字与目标语言一致，则返回原文即可"
             }else{
                 tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
