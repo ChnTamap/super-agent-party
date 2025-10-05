@@ -5639,7 +5639,8 @@ let vue_methods = {
           };
         } catch (error) {
           console.error(`Error playing audio chunk ${message.currentChunk}:`, error);
-          message.isPlaying = false; // 出错时停止播放
+          message.currentChunk++; // 播放结束后，索引加一
+          this.playAudioChunk(message); // 递归调用播放下一个音频块
         }
       } else {
         message.isPlaying = false; // 如果没有音频块，停止播放
