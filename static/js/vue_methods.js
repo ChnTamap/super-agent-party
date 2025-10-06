@@ -540,7 +540,8 @@ let vue_methods = {
           });
         }
       }).join('');
-    
+      // 删除包含非ASCII码的HTML标签
+      processedContent = removeNonAsciiTags(processedContent)
       // 渲染Markdown
       let rendered = md.render(processedContent);
     
@@ -551,7 +552,7 @@ let vue_methods = {
     
       // 处理未闭合代码块的转义字符
       rendered = rendered.replace(/\\\`/g, '`').replace(/\\\$/g, '$');
-    
+
       this.$nextTick(() => {
         MathJax.typesetPromise()
           .then(() => {
@@ -1670,7 +1671,7 @@ let vue_methods = {
               }
             }
             let tts_msg = ""
-            if (newttsList?.length == 0){
+            if (newttsList?.length == 0 || !this.ttsSettings.enabled){
                 tts_msg = "如果被翻译的文字与目标语言一致，则返回原文即可"
             }else{
                 tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
@@ -5638,7 +5639,8 @@ let vue_methods = {
           };
         } catch (error) {
           console.error(`Error playing audio chunk ${message.currentChunk}:`, error);
-          message.isPlaying = false; // 出错时停止播放
+          message.currentChunk++; // 播放结束后，索引加一
+          this.playAudioChunk(message); // 递归调用播放下一个音频块
         }
       } else {
         message.isPlaying = false; // 如果没有音频块，停止播放
@@ -6892,20 +6894,42 @@ let vue_methods = {
         remaining,
         remaining_voice
       } = this.splitTTSBuffer(this.readConfig.longText);
-      
-      // remaining 是剩余的文本，如果剩余文本不为空，则将其添加到 ttsChunks 中
+
+      // 追加 remaining
       if (remaining) {
         chunks.push(remaining);
         chunks_voice.push(remaining_voice);
       }
-      
+
+      /* ================= 新增：去标签 + 去空白并同步删除 ================= */
+      // 1. 去 HTML 标签
+      const cleanedChunks = chunks.map(txt => txt.replace(/<\/?[^>]+>/g, '').trim());
+
+      // 2. 过滤空白并同步删除 chunks_voice 对应项
+      const finalChunks       = [];
+      const finalChunksVoice  = [];
+
+      cleanedChunks.forEach((txt, idx) => {
+        if (txt) {                      // 非空才保留
+          finalChunks.push(txt);
+          finalChunksVoice.push(chunks_voice[idx]);
+        }
+      });
+
+      // 3. 覆盖原来的数组
+      chunks.length       = 0;
+      chunks_voice.length = 0;
+      chunks.push(...finalChunks);
+      chunks_voice.push(...finalChunksVoice);
+      /* ================================================================ */
+
       if (!chunks.length) {
         this.isReadRunning  = false;
         this.isReadStarting = false;
         return;
       }
-      
-      this.readState.ttsChunks = chunks;
+
+      this.readState.ttsChunks   = chunks;
       this.readState.chunks_voice = chunks_voice;
       
       /* 新增: 设置总片段数 */

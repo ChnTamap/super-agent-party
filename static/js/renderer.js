@@ -532,6 +532,25 @@ function showNotification(message, type = 'success') {
   }, duration);
 }
 
+function removeNonAsciiTags(html) {
+  // 匹配所有标签（包括开始标签和结束标签）
+  // 例如：<旁白> 和 </旁白>
+  const regex = /<\/?([^\s>]+)[^>]*>/g;
+  
+  return html.replace(regex, (match, tagName) => {
+    // 检查标签名是否包含非 ASCII 字符
+    const hasNonAscii = [...tagName].some(char => char.charCodeAt(0) > 127);
+    
+    // 如果标签名包含非 ASCII 字符，删除标签（但保留内容）
+    if (hasNonAscii) {
+      return '';
+    }
+    
+    // 否则，保留标签
+    return match;
+  });
+}
+
 // 修改图标注册方式（完整示例）
 app.use(ElementPlus);
 
