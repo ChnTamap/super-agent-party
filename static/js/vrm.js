@@ -53,6 +53,9 @@ async function fetchVRMConfig() {
             data.VRMConfig.selectedModelId = data.VRMConfig.selectedNewModelId;
             data.VRMConfig.selectedMotionIds = data.VRMConfig.selectedNewMotionIds;
         }
+        if (data.VRMConfig.selectedGaussSceneId == ''){
+            data.VRMConfig.selectedGaussSceneId = 'transparent';
+        }
         console.log(data.VRMConfig);
         return data.VRMConfig;
     } catch (error) {
@@ -66,6 +69,9 @@ async function fetchVRMConfig() {
             defaultMotions: [], // 存储默认动作
             userMotions: [],     // 存储用户上传的动作
             selectedMotionIds: [],
+            gaussDefaultScenes: [],   // GAUSS
+            gaussUserScenes: [],      // GAUSS
+            selectedGaussSceneId: 'transparent',
         };
     }
 }
@@ -150,13 +156,77 @@ light.shadow.camera.near   = 0.1;
 light.shadow.camera.far    = 20;
 scene.add( light );
 
-// 隐形阴影接收平面
-const groundGeo = new THREE.PlaneGeometry(20, 20);
-const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 }); // 透明度可调
-const ground = new THREE.Mesh(groundGeo, shadowMat);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
+let currentSceneGroup = null;          // 当前场景根节点，方便整体卸载
+
+/* 拉一次配置即可，外面已经 await fetchVRMConfig() 了，直接复用 */
+async function loadGaussScene() {
+    /* ---------- 1. 读配置 ---------- */
+    const cfg        = await fetchVRMConfig();
+    const sceneId    = cfg.selectedGaussSceneId;
+    const defaultArr = cfg.gaussDefaultScenes || [];
+    const userArr    = cfg.gaussUserScenes    || [];
+
+    /* ---------- 2. 拼 URL ---------- */
+    let sceneURL = null;
+    if (sceneId === 'transparent') {
+        /* 透明场景 -> 不下载 spz */
+        sceneURL = 'transparent';
+    } else {
+        const hit = [...defaultArr, ...userArr].find(s => s.id === sceneId);
+        if (!hit) {
+            console.warn(`[SceneLoader] 找不到 id=${sceneId} 的场景，回退到 transparent`);
+            sceneURL = 'transparent';
+        } else {
+            // 把相对 path 拼成绝对地址
+            const url = new URL(hit.path);
+            url.protocol = window.location.protocol;
+            url.host     = window.location.host;
+            sceneURL     = url.toString();
+        }
+    }
+
+    /* ---------- 3. 卸载旧场景 ---------- */
+    if (currentSceneGroup) {
+        scene.remove(currentSceneGroup);
+        currentSceneGroup.traverse(o => {
+            if (o.dispose) o.dispose();      // SplatMesh 自带 dispose
+        });
+        currentSceneGroup = null;
+    }
+
+    /* ---------- 4. 构建新场景 ---------- */
+    const group = new THREE.Group();
+    group.name = `gaussScene_${sceneId}`;
+
+    if (sceneURL === 'transparent') {
+        /* ------ 4.1 透明阴影地面 ------ */
+        const groundGeo = new THREE.PlaneGeometry(20, 20);
+        const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 });
+        const ground    = new THREE.Mesh(groundGeo, shadowMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        group.add(ground);
+    } else {
+        /* ------ 4.2 加载 .spz ------ */
+        const splat = new SplatMesh({ url: sceneURL });
+        // 统一先缩放/位移到脚底中心，具体数值可按模型微调
+        splat.quaternion.set(1, 0, 0, 0);
+        splat.position.set(0, 2, 0);
+        splat.scale.set(2.7, 2.7, 2.7);
+        splat.receiveShadow = true;
+        group.add(splat);
+    }
+
+    /* ---------- 5. 挂到场景 ---------- */
+    scene.add(group);
+    currentSceneGroup = group;
+    console.log(`[SceneLoader] 场景 ${sceneId} 加载完成`);
+}
+
+/* ------------------------------------------------------------------ */
+/* 初始化时调用一次                                                    */
+/* ------------------------------------------------------------------ */
+await loadGaussScene();
 
 
 // lookat target
@@ -1557,13 +1627,6 @@ loader.load(
         currentVrm = vrm;
         console.log( vrm );
         scene.add( vrm.scene );
-
-        // const splatURL = `${window.location.protocol}//${window.location.host}/vrm/scene/cyberpunk-h.spz`;
-        // const splat = new SplatMesh({ url: splatURL });
-        // splat.quaternion.set(1, 0, 0, 0);
-        // splat.position.set(0, 2.5, 2.5); 
-        // splat.scale.set(2.7, 2.7, 2.7);
-        // scene.add(splat);
         
         // 让模型投射阴影
         vrm.scene.traverse((obj) => {
