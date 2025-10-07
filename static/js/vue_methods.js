@@ -6856,6 +6856,7 @@ browseGaussSceneFile() {
     if (file) {
       this.newGaussScene.name = file.name;
       this.newGaussScene.file = file;   // 保存原始 File 对象
+      this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
     }
   };
   ipt.click();
@@ -6871,6 +6872,7 @@ handleGaussSceneDrop(e) {
   }
   this.newGaussScene.name = file.name;
   this.newGaussScene.file = file;
+  this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
 },
 
 /* 移除待上传文件 */
@@ -6883,7 +6885,7 @@ async uploadGaussScene() {
   const fd = new FormData();
   fd.append('file', this.newGaussScene.file);
   fd.append('display_name', this.newGaussScene.displayName || this.newGaussScene.name);
-
+  console.log("上传场景：",fd);
   const res = await fetch('/upload_gauss_scene', {
     method: 'POST',
     body: fd
@@ -6892,12 +6894,17 @@ async uploadGaussScene() {
   if (res.success) {
     showNotification('场景上传成功');
     this.showGaussSceneDialog = false;
-    this.removeNewGaussScene();
-    // 刷新列表
-    await this.loadGaussScenes();
+    // 添加新动作到用户动作列表
+    const newgaussScenes = {
+      id: res.file.unique_filename,
+      name: res.file.display_name,
+      path: res.file.path,
+      type: 'user' // 标记为用户上传的动作
+    };
+        
+    this.VRMConfig.gaussUserScenes.push(newgaussScenes);
     // 自动选中新上传的场景
-    const newScene = [...this.VRMConfig.gaussUserScenes].pop();
-    if (newScene) this.handleGaussSceneChange(newScene.id);
+    if (newgaussScenes) this.handleGaussSceneChange(newgaussScenes.id);
   } else {
     showNotification(res.message || '上传失败', 'error');
   }
