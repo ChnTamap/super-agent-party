@@ -8077,5 +8077,6 @@ async deleteGaussSceneOption(sceneId) {
   usePrompt(content) {
     this.messages[0].content = content;
     this.activeMenu = 'home';      // 切换到主界面
+    this.showEditDialog = false;
   }
 }
