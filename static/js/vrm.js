@@ -129,8 +129,9 @@ document.body.appendChild( renderer.domElement );
 
 // camera
 const camera = new THREE.PerspectiveCamera( 30.0, window.innerWidth / window.innerHeight, 0.1, 20.0 );
-camera.position.set( 0.0, 1.0, 5.0 );
-
+camera.position.set( 0.0, 1.0, 4.0 );
+camera.far = 1000; // 根据场景需要调整（例如 1000 或更大）
+camera.updateProjectionMatrix(); // 必须调用以生效
 // camera controls
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.screenSpacePanning = true;
@@ -209,10 +210,20 @@ async function loadGaussScene() {
     } else {
         /* ------ 4.2 加载 .spz ------ */
         const splat = new SplatMesh({ url: sceneURL });
+        let splat_height = 0;
+        let splat_scale = 2;
+        if (sceneId === 'space') {
+            splat_height = 1.55;
+        }else if (sceneId === 'home') {
+            splat_height = 1.6;
+        }else if (sceneId === 'sea') {
+            splat_height = 2.4;
+            splat_scale = 4;
+        }
         // 统一先缩放/位移到脚底中心，具体数值可按模型微调
         splat.quaternion.set(1, 0, 0, 0);
-        splat.position.set(0, 2, 0);
-        splat.scale.set(2.7, 2.7, 2.7);
+        splat.position.set(0, splat_height, 2);
+        splat.scale.set(splat_scale, splat_scale, splat_scale);
         splat.receiveShadow = true;
         group.add(splat);
     }
