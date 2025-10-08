@@ -1017,7 +1017,7 @@ body {
 }
 .markdown-body table th {
   background-color: var(--el-color-primary) !important;
-  color: var(--el-text-color) !important;
+  color: var(--el-bg-color-page) !important;
 }
 .markdown-body table td {
   background-color: var(--el-table-bg-color) !important;
@@ -1033,6 +1033,12 @@ body {
   background-color: var(--code-bg-color) !important;
   color: var(--code-text-color) !important;
 }
+.markdown-body .code-block {
+  padding: 0!important;
+  margin: 0!important;
+  border-radius: 8px!important;
+}
+
 .markdown-body code::-webkit-scrollbar {
   width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
   height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
@@ -1699,12 +1705,12 @@ body {
   align-items: center;
   padding: 8px 12px;
   background: var(--el-color-primary);
-  color: var(--el-text-color);
+  color: var(--el-bg-color-page)!important;
   border-radius: 8px 8px 0 0;
 }
 
 .code-lang {
-  color: var(--el-text-color);
+  color: var(--el-bg-color-page)!important;
   font-size: 0.9em;
   font-family: var(--el-font-family);
   margin-right: auto;
@@ -1725,9 +1731,6 @@ body {
   border-radius: 4px;
   transition: all 0.2s;
 }
-.copy-button:hover, .preview-button:hover {
-  background: var(--code-bg-color);
-}
 
 .copy-button, .download-button{
   background: var(--el-bg-color-page);
@@ -1737,9 +1740,6 @@ body {
   padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.2s;
-}
-.copy-button:hover, .download-button:hover {
-  background: var(--code-bg-color);
 }
 
 /* 在样式表中添加覆盖规则 */
