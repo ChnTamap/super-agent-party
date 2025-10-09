@@ -1014,7 +1014,14 @@ body {
   background-color: transparent !important;
   border-color: var(--el-border-color) !important;
   color: var(--text-color);
+  border-radius: 12px 12px 0 0 !important;
 }
+
+.markdown-body table::-webkit-scrollbar {
+  width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
+  height: 5px; /* 纵向滚动条高度（虽然你这里主要是垂直滚动，但设置一下也可以统一样式） */
+}
+
 .markdown-body table th {
   background-color: var(--el-color-primary) !important;
   color: var(--el-bg-color-page) !important;
