@@ -1108,6 +1108,7 @@ let vue_methods = {
           this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
           this.loadDefaultModels();
           this.loadDefaultMotions();
+          this.loadGaussScenes();
           if (this.asrSettings.enabled) {
             this.startASR();
           }
@@ -6823,6 +6824,123 @@ let vue_methods = {
     return motion;
   },
 
+/* 生命周期：读取场景列表 */
+async loadGaussScenes() {
+  const [def, user] = await Promise.all([
+    fetch('/get_default_gauss_scenes').then(r => r.json()),
+    fetch('/get_user_gauss_scenes').then(r => r.json())
+  ]);
+  this.VRMConfig.gaussDefaultScenes = def.scenes || [];
+  this.VRMConfig.gaussUserScenes   = user.scenes || [];
+  console.log("默认场景：",this.VRMConfig.gaussDefaultScenes);
+  if (!this.VRMConfig.selectedGaussSceneId) {
+    this.VRMConfig.selectedGaussSceneId = 'transparent';
+  }
+  this.autoSaveSettings();
+},
+/* 选择场景后实时切换背景 */
+async handleGaussSceneChange(sceneId) {
+  // 与 VRM 模型切换类似：把场景 id 写进 VRMConfig
+  this.VRMConfig.selectedGaussSceneId = sceneId;
+
+  this.autoSaveSettings();
+},
+
+/* 上传区域点击 */
+browseGaussSceneFile() {
+  const ipt = document.createElement('input');
+  ipt.type = 'file';
+  ipt.accept = '.ply,.spz,.splat,.ksplat,.sog';
+  ipt.onchange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      this.newGaussScene.name = file.name;
+      this.newGaussScene.file = file;   // 保存原始 File 对象
+      this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
+    }
+  };
+  ipt.click();
+},
+
+/* 拖拽上传 */
+handleGaussSceneDrop(e) {
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['ply','spz','splat','ksplat','sog'].includes(ext)) {
+    return showNotification('不支持的文件类型', 'error');
+  }
+  this.newGaussScene.name = file.name;
+  this.newGaussScene.file = file;
+  this.newGaussScene.displayName = this.newGaussScene.displayName || this.newGaussScene.name;
+},
+
+/* 移除待上传文件 */
+removeNewGaussScene() {
+  this.newGaussScene = { name: '', displayName: '' };
+},
+
+/* 真正上传 */
+async uploadGaussScene() {
+  const fd = new FormData();
+  fd.append('file', this.newGaussScene.file);
+  fd.append('display_name', this.newGaussScene.displayName || this.newGaussScene.name);
+  console.log("上传场景：",fd);
+  const res = await fetch('/upload_gauss_scene', {
+    method: 'POST',
+    body: fd
+  }).then(r => r.json());
+
+  if (res.success) {
+    showNotification('场景上传成功');
+    this.showGaussSceneDialog = false;
+    // 添加新动作到用户动作列表
+    const newgaussScenes = {
+      id: res.file.unique_filename,
+      name: res.file.display_name,
+      path: res.file.path,
+      type: 'user' // 标记为用户上传的动作
+    };
+        
+    this.VRMConfig.gaussUserScenes.push(newgaussScenes);
+    // 自动选中新上传的场景
+    if (newgaussScenes) this.handleGaussSceneChange(newgaussScenes.id);
+  } else {
+    showNotification(res.message || '上传失败', 'error');
+  }
+},
+
+/* 取消上传 */
+cancelGaussSceneUpload() {
+  this.showGaussSceneDialog = false;
+  this.removeNewGaussScene();
+},
+
+/* 删除用户场景 */
+async deleteGaussSceneOption(sceneId) {
+  const scene = this.VRMConfig.gaussUserScenes.find(s => s.id === sceneId);
+  if (!scene) return;
+
+  // 提取 uuid 文件名
+  const filename = scene.path.split('/').pop();
+  const res = await fetch(`/delete_gauss_scene/${filename}`, {
+    method: 'DELETE'
+  }).then(r => r.json());
+
+  if (res.success) {
+    showNotification('场景已删除');
+    // 如果当前正在使用被删场景，切回第一个默认场景
+    if (this.VRMConfig.selectedGaussSceneId === sceneId) {
+      const firstDef = this.VRMConfig.gaussDefaultScenes[0];
+      if (firstDef) this.handleGaussSceneChange(firstDef.id);
+    }
+    await this.loadGaussScenes();
+  } else {
+    showNotification(res.message || '删除失败', 'error');
+  }
+},
+
+
   async confirmClearAll() {
     try {
       await this.$confirm(this.t('confirmClearAllHistory'), this.t('warning'), {
@@ -7966,5 +8084,6 @@ let vue_methods = {
   usePrompt(content) {
     this.messages[0].content = content;
     this.activeMenu = 'home';      // 切换到主界面
+    this.showEditDialog = false;
   }
 }

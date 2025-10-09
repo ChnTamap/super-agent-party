@@ -603,6 +603,8 @@ let vue_data = {
       displayName: '',
       file: null
     },
+    showGaussSceneDialog: false, // GAUSS
+    newGaussScene: { name: '', displayName: '' }, // GAUSS
     VRMConfig: {
       name: 'default',
       enabledExpressions: false,
@@ -616,7 +618,10 @@ let vue_data = {
       selectedMotionIds: [],
       selectedNewModelId: 'alice',
       selectedNewMotionIds: [],
-      newVRM:{}
+      newVRM:{},
+      gaussDefaultScenes: [],   // GAUSS
+      gaussUserScenes: [],      // GAUSS
+      selectedGaussSceneId: '',
     },
     newAppearanceConfig: {
       name: '',

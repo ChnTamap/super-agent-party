@@ -319,7 +319,10 @@
       "selectedMotionIds": [],
       "newVRM":{},
       "selectedNewModelId": "alice",
-      "selectedNewMotionIds": []
+      "selectedNewMotionIds": [],
+      "gaussDefaultScenes": [], 
+      "gaussUserScenes": [],  
+      "selectedGaussSceneId": ""
     },
     "comfyuiServers": ["http://127.0.0.1:8188"],
     "comfyuiAPIkey": "",
