@@ -1677,7 +1677,7 @@ let vue_methods = {
             }else{
                 tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
             }
-            const response = await fetch('/v1/chat/completions', {
+            const response = await fetch('/simple_chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -3654,6 +3654,52 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
                 content={"error": {"message": str(e), "type": "server_error", "code": 500}}
             )
 
+@app.post("/simple_chat")
+async def chat_endpoint(request: ChatRequest):
+    """
+    messages: 必填项，聊天记录，包括role和content
+    """
+    global client, settings
+
+    current_settings = await load_settings()
+    if len(current_settings['modelProviders']) <= 0:
+        return JSONResponse(
+            status_code=500,
+            content={"error": {"message": await t("NoModelProvidersConfigured"), "type": "server_error", "code": 500}}
+        )
+    vendor = 'OpenAI'
+    for modelProvider in current_settings['modelProviders']: 
+        if modelProvider['id'] == current_settings['selectedProvider']:
+            vendor = modelProvider['vendor']
+            break
+    client_class = AsyncOpenAI
+    if vendor == 'Dify':
+        client_class = DifyOpenAIAsync
+    # 动态更新客户端配置
+    if (current_settings['api_key'] != settings['api_key'] 
+        or current_settings['base_url'] != settings['base_url']):
+        client = client_class(
+            api_key=current_settings['api_key'],
+            base_url=current_settings['base_url'] or "https://api.openai.com/v1",
+        )
+    response = await client.chat.completions.create(
+        model=current_settings['model'],
+        messages=request.messages,
+        stream=True,
+    )
+    async def openai_format_stream():
+        async for chunk in response:
+            chunk_dict = chunk.model_dump()
+            yield f"data: {json.dumps(chunk_dict)}\n\n"
+            yield f"data: [DONE]\n\n"
+
+    return StreamingResponse(
+        openai_format_stream(),
+        headers={
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache"
+        }
+    )
 
 # 存储活跃的ASR WebSocket连接
 asr_connections = []
