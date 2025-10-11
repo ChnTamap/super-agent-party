@@ -1105,7 +1105,7 @@ let vue_methods = {
           }
           this.changeMemory();
           // this.target_lang改成navigator.language || navigator.userLanguage;
-          this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
+          this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
           this.loadDefaultModels();
           this.loadDefaultMotions();
           this.loadGaussScenes();
@@ -8085,5 +8085,97 @@ async deleteGaussSceneOption(sceneId) {
     this.messages[0].content = content;
     this.activeMenu = 'home';      // 切换到主界面
     this.showEditDialog = false;
-  }
+  },
+  /* 主入口 */
+  async handleTranslate() {
+    if (!this.sourceText.trim() || this.isTranslating) return;
+    this.isTranslating = true;
+    this.translatedText = this.t('translating') + '…';
+    const controller = new AbortController()
+    this.translateAbortController = controller
+
+    /* 构造 system prompt 与 TTS 标签逻辑，与你给出的 translateMessage 保持一致 */
+    let newttsList = [];
+    if (this.ttsSettings.newtts) {
+      for (const key in this.ttsSettings.newtts) {
+        if (this.ttsSettings.newtts[key].enabled) newttsList.push(key);
+      }
+    }
+    let ttsPrompt = '';
+    if (newttsList?.length == 0 || !this.ttsSettings.enabled){
+        ttsPrompt = "如果被翻译的文字与目标语言一致，则返回原文即可"
+    }else{
+        ttsPrompt = `你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！你可以使用以下音色：\n${newttsList}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<Narrator>现在是下午三点，她说道：</Narrator><角色名>”天气真好哇！“</角色名><Narrator>说完她伸了个懒腰。</Narrator>\n\n`
+    }
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.mainAgent,
+          messages: [
+            {
+              role: 'system',
+              content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。${ttsPrompt}`,
+            },
+            {
+              role: 'user',
+              content: `请翻译以下内容到${this.target_lang}：\n\n${this.sourceText}`,
+            },
+          ],
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        for (const chunk of chunks.slice(0, -1)) {
+          if (chunk.startsWith('data: ')) {
+            const jsonStr = chunk.slice(6);
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const { choices } = JSON.parse(jsonStr);
+              if (choices?.[0]?.delta?.content) {
+                result += choices[0].delta.content;
+                this.translatedText = result;
+              }
+            } catch {}
+          }
+        }
+        buffer = chunks[chunks.length - 1];
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        
+      } else {
+        this.translatedText = `Translation error: ${e.message}`;
+      }
+    } finally {
+      this.isTranslating = false;
+      this.abortController = null;
+    }
+  },
+
+  abortTranslate () {
+    this.translateAbortController?.abort()
+    this.isTranslating = false
+  },
+
+  clearAll () {
+    this.sourceText = ''
+    this.translatedText = ''
+    this.targetLangSelected = ''
+  },
+  changeLanguage() {
+    this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
+  },
 }
