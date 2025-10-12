@@ -3655,7 +3655,7 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
             )
 
 @app.post("/simple_chat")
-async def chat_endpoint(request: ChatRequest):
+async def simple_chat_endpoint(request: ChatRequest):
     """
     messages: 必填项，聊天记录，包括role和content
     """
@@ -3685,7 +3685,8 @@ async def chat_endpoint(request: ChatRequest):
     response = await client.chat.completions.create(
         model=current_settings['model'],
         messages=request.messages,
-        stream=True,
+        stream=request.stream,
+        temperature=request.temperature,
     )
     async def openai_format_stream():
         async for chunk in response:

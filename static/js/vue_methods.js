@@ -8126,6 +8126,8 @@ async deleteGaussSceneOption(sceneId) {
               content: `请翻译以下内容到${this.target_lang}：\n\n${this.sourceText}`,
             },
           ],
+          stream: true,
+          temperature: 0.1
         }),
         signal: controller.signal,
       });
