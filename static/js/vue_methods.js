@@ -3904,8 +3904,11 @@ let vue_methods = {
               : (src.lorebook || []).map(l => ({
                   keysRaw: l.name,
                   content: l.value
-                }))
+                }))  
         };
+           if (this.newMemory.characterBook.length == 0 ){
+              this.newMemory.characterBook = [{ keysRaw: '', content: '' }]
+           }   
       } else {
         /* 新建：直接给空模板 */
         this.resetNewMemory();
