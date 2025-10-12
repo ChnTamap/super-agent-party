@@ -1350,20 +1350,12 @@ body {
 
 /* 设置表单样式 */
 .settings-form {
-  max-width: 800px;
+  max-width: 100%;
   margin: 40px auto;
   padding: 32px;
   background-color: var(--el-bg-color);
   border-radius: 12px;
   box-shadow: 0 4px 16px var(--el-box-shadow-light);
-}
-
-#translate-form {
-  max-width: 100%;
-}
-
-#read-form {
-  max-width: 100%;
 }
 
 .behavior-block {
