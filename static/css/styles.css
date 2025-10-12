@@ -1357,6 +1357,15 @@ body {
   border-radius: 12px;
   box-shadow: 0 4px 16px var(--el-box-shadow-light);
 }
+
+#translate-form {
+  max-width: 100%;
+}
+
+#read-form {
+  max-width: 100%;
+}
+
 .behavior-block {
   margin: 40px auto;
   padding: 32px;
@@ -3459,4 +3468,36 @@ body {
   height: 32px;
   object-fit: contain;
   border-radius: 50%; /* 圆形 */
+}
+
+/* 头部 */
+.tool-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+.header-buttons{
+  display:flex;
+  gap:8px;
+}
+
+/* 经典并排 */
+.classic-box{
+  display:flex;
+  gap:16px;
+}
+.classic-panel{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+.panel-label{
+  font-size:14px;
+  color:#606266;
+  margin-bottom:6px;
+}
+/* 让 textarea 撑满 */
+.classic-panel .el-textarea{
+  flex:1;
 }

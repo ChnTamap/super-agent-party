@@ -7374,15 +7374,25 @@ if ('serviceWorker' in navigator) {
 
                   <!-- 翻译机器人 -->
                   <div v-show="subMenu === 'translate_bot'" class="page translate-container">
-                    <el-form class="settings-form" label-position="top">
+                    <el-form class="settings-form" id="translate-form" label-position="top">
                       <div class="tool-item">
+
                         <!-- 头部 -->
-                        <div class="tool-header" style="display:flex;justify-content:space-between;align-items:center;">
+                        <div class="tool-header">
                           <span>
                             <el-icon><i class="fa-solid fa-language"></i></el-icon>
                             {{ t('translateBot') }}
                           </span>
-                          <div>
+
+                          <div class="header-buttons">
+                            <!-- 复制 -->
+                            <el-tooltip :content="t('copy')" placement="top">
+                              <el-button circle @click="copyTranslated">
+                                <i class="fa-solid fa-copy"></i>
+                              </el-button>
+                            </el-tooltip>
+
+                            <!-- 翻译 -->
                             <el-tooltip :content="t('translate')" placement="top">
                               <el-button
                                 type="primary"
@@ -7390,15 +7400,12 @@ if ('serviceWorker' in navigator) {
                                 :disabled="!sourceText.trim() || isTranslating"
                                 @click="handleTranslate"
                               >
-                                <template v-if="isTranslating">
-                                  <i class="fa-solid fa-spinner fa-spin"></i>
-                                </template>
-                                <template v-else>
-                                  <i class="fa-solid fa-play"></i>
-                                </template>
+                                <i v-if="isTranslating" class="fa-solid fa-spinner fa-spin"></i>
+                                <i v-else class="fa-solid fa-play"></i>
                               </el-button>
                             </el-tooltip>
 
+                            <!-- 停止 -->
                             <el-tooltip :content="t('stop')" placement="top">
                               <el-button
                                 type="danger"
@@ -7410,71 +7417,67 @@ if ('serviceWorker' in navigator) {
                               </el-button>
                             </el-tooltip>
 
+                            <!-- 清空 -->
                             <el-tooltip :content="t('clear')" placement="top">
-                              <el-button
-                                circle
-                                @click="clearAll"
-                              >
+                              <el-button circle @click="clearAll">
                                 <i class="fa-solid fa-broom"></i>
                               </el-button>
                             </el-tooltip>
                           </div>
                         </div>
 
-                        <!-- 内容区 -->
-                        <div class="tool-content">
-                          <!-- 目标语言 -->
-                          <el-form-item :label="t('targetLang')">
-                            <el-select
-                              v-model="targetLangSelected"
-                              filterable
-                              allow-create
-                              default-first-option
-                              :placeholder="t('targetLangPlaceholder')"
-                              @change="changeLanguage"
-                              class="full-width-input"
-                            >
-                              <el-option :label="t('systemLanguage')" value="system" ></el-option>
-                              <el-option label="简体中文" value="简体中文" ></el-option>
-                              <el-option label="繁體中文" value="繁體中文" ></el-option>
-                              <el-option label="English" value="English" ></el-option>
-                              <el-option label="Français" value="Français" ></el-option>
-                              <el-option label="Язык" value="Язык" ></el-option>
-                              <el-option label="Deutsch" value="Deutsch" ></el-option>
-                              <el-option label="Español" value="Español" ></el-option>
-                              <el-option label="Portuguese" value="Portuguese" ></el-option>
-                              <el-option label="日本語" value="日本語" ></el-option>
-                              <el-option label="한국어" value="한국어" ></el-option>
-                            </el-select>
-                          </el-form-item>
+                        <!-- 目标语言 -->
+                        <el-form-item :label="t('targetLang')" style="margin-bottom:12px;" label-position="left">
+                          <el-select
+                            v-model="targetLangSelected"
+                            filterable
+                            allow-create
+                            default-first-option
+                            :placeholder="t('targetLangPlaceholder')"
+                            @change="changeLanguage"
+                            style="width:220px"
+                          >
+                            <el-option :label="t('systemLanguage')" value="system"></el-option>
+                            <el-option label="简体中文" value="简体中文"></el-option>
+                            <el-option label="繁體中文" value="繁體中文"></el-option>
+                            <el-option label="English" value="English"></el-option>
+                            <el-option label="Français" value="Français"></el-option>
+                            <el-option label="Язык" value="Язык"></el-option>
+                            <el-option label="Deutsch" value="Deutsch"></el-option>
+                            <el-option label="Español" value="Español"></el-option>
+                            <el-option label="Portuguese" value="Portuguese"></el-option>
+                            <el-option label="日本語" value="日本語"></el-option>
+                            <el-option label="한국어" value="한국어"></el-option>
+                          </el-select>
+                        </el-form-item>
 
-                          <!-- 源文本 -->
-                          <el-form-item :label="t('sourceText')">
+                        <!-- 经典并排 -->
+                        <div class="classic-box">
+                          <div class="classic-panel">
                             <el-input
                               v-model="sourceText"
                               type="textarea"
-                              :rows="10"
+                              :rows="24"
                               :placeholder="t('sourceTextPlaceholder')"
-                              class="input-box"
-                            />
-                          </el-form-item>
+                              resize="none"
+                            ></el-input>
+                          </div>
 
-                          <!-- 译文 -->
-                          <el-form-item :label="t('translatedText')">
+                          <div class="classic-panel">
                             <el-input
                               v-model="translatedText"
+                              :placeholder="t('translatedTextPlaceholder')"
                               type="textarea"
-                              :rows="10"
+                              :rows="24"
                               readonly
-                              class="input-box"
-                            />
-                          </el-form-item>
+                              resize="none"
+                            ></el-input>
+                          </div>
                         </div>
+
                       </div>
                     </el-form>
                   </div>
-
-
 
                   <!-- 桌宠配置页面 -->
                   <div v-show="subMenu === 'table_pet'">
@@ -8000,7 +8003,7 @@ if ('serviceWorker' in navigator) {
 
                   <!-- 朗读页面 -->
                   <div v-show="subMenu === 'read_bot'">
-                    <el-form class="settings-form" :model="readConfig" label-position="top">
+                    <el-form class="settings-form" id="read-form" :model="readConfig" label-position="top">
                       <div class="tool-item">
                         <!-- 配置头部 -->
                         <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center;">
