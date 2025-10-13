@@ -1280,6 +1280,43 @@ if ('serviceWorker' in navigator) {
                   </el-tab-pane>
                   <!-- 添加新记忆标签页 -->
                   <el-tab-pane :label="t('addNewMemory')" name="add">
+                    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                      <!-- 大输入框：限制最大宽度，让出空间给按钮 -->
+                      <el-input
+                        v-model="quickCreatePrompt"
+                        type="textarea"
+                        :rows="2"
+                        :placeholder="t('quickGenPlaceholder')"
+                      >
+                      </el-input>
+                      <!-- 生成按钮 -->
+                      <el-tooltip :content="t('oneClickGenCard')" placement="top">
+                        <el-button
+                          type="primary"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!quickCreatePrompt.trim()||isGenerating"
+                          @click="handleQuickGen"
+                        >
+                          <i v-if="!isGenerating" class="fa-solid fa-wand-magic-sparkles"></i>
+                          <i v-else class="fa-solid fa-spinner fa-spin"></i>
+                        </el-button>
+                      </el-tooltip>
+                      <el-tooltip :content="t('stopGenCard')" placement="top">
+                        <!-- 停止生成按钮 -->
+                        <el-button
+                          type="danger"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!isGenerating"
+                          @click="stopQuickGen"
+                        >
+                          <i class="fa-solid fa-stop"></i>
+                        </el-button>
+                      </el-tooltip>
+                    </div>
                     <div class="provider-grid">
                       <!-- 已有记忆磁贴 -->
                       <div class="provider-card knowledge-card" v-for="memory in memories" :key="memory.id">
@@ -1299,6 +1336,7 @@ if ('serviceWorker' in navigator) {
                             </el-button>
                             <el-button
                               @click="editMemory(memory.id)"
+                              :disabled="isGenerating"
                               type="default"
                               circle
                               size="small"
@@ -1329,7 +1367,7 @@ if ('serviceWorker' in navigator) {
                       </div>
                       
                       <!-- 添加新记忆磁贴 -->
-                      <div class="provider-card add-tile" @click="showAddMemoryDialog = true">
+                      <div class="provider-card add-tile" @click="handleShowAddMemoryDialog">
                         <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
                         <div style="color: #606266; margin-top: 10px;">{{ t('addNewMemory') }}</div>
                       </div>

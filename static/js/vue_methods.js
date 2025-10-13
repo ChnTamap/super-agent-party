@@ -8169,7 +8169,7 @@ async deleteGaussSceneOption(sceneId) {
       }
     } finally {
       this.isTranslating = false;
-      this.abortController = null;
+      this.translateAbortController = null;
     }
   },
 
@@ -8190,5 +8190,112 @@ async deleteGaussSceneOption(sceneId) {
     if (!this.translatedText) return
     navigator.clipboard.writeText(this.translatedText)
     showNotification(this.t('copy_success'))
+  },
+  handleShowAddMemoryDialog() {
+    if (this.isGenerating) return;
+    this.showAddMemoryDialog = true
+  },
+  async handleQuickGen() {
+    if (!this.quickCreatePrompt.trim() || this.isGenerating) return;
+    this.isGenerating = true;
+    showNotification(this.t('startGen'));
+    const controller = new AbortController()
+    this.QuickGenAbortController = controller
+    const systemPrompt = `你是一名专业的角色设计师。  
+生成的角色卡内容必须与用户输入的语言保持一致。  
+用户会提供一个简短的创意，你必须仅回复一段**有效的 JSON**，并放在一个标准的Markdown 代码块中。  
+JSON 结构必须为：
+
+  {
+    "name": "角色名称",
+    "description": "简要背景/世界观设定",
+    "personality": "性格特征",
+    "mesExample": "展示 2~5 轮聊天示例，格式：用户:xxx\n角色:xxx",
+    "systemPrompt": "用于驱动角色的系统提示",
+    "firstMes": "角色的第一句问候语",
+    "alternateGreetings": ["可选问候2","可选问候3"],
+    "characterBook": [
+        {"keysRaw":"关键词1\n关键词2","content":"这里填入当用户提到关键词1或关键词2时，需要返回给AI看的内容……"},
+        {"keysRaw":"关键词3","content":"这里填入当用户提到关键词3时，需要返回给AI看的内容……"}
+    ]
+  }
+
+所有字段都必须提供；若不需要，alternateGreetings 与 characterBook 可为空数组。  
+绝不可包含 avatar 字段。`;
+
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: this.quickCreatePrompt }
+          ],
+          stream: false,          // 非流式，直接拿完整 JSON
+          temperature: 0.8
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+
+      // 解析返回的 choices[0].message.content
+      const data = await res.json();
+      let raw  = data.choices?.[0]?.message?.content ?? '';
+      // 1. 去掉首尾空格
+      raw = raw.trim();
+
+      // 2. 如果被 ```json … ``` 包裹，先提取
+      const codeBlock = raw.match(/^```json\s*([\s\S]*?)```$/);
+      if (codeBlock) raw = codeBlock[1];
+
+      // 3. 再试一次「裸」提取（有时只写 ``` 不带语言标记）
+      const tildeBlock = raw.match(/^```\s*([\s\S]*?)```$/);
+      if (tildeBlock) raw = tildeBlock[1];
+
+      // 4. 解析
+      let json;
+      console.log(raw)
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        throw new Error('AI 返回的不是合法 JSON：' + e.message);
+      }
+
+      // 把结果写入 newMemory（不会自动保存，用户仍可手动改）
+      Object.assign(this.newMemory, {
+        name:        json.name        ?? '',
+        description: json.description ?? '',
+        personality: json.personality ?? '',
+        mesExample:  json.mesExample  ?? '',
+        systemPrompt:json.systemPrompt?? '',
+        firstMes:    json.firstMes    ?? '',
+        alternateGreetings: json.alternateGreetings?.filter(Boolean) ?? [],
+        characterBook: (json.characterBook ?? []).map(b => ({
+          keysRaw: b.keysRaw ?? '',
+          content: b.content ?? ''
+        })),
+        avatar: ''   // 强制空
+      });
+
+      // 保存
+      this.addMemory();
+      showNotification(this.t('genSuccess'));
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        console.log('QuickGen aborted');
+      }else{
+        showNotification(this.t('genFailed') + ': ' + e.message, 'error');
+      }
+      
+    } finally {
+      this.isGenerating = false;
+      this.QuickGenAbortController = null;
+    }
+  },
+  stopQuickGen() {
+    this.QuickGenAbortController?.abort()
+    this.isGenerating = false
   },
 }

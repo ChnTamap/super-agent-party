@@ -1211,6 +1211,8 @@ let vue_data = {
     activeBehaviorTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     activeMCPTab: 'config',
+    quickCreatePrompt: '',
+    isGenerating: false, // 是否正在生成
     memories: [],
     newMemory: {
       id: null,
