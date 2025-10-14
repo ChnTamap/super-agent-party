@@ -1786,7 +1786,7 @@ body {
   border-radius: 0.75rem;
   padding: 1.25rem;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 240px;
+  min-height: 270px!important;
   display: flex;
   flex-direction: column;
   margin: 0.75rem;
