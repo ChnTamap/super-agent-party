@@ -338,15 +338,6 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-pen-to-square"></i>
                   </el-button>
                 </el-tooltip>
-                <el-tooltip v-if="message.role === 'system'" :content="t('oneClickExpand')" placement="bottom">
-                  <el-button 
-                    class="Gen-btn" 
-                    @click="toggleQuickGen(index)"
-                    circle 
-                    size="small">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  </el-button>
-                </el-tooltip>
                 <el-tooltip v-if="message.role === 'assistant'" :content="t('briefly')" placement="bottom">
                   <el-button 
                     class="briefly-btn" 
@@ -387,6 +378,26 @@ if ('serviceWorker' in navigator) {
                 <el-tooltip v-if="index == 0" :content="t('reset')" placement="bottom">
                   <el-button @click="resetMessage(index)" circle size="small">
                     <i class="fa-solid fa-rotate"></i>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip v-if="message.role === 'system'" :content="t('oneClickExpand')" placement="bottom">
+                  <el-button 
+                    class="Gen-btn" 
+                    @click="toggleQuickGen(index)"
+                    :disabled="isQuickGenerating"
+                    circle 
+                    size="small">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip v-if="message.role === 'system'" :content="t('save')" placement="bottom">
+                  <el-button 
+                    class="Gen-btn" 
+                    @click="saveSystemPrompt(index)"
+                    :disabled="isQuickGenerating"
+                    circle 
+                    size="small">
+                    <i class="fa-solid fa-floppy-disk"></i>
                   </el-button>
                 </el-tooltip>
                 <span class="msg-status" v-if="message.role === 'assistant' && !isMobile">

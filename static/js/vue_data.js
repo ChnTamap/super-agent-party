@@ -1215,6 +1215,7 @@ let vue_data = {
     isGenerating: false, // 是否正在生成
     quickCreateSystemPrompt: '',
     isSystemPromptGenerating: false, // 是否正在生成
+    isQuickGenerating: false, // 是否正在生成
     memories: [],
     newMemory: {
       id: null,

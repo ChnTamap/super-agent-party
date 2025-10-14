@@ -8315,22 +8315,12 @@ JSON 结构必须为：
             {
               role: 'system',
               content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
-你可以用以下格式扩写，但可以不局限于以下格式：
-## 角色名
-
-## 角色定位
-
-## 核心能力
-
-## 回答风格
-
-## 约束
-
-## 输出格式示例`,
+注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
+你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`,
             },
             {
               role: 'user',
-              content: `你需要优化的系统提示词：${this.quickCreateSystemPrompt}`,
+              content: `${this.quickCreateSystemPrompt}`,
             },
           ],
           stream: true,
@@ -8391,6 +8381,7 @@ JSON 结构必须为：
       return;
     }
     showNotification(this.t('startGen'));
+    this.isQuickGenerating = true;
     const abortController = new AbortController();
     this.abortController = abortController;
     try {
@@ -8403,28 +8394,18 @@ JSON 结构必须为：
             {
               role: 'system',
               content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
-你可以用以下格式扩写，但可以不局限于以下格式：
-## 角色名
-
-## 角色定位
-
-## 核心能力
-
-## 回答风格
-
-## 约束
-
-## 输出格式示例`,
+注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
+你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`
             },
             {
               role: 'user',
-              content: `你需要优化的系统提示词：${systemPrompt}`,
+              content: `${systemPrompt}`,
             },
           ],
           stream: true,
           temperature: 0.8
         }),
-        signal: abortController.signal,
+        signal: this.abortController.signal,
       });
 
       if (!res.ok) throw new Error('Network error');
@@ -8462,7 +8443,16 @@ JSON 结构必须为：
         showNotification(this.t('genFailed') + ': ' + e.message, 'error');
       }
     } finally {
+      this.isQuickGenerating = false;
       this.abortController = null;
     }
+  },
+  saveSystemPrompt(index) {
+    let systemPrompt = this.messages[index].content;
+    this.activeMenu = 'role';
+    this.subMenu = 'memory';
+    this.activeMemoryTab = 'prompts';
+    this.promptForm = { id: null, name: '', content: systemPrompt };
+    this.showPromptDialog = true;
   }
 }
