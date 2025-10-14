@@ -41,3 +41,4 @@ Brotli
 wikipedia-api
 arxiv
 ddgs
+claude-agent-sdk

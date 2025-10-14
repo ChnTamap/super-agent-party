@@ -1056,6 +1056,7 @@ let vue_methods = {
           this.agents = data.data.agents || this.agents;
           this.mainAgent = data.data.mainAgent || this.mainAgent;
           this.qqBotConfig = data.data.qqBotConfig || this.qqBotConfig;
+          this.targetLangSelected = data.data.targetLangSelected || this.targetLangSelected;
           this.allBriefly = data.data.allBriefly || this.allBriefly;
           this.BotConfig = data.data.BotConfig || this.BotConfig;
           this.liveConfig = data.data.liveConfig || this.liveConfig;
@@ -1105,7 +1106,7 @@ let vue_methods = {
           }
           this.changeMemory();
           // this.target_lang改成navigator.language || navigator.userLanguage;
-          this.target_lang = navigator.language || navigator.userLanguage || 'zh-CN';
+          this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
           this.loadDefaultModels();
           this.loadDefaultMotions();
           this.loadGaussScenes();
@@ -1675,9 +1676,9 @@ let vue_methods = {
             if (newttsList?.length == 0 || !this.ttsSettings.enabled){
                 tts_msg = "如果被翻译的文字与目标语言一致，则返回原文即可"
             }else{
-                tts_msg = "你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！"
+                tts_msg = `你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！你可以使用以下音色：\n${newttsList}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<Narrator>现在是下午三点，她说道：</Narrator><角色名>”天气真好哇！“</角色名><Narrator>说完她伸了个懒腰。</Narrator>\n\n`
             }
-            const response = await fetch('/v1/chat/completions', {
+            const response = await fetch('/simple_chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1786,6 +1787,7 @@ let vue_methods = {
           agents: this.agents,
           mainAgent: this.mainAgent,
           qqBotConfig : this.qqBotConfig,
+          targetLangSelected: this.targetLangSelected,
           allBriefly: this.allBriefly,
           BotConfig: this.BotConfig,
           liveConfig: this.liveConfig,
@@ -3902,8 +3904,11 @@ let vue_methods = {
               : (src.lorebook || []).map(l => ({
                   keysRaw: l.name,
                   content: l.value
-                }))
+                }))  
         };
+           if (this.newMemory.characterBook.length == 0 ){
+              this.newMemory.characterBook = [{ keysRaw: '', content: '' }]
+           }   
       } else {
         /* 新建：直接给空模板 */
         this.resetNewMemory();
@@ -8085,5 +8090,369 @@ async deleteGaussSceneOption(sceneId) {
     this.messages[0].content = content;
     this.activeMenu = 'home';      // 切换到主界面
     this.showEditDialog = false;
+  },
+  /* 主入口 */
+  async handleTranslate() {
+    if (!this.sourceText.trim() || this.isTranslating) return;
+    this.isTranslating = true;
+    this.translatedText = this.t('translating') + '…';
+    const controller = new AbortController()
+    this.translateAbortController = controller
+
+    /* 构造 system prompt 与 TTS 标签逻辑，与你给出的 translateMessage 保持一致 */
+    let newttsList = [];
+    if (this.ttsSettings.newtts) {
+      for (const key in this.ttsSettings.newtts) {
+        if (this.ttsSettings.newtts[key].enabled) newttsList.push(key);
+      }
+    }
+    let ttsPrompt = '';
+    ttsPrompt = "如果被翻译的文字与目标语言一致，则返回原文即可"
+    // if (newttsList?.length == 0 || !this.ttsSettings.enabled){
+    //     ttsPrompt = "如果被翻译的文字与目标语言一致，则返回原文即可"
+    // }else{
+    //     ttsPrompt = `你还需要在翻译的同时，添加对应的音色标签。如果被翻译的文字与目标语言一致，则只需要添加对应的音色标签。注意！不要使用<!--  -->这会导致部分文字不可见！你可以使用以下音色：\n${newttsList}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<Narrator>现在是下午三点，她说道：</Narrator><角色名>”天气真好哇！“</角色名><Narrator>说完她伸了个懒腰。</Narrator>\n\n`
+    // }
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.mainAgent,
+          messages: [
+            {
+              role: 'system',
+              content: `你是一位专业翻译，请将用户提供的任何内容严格翻译为${this.target_lang}，保持原有格式（如Markdown、换行等），不要添加任何额外内容。只需返回翻译结果。${ttsPrompt}`,
+            },
+            {
+              role: 'user',
+              content: `请翻译以下内容到${this.target_lang}：\n\n${this.sourceText}`,
+            },
+          ],
+          stream: true,
+          temperature: 0.1
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        for (const chunk of chunks.slice(0, -1)) {
+          if (chunk.startsWith('data: ')) {
+            const jsonStr = chunk.slice(6);
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const { choices } = JSON.parse(jsonStr);
+              if (choices?.[0]?.delta?.content) {
+                result += choices[0].delta.content;
+                this.translatedText = result;
+              }
+            } catch {}
+          }
+        }
+        buffer = chunks[chunks.length - 1];
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        
+      } else {
+        this.translatedText = `Translation error: ${e.message}`;
+      }
+    } finally {
+      this.isTranslating = false;
+      this.translateAbortController = null;
+    }
+  },
+
+  abortTranslate () {
+    this.translateAbortController?.abort()
+    this.isTranslating = false
+  },
+
+  clearAll () {
+    this.sourceText = ''
+    this.translatedText = ''
+  },
+  changeLanguage() {
+    this.target_lang = this.targetLangSelected!="system"? this.targetLangSelected: navigator.language || navigator.userLanguage || 'zh-CN';
+    this.autoSaveSettings()
+  },
+  copyTranslated() {
+    if (!this.translatedText) return
+    navigator.clipboard.writeText(this.translatedText)
+    showNotification(this.t('copy_success'))
+  },
+  handleShowAddMemoryDialog() {
+    if (this.isGenerating) return;
+    this.showAddMemoryDialog = true
+  },
+  async handleQuickGen() {
+    if (!this.quickCreatePrompt.trim() || this.isGenerating) return;
+    this.isGenerating = true;
+    showNotification(this.t('startGen'));
+    const controller = new AbortController()
+    this.QuickGenAbortController = controller
+    const systemPrompt = `你是一名专业的角色设计师。  
+生成的角色卡内容必须与用户输入的语言保持一致。  
+用户会提供一个简短的创意，你必须仅回复一段**有效的 JSON**，并放在一个标准的Markdown 代码块中。  
+JSON 结构必须为：
+
+  {
+    "name": "角色名称",
+    "description": "简要背景/世界观设定",
+    "personality": "性格特征",
+    "mesExample": "展示 2~5 轮聊天示例，格式：用户:xxx\n角色:xxx",
+    "systemPrompt": "用于驱动角色的系统提示",
+    "firstMes": "角色的第一句问候语",
+    "alternateGreetings": ["可选问候2","可选问候3"],
+    "characterBook": [
+        {"keysRaw":"关键词1\n关键词2","content":"这里填入当用户提到关键词1或关键词2时，需要返回给AI看的内容……"},
+        {"keysRaw":"关键词3","content":"这里填入当用户提到关键词3时，需要返回给AI看的内容……"}
+    ]
+  }
+
+所有字段都必须提供；若不需要，alternateGreetings 与 characterBook 可为空数组。  
+绝不可包含 avatar 字段。`;
+
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: this.quickCreatePrompt }
+          ],
+          stream: false,          // 非流式，直接拿完整 JSON
+          temperature: 0.8
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+
+      // 解析返回的 choices[0].message.content
+      const data = await res.json();
+      let raw  = data.choices?.[0]?.message?.content ?? '';
+      // 1. 去掉首尾空格
+      raw = raw.trim();
+
+      // 2. 如果被 ```json … ``` 包裹，先提取
+      const codeBlock = raw.match(/^```json\s*([\s\S]*?)```$/);
+      if (codeBlock) raw = codeBlock[1];
+
+      // 3. 再试一次「裸」提取（有时只写 ``` 不带语言标记）
+      const tildeBlock = raw.match(/^```\s*([\s\S]*?)```$/);
+      if (tildeBlock) raw = tildeBlock[1];
+
+      // 4. 解析
+      let json;
+      console.log(raw)
+      try {
+        json = JSON.parse(raw);
+      } catch (e) {
+        throw new Error('AI 返回的不是合法 JSON：' + e.message);
+      }
+
+      // 把结果写入 newMemory（不会自动保存，用户仍可手动改）
+      Object.assign(this.newMemory, {
+        name:        json.name        ?? '',
+        description: json.description ?? '',
+        personality: json.personality ?? '',
+        mesExample:  json.mesExample  ?? '',
+        systemPrompt:json.systemPrompt?? '',
+        firstMes:    json.firstMes    ?? '',
+        alternateGreetings: json.alternateGreetings?.filter(Boolean) ?? [],
+        characterBook: (json.characterBook ?? []).map(b => ({
+          keysRaw: b.keysRaw ?? '',
+          content: b.content ?? ''
+        })),
+        avatar: ''   // 强制空
+      });
+
+      // 保存
+      this.addMemory();
+      showNotification(this.t('genSuccess'));
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        console.log('QuickGen aborted');
+      }else{
+        showNotification(this.t('genFailed') + ': ' + e.message, 'error');
+      }
+      
+    } finally {
+      this.isGenerating = false;
+      this.QuickGenAbortController = null;
+    }
+  },
+  stopQuickGen() {
+    this.QuickGenAbortController?.abort()
+    this.isGenerating = false
+  },
+  async handleSystemPromptQuickGen() {
+    if (!this.quickCreateSystemPrompt.trim() || this.isSystemPromptGenerating) return;
+    this.isSystemPromptGenerating = true;
+    this.promptForm.name = this.quickCreateSystemPrompt
+    showNotification(this.t('startGen'));
+    const controller = new AbortController()
+    this.QuickGenSystemPromptAbortController = controller
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.mainAgent,
+          messages: [
+            {
+              role: 'system',
+              content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
+注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
+你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`,
+            },
+            {
+              role: 'user',
+              content: `${this.quickCreateSystemPrompt}`,
+            },
+          ],
+          stream: true,
+          temperature: 0.8
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        for (const chunk of chunks.slice(0, -1)) {
+          if (chunk.startsWith('data: ')) {
+            const jsonStr = chunk.slice(6);
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const { choices } = JSON.parse(jsonStr);
+              if (choices?.[0]?.delta?.content) {
+                result += choices[0].delta.content;
+                this.quickCreateSystemPrompt = result;
+              }
+            } catch {}
+          }
+        }
+        buffer = chunks[chunks.length - 1];
+      }
+      this.promptForm.content = this.quickCreateSystemPrompt;
+      this.savePrompt();
+      showNotification(this.t('genSuccess'));
+      this.quickCreateSystemPrompt = '';
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        
+      } else {
+        showNotification(this.t('genFailed') + ': ' + e.message, 'error');
+      }
+    } finally {
+      this.isSystemPromptGenerating = false;
+      this.QuickGenSystemPromptAbortController = null;
+    }
+  },
+  stopSystemPromptQuickGen() {
+    this.QuickGenSystemPromptAbortController?.abort()
+    this.isSystemPromptGenerating = false
+  },
+  async toggleQuickGen(index) {
+    let systemPrompt = this.messages[index].content;
+    if (!systemPrompt.trim()) {
+      showNotification(this.t('noSystemPromptToExtend'), 'error');
+      return;
+    }
+    showNotification(this.t('startGen'));
+    this.isQuickGenerating = true;
+    const abortController = new AbortController();
+    this.abortController = abortController;
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.mainAgent,
+          messages: [
+            {
+              role: 'system',
+              content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
+注意！生成的系统提示词必须与用户输入的语言保持一致。如果用户说英文，你就必须生成英文的系统提示词；如果用户说中文，你就必须生成中文的系统提示词。以此类推！
+你可以从这几个方面来写，但也不要限于这些方面：角色名、角色定位、核心能力、回答风格、约束、输出格式示例等等`
+            },
+            {
+              role: 'user',
+              content: `${systemPrompt}`,
+            },
+          ],
+          stream: true,
+          temperature: 0.8
+        }),
+        signal: this.abortController.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        for (const chunk of chunks.slice(0, -1)) {
+          if (chunk.startsWith('data: ')) {
+            const jsonStr = chunk.slice(6);
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const { choices } = JSON.parse(jsonStr);
+              if (choices?.[0]?.delta?.content) {
+                result += choices[0].delta.content;
+                this.messages[index].content = result;
+                this.scrollToBottom();
+              }
+            } catch {}
+          }
+        }
+        buffer = chunks[chunks.length - 1];
+      }
+      showNotification(this.t('genSuccess'));
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        
+      } else {
+        showNotification(this.t('genFailed') + ': ' + e.message, 'error');
+      }
+    } finally {
+      this.isQuickGenerating = false;
+      this.abortController = null;
+    }
+  },
+  saveSystemPrompt(index) {
+    let systemPrompt = this.messages[index].content;
+    this.activeMenu = 'role';
+    this.subMenu = 'memory';
+    this.activeMemoryTab = 'prompts';
+    this.promptForm = { id: null, name: '', content: systemPrompt };
+    this.showPromptDialog = true;
   }
 }

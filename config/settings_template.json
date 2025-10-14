@@ -112,6 +112,7 @@
       "bochaai_max_results":10,
       "bochaai_api_key": ""
     },
+    "targetLangSelected": "system",
     "knowledgeBases": [],
     "KBSettings": {
       "when": "before_thinking",

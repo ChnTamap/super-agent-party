@@ -380,6 +380,26 @@ if ('serviceWorker' in navigator) {
                     <i class="fa-solid fa-rotate"></i>
                   </el-button>
                 </el-tooltip>
+                <el-tooltip v-if="message.role === 'system'" :content="t('oneClickExpand')" placement="bottom">
+                  <el-button 
+                    class="Gen-btn" 
+                    @click="toggleQuickGen(index)"
+                    :disabled="isQuickGenerating"
+                    circle 
+                    size="small">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip v-if="message.role === 'system'" :content="t('save')" placement="bottom">
+                  <el-button 
+                    class="Gen-btn" 
+                    @click="saveSystemPrompt(index)"
+                    :disabled="isQuickGenerating"
+                    circle 
+                    size="small">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                  </el-button>
+                </el-tooltip>
                 <span class="msg-status" v-if="message.role === 'assistant' && !isMobile">
                   {{ t('total_tokens')+': '+message?.total_tokens +',    '+ t('first_token_latency')+': '+message?.first_token_latency +'ms,    '+ t('elapsedTime')+': '+message?.elapsedTime + 's'}}
                 </span>
@@ -1280,6 +1300,43 @@ if ('serviceWorker' in navigator) {
                   </el-tab-pane>
                   <!-- 添加新记忆标签页 -->
                   <el-tab-pane :label="t('addNewMemory')" name="add">
+                    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                      <!-- 大输入框：限制最大宽度，让出空间给按钮 -->
+                      <el-input
+                        v-model="quickCreatePrompt"
+                        type="textarea"
+                        :rows="4"
+                        :placeholder="t('quickGenPlaceholder')"
+                      >
+                      </el-input>
+                      <!-- 生成按钮 -->
+                      <el-tooltip :content="t('oneClickGenCard')" placement="top">
+                        <el-button
+                          type="primary"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!quickCreatePrompt.trim()||isGenerating"
+                          @click="handleQuickGen"
+                        >
+                          <i v-if="!isGenerating" class="fa-solid fa-wand-magic-sparkles"></i>
+                          <i v-else class="fa-solid fa-spinner fa-spin"></i>
+                        </el-button>
+                      </el-tooltip>
+                      <el-tooltip :content="t('stopGenCard')" placement="top">
+                        <!-- 停止生成按钮 -->
+                        <el-button
+                          type="danger"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!isGenerating"
+                          @click="stopQuickGen"
+                        >
+                          <i class="fa-solid fa-stop"></i>
+                        </el-button>
+                      </el-tooltip>
+                    </div>
                     <div class="provider-grid">
                       <!-- 已有记忆磁贴 -->
                       <div class="provider-card knowledge-card" v-for="memory in memories" :key="memory.id">
@@ -1299,6 +1356,7 @@ if ('serviceWorker' in navigator) {
                             </el-button>
                             <el-button
                               @click="editMemory(memory.id)"
+                              :disabled="isGenerating"
                               type="default"
                               circle
                               size="small"
@@ -1329,7 +1387,7 @@ if ('serviceWorker' in navigator) {
                       </div>
                       
                       <!-- 添加新记忆磁贴 -->
-                      <div class="provider-card add-tile" @click="showAddMemoryDialog = true">
+                      <div class="provider-card add-tile" @click="handleShowAddMemoryDialog">
                         <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
                         <div style="color: #606266; margin-top: 10px;">{{ t('addNewMemory') }}</div>
                       </div>
@@ -1646,6 +1704,43 @@ if ('serviceWorker' in navigator) {
                   </el-tab-pane>
                   <!-- 系统提示词标签页 -->
                   <el-tab-pane :label="t('addSystemPrompt')" name="prompts">
+                    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                      <!-- 大输入框：限制最大宽度，让出空间给按钮 -->
+                      <el-input
+                        v-model="quickCreateSystemPrompt"
+                        type="textarea"
+                        :rows="4"
+                        :placeholder="t('quickGenSystemPromptPlaceholder')"
+                      >
+                      </el-input>
+                      <!-- 生成按钮 -->
+                      <el-tooltip :content="t('oneClickGenCard')" placement="top">
+                        <el-button
+                          type="primary"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!quickCreateSystemPrompt.trim()||isSystemPromptGenerating"
+                          @click="handleSystemPromptQuickGen"
+                        >
+                          <i v-if="!isSystemPromptGenerating" class="fa-solid fa-wand-magic-sparkles"></i>
+                          <i v-else class="fa-solid fa-spinner fa-spin"></i>
+                        </el-button>
+                      </el-tooltip>
+                      <el-tooltip :content="t('stopGenCard')" placement="top">
+                        <!-- 停止生成按钮 -->
+                        <el-button
+                          type="danger"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!isSystemPromptGenerating"
+                          @click="stopSystemPromptQuickGen"
+                        >
+                          <i class="fa-solid fa-stop"></i>
+                        </el-button>
+                      </el-tooltip>
+                    </div>
                     <div class="provider-grid">
                       <!-- 已有提示词磁贴 -->
                       <div
@@ -6834,7 +6929,7 @@ if ('serviceWorker' in navigator) {
         <!-- logo页面 -->
         <div v-show="activeMenu === 'logo'" class="page logo-container">
           <div class="license-notice">
-            <h1>Super Agent Party v0.3.0</h1>
+            <h1>Super Agent Party v0.3.1</h1>
             <h3>开源协议声明 / Open Source License</h3>
             <div class="notice-section">
               <p class="warning-text">❗ 注意！本项目是基于AGPL协议开源的，请遵守AGPL协议，以避免不必要的法律问题！</p>
@@ -7368,6 +7463,113 @@ if ('serviceWorker' in navigator) {
                                 <el-input @change="autoSaveSettings" v-model="qqBotConfig.secret" :placeholder="t('enter_qq_bot_secret')" show-password class="full-width-input"></el-input>
                             </el-form-item>
                         </div>
+                      </div>
+                    </el-form>
+                  </div>
+
+                  <!-- 翻译机器人 -->
+                  <div v-show="subMenu === 'translate_bot'" class="page translate-container">
+                    <el-form class="settings-form" label-position="top">
+                      <div class="tool-item">
+
+                        <!-- 头部 -->
+                        <div class="tool-header">
+                          <span>
+                            <el-icon><i class="fa-solid fa-language"></i></el-icon>
+                            {{ t('translateBot') }}
+                          </span>
+
+                          <div class="header-buttons">
+                            <!-- 复制 -->
+                            <el-tooltip :content="t('copy')" placement="top">
+                              <el-button circle @click="copyTranslated">
+                                <i class="fa-solid fa-copy"></i>
+                              </el-button>
+                            </el-tooltip>
+
+                            <!-- 翻译 -->
+                            <el-tooltip :content="t('translate')" placement="top">
+                              <el-button
+                                type="primary"
+                                circle
+                                :disabled="!sourceText.trim() || isTranslating"
+                                @click="handleTranslate"
+                              >
+                                <i v-if="isTranslating" class="fa-solid fa-spinner fa-spin"></i>
+                                <i v-else class="fa-solid fa-play"></i>
+                              </el-button>
+                            </el-tooltip>
+
+                            <!-- 停止 -->
+                            <el-tooltip :content="t('stop')" placement="top">
+                              <el-button
+                                type="danger"
+                                circle
+                                :disabled="!isTranslating"
+                                @click="abortTranslate"
+                              >
+                                <i class="fa-solid fa-stop"></i>
+                              </el-button>
+                            </el-tooltip>
+
+                            <!-- 清空 -->
+                            <el-tooltip :content="t('clear')" placement="top">
+                              <el-button circle @click="clearAll">
+                                <i class="fa-solid fa-broom"></i>
+                              </el-button>
+                            </el-tooltip>
+                          </div>
+                        </div>
+
+                        <!-- 目标语言 -->
+                        <el-form-item :label="t('targetLang')" style="margin-bottom:12px;" label-position="left">
+                          <el-select
+                            v-model="targetLangSelected"
+                            filterable
+                            allow-create
+                            default-first-option
+                            :placeholder="t('targetLangPlaceholder')"
+                            @change="changeLanguage"
+                            style="width:220px"
+                          >
+                            <el-option :label="t('systemLanguage')" value="system"></el-option>
+                            <el-option label="简体中文" value="简体中文"></el-option>
+                            <el-option label="繁體中文" value="繁體中文"></el-option>
+                            <el-option label="English" value="English"></el-option>
+                            <el-option label="Français" value="Français"></el-option>
+                            <el-option label="Язык" value="Язык"></el-option>
+                            <el-option label="Deutsch" value="Deutsch"></el-option>
+                            <el-option label="Español" value="Español"></el-option>
+                            <el-option label="Portuguese" value="Portuguese"></el-option>
+                            <el-option label="日本語" value="日本語"></el-option>
+                            <el-option label="한국어" value="한국어"></el-option>
+                          </el-select>
+                        </el-form-item>
+
+                        <!-- 经典并排 -->
+                        <div class="classic-box">
+                          <div class="classic-panel">
+                            <el-input
+                              v-model="sourceText"
+                              type="textarea"
+                              :rows="24"
+                              :placeholder="t('sourceTextPlaceholder')"
+                              resize="none"
+                            ></el-input>
+                          </div>
+
+                          <div class="classic-panel">
+                            <el-input
+                              v-model="translatedText"
+                              :placeholder="t('translatedTextPlaceholder')"
+                              type="textarea"
+                              :rows="24"
+                              readonly
+                              resize="none"
+                            ></el-input>
+                          </div>
+                        </div>
+
                       </div>
                     </el-form>
                   </div>

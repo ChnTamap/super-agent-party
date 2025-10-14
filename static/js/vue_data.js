@@ -1136,8 +1136,13 @@ let vue_data = {
       { id: 'live_stream', title: 'live_stream_bot', icon: "fa-solid fa-video"},
       { id: 'qq_bot', title: 'qqBot', icon: 'fa-brands fa-qq' },
       { id: 'read_bot', title: 'readBot', icon: "fa-solid fa-book-open-reader"}, 
+      { id: 'translate_bot', title: 'translateBot', icon: "fa-solid fa-language"}, 
       { id: 'bot_config', title: 'bot_config', icon: 'fa-solid fa-robot' }
     ],
+    sourceText: '',
+    translatedText: '',
+    isTranslating: false,
+    targetLangSelected: 'system',   //“系统默认”
     readConfig: {
       longText: "",
       longTextList: [],
@@ -1206,6 +1211,11 @@ let vue_data = {
     activeBehaviorTab: 'config',
     activeMemoryTabName: 'autoUpdateSetting',
     activeMCPTab: 'config',
+    quickCreatePrompt: '',
+    isGenerating: false, // 是否正在生成
+    quickCreateSystemPrompt: '',
+    isSystemPromptGenerating: false, // 是否正在生成
+    isQuickGenerating: false, // 是否正在生成
     memories: [],
     newMemory: {
       id: null,
