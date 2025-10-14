@@ -8192,7 +8192,10 @@ async deleteGaussSceneOption(sceneId) {
     showNotification(this.t('copy_success'))
   },
   handleShowAddMemoryDialog() {
-    if (this.isGenerating) return;
+    if (this.isGenerating){
+      showNotification(this.t('AIgening'))
+       return;
+    }
     this.showAddMemoryDialog = true
   },
   async handleQuickGen() {
@@ -8208,7 +8211,7 @@ JSON 结构必须为：
 
   {
     "name": "角色名称",
-    "description": "简要背景/世界观设定",
+    "description": "简要背景/世界观设定，尽可能详细",
     "personality": "性格特征",
     "mesExample": "展示 2~5 轮聊天示例，格式：用户:xxx\n角色:xxx",
     "systemPrompt": "用于驱动角色的系统提示",
@@ -8220,7 +8223,7 @@ JSON 结构必须为：
     ]
   }
 
-所有字段都必须提供；若不需要，alternateGreetings 与 characterBook 可为空数组。  
+所有字段都必须提供；characterBook也请尽可能的丰富，最好可以在10条以上，每条的字数可以不用太多。alternateGreetings最好也有5条以上。
 绝不可包含 avatar 字段。`;
 
     try {
