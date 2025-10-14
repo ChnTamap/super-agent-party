@@ -1531,16 +1531,10 @@ let vue_methods = {
                   }
                 }
                 // 处理 reasoning_content 逻辑
-                if (parsed.choices?.[0]?.delta?.reasoning_content || parsed.choices?.[0]?.delta?.tool_content) {
+                if (parsed.choices?.[0]?.delta?.reasoning_content) {
                   let newContent = '';
                   if (parsed.choices?.[0]?.delta?.reasoning_content) {
                     newContent = parsed.choices[0].delta.reasoning_content;
-                  }
-                  if (parsed.choices?.[0]?.delta?.tool_content) {
-                    newContent = parsed.choices[0].delta.tool_content;
-                  }
-                  if (parsed.choices?.[0]?.delta?.tool_link && this.toolsSettings.toolMemorandum.enabled) {
-                    this.fileLinks.push(parsed.choices[0].delta.tool_link);
                   }
                   
                   // 将新内容中的换行符转换为换行+引用符号
@@ -1555,6 +1549,19 @@ let vue_methods = {
                     lastMessage.content += newContent;
                   }
 
+                  this.scrollToBottom();
+                }
+                // 处理 content 逻辑
+                if (parsed.choices?.[0]?.delta?.tool_content) {
+                  const lastMessage = this.messages[this.messages.length - 1];
+                  if (this.isThinkOpen) {
+                    lastMessage.content += '\n\n';
+                    this.isThinkOpen = false; // 重置状态
+                  }
+                  if (parsed.choices?.[0]?.delta?.tool_link && this.toolsSettings.toolMemorandum.enabled) {
+                    this.fileLinks.push(parsed.choices[0].delta.tool_link);
+                  }
+                  lastMessage.content += parsed.choices[0].delta.tool_content + '\n\n';
                   this.scrollToBottom();
                 }
                 // 处理 content 逻辑
