@@ -8281,7 +8281,7 @@ JSON 结构必须为：
         })),
         avatar: ''   // 强制空
       });
-
+      this.newMemory.id=null;
       // 保存
       this.addMemory();
       showNotification(this.t('genSuccess'));
