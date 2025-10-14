@@ -8298,4 +8298,90 @@ JSON 结构必须为：
     this.QuickGenAbortController?.abort()
     this.isGenerating = false
   },
+  async handleSystemPromptQuickGen() {
+    if (!this.quickCreateSystemPrompt.trim() || this.isSystemPromptGenerating) return;
+    this.isSystemPromptGenerating = true;
+    this.promptForm.name = this.quickCreateSystemPrompt
+    showNotification(this.t('startGen'));
+    const controller = new AbortController()
+    this.QuickGenSystemPromptAbortController = controller
+    try {
+      const res = await fetch('/simple_chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: this.mainAgent,
+          messages: [
+            {
+              role: 'system',
+              content: `你需要将用户发给你的简短的系统提示词优化成可以驱动大模型更好的工作的详细的系统提示词。
+你可以用以下格式扩写，但可以不局限于以下格式：
+## 角色名
+
+## 角色定位
+
+## 核心能力
+
+## 回答风格
+
+## 约束
+
+## 输出格式示例`,
+            },
+            {
+              role: 'user',
+              content: `你需要优化的系统提示词：${this.quickCreateSystemPrompt}`,
+            },
+          ],
+          stream: true,
+          temperature: 0.8
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error('Network error');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split('\n\n');
+        for (const chunk of chunks.slice(0, -1)) {
+          if (chunk.startsWith('data: ')) {
+            const jsonStr = chunk.slice(6);
+            if (jsonStr === '[DONE]') continue;
+            try {
+              const { choices } = JSON.parse(jsonStr);
+              if (choices?.[0]?.delta?.content) {
+                result += choices[0].delta.content;
+                this.quickCreateSystemPrompt = result;
+              }
+            } catch {}
+          }
+        }
+        buffer = chunks[chunks.length - 1];
+      }
+      this.promptForm.content = this.quickCreateSystemPrompt;
+      this.savePrompt();
+      showNotification(this.t('genSuccess'));
+      this.quickCreateSystemPrompt = '';
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        
+      } else {
+        showNotification(this.t('genFailed') + ': ' + e.message, 'error');
+      }
+    } finally {
+      this.isSystemPromptGenerating = false;
+      this.QuickGenSystemPromptAbortController = null;
+    }
+  },
+  stopSystemPromptQuickGen() {
+    this.QuickGenSystemPromptAbortController?.abort()
+    this.isSystemPromptGenerating = false
+  },
 }

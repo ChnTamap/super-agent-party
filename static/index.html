@@ -1285,7 +1285,7 @@ if ('serviceWorker' in navigator) {
                       <el-input
                         v-model="quickCreatePrompt"
                         type="textarea"
-                        :rows="2"
+                        :rows="4"
                         :placeholder="t('quickGenPlaceholder')"
                       >
                       </el-input>
@@ -1684,6 +1684,43 @@ if ('serviceWorker' in navigator) {
                   </el-tab-pane>
                   <!-- 系统提示词标签页 -->
                   <el-tab-pane :label="t('addSystemPrompt')" name="prompts">
+                    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                      <!-- 大输入框：限制最大宽度，让出空间给按钮 -->
+                      <el-input
+                        v-model="quickCreateSystemPrompt"
+                        type="textarea"
+                        :rows="4"
+                        :placeholder="t('quickGenSystemPromptPlaceholder')"
+                      >
+                      </el-input>
+                      <!-- 生成按钮 -->
+                      <el-tooltip :content="t('oneClickGenCard')" placement="top">
+                        <el-button
+                          type="primary"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!quickCreateSystemPrompt.trim()||isSystemPromptGenerating"
+                          @click="handleSystemPromptQuickGen"
+                        >
+                          <i v-if="!isSystemPromptGenerating" class="fa-solid fa-wand-magic-sparkles"></i>
+                          <i v-else class="fa-solid fa-spinner fa-spin"></i>
+                        </el-button>
+                      </el-tooltip>
+                      <el-tooltip :content="t('stopGenCard')" placement="top">
+                        <!-- 停止生成按钮 -->
+                        <el-button
+                          type="danger"
+                          size="large"
+                          circle
+                          style="margin: 0;"
+                          :disabled="!isSystemPromptGenerating"
+                          @click="stopSystemPromptQuickGen"
+                        >
+                          <i class="fa-solid fa-stop"></i>
+                        </el-button>
+                      </el-tooltip>
+                    </div>
                     <div class="provider-grid">
                       <!-- 已有提示词磁贴 -->
                       <div

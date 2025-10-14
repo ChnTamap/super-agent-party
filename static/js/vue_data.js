@@ -1213,6 +1213,8 @@ let vue_data = {
     activeMCPTab: 'config',
     quickCreatePrompt: '',
     isGenerating: false, // 是否正在生成
+    quickCreateSystemPrompt: '',
+    isSystemPromptGenerating: false, // 是否正在生成
     memories: [],
     newMemory: {
       id: null,
