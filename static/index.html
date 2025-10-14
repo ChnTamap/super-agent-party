@@ -263,6 +263,46 @@ if ('serviceWorker' in navigator) {
         class="sidebar-mask"
         v-show="isMobile && sidebarVisible"
         @click="sidebarVisible = false"></div>
+      <el-dialog
+        v-model="showModelDialog"
+        :title="t('mainModel')"
+        width="600px">
+        <div class="knowledge-dialog-content">
+          <!-- 服务器列表 -->
+          <div
+            v-for="provider in modelProviders"
+            :key="provider.id"
+            class="knowledge-item"
+            :class="{ active: settings.selectedProvider === provider.id }"
+            @click="
+              settings.selectedProvider = provider.id;
+              selectMainProvider(provider.id);
+              showModelDialog = false;
+            "
+          >
+            <img
+              :src="getVendorLogo(provider.vendor)"
+              class="mini-vendor-logo"
+            />
+            <span>{{ provider.modelId }}</span>
+          </div>
+          <div v-if="Object.keys(modelProviders).length === 0" class="empty-tip">
+              {{ t('firstTimeUse') }}
+              <el-link
+                type="primary"
+                :underline="false"
+                class="font-medium"
+                @click="switchToApiBox"
+              >
+                <el-icon class="mr-1">
+                  <i class="fa-solid fa-key"></i>
+                </el-icon>{{ t('keyBoxInterface') }}
+              </el-link>
+              {{ t('addProviderReturnSelect') }}
+              {{ t('mainmodelnotice') }}
+          </div>
+        </div>
+      </el-dialog>  
       <!-- 内容区 -->
       <el-main class="content">
         <!-- 聊天界面保持不变 -->
@@ -543,46 +583,6 @@ if ('serviceWorker' in navigator) {
                   <a href="#" @click.stop.prevent="switchToagents">{{ t('goToagents') }}</a>
                   {{ t('add') }}
                 </div>
-              </div>
-            </div>
-          </el-dialog>
-          <el-dialog
-            v-model="showModelDialog"
-            :title="t('mainModel')"
-            width="600px">
-            <div class="knowledge-dialog-content">
-              <!-- 服务器列表 -->
-              <div
-                v-for="provider in modelProviders"
-                :key="provider.id"
-                class="knowledge-item"
-                :class="{ active: settings.selectedProvider === provider.id }"
-                @click="
-                  settings.selectedProvider = provider.id;
-                  selectMainProvider(provider.id);
-                  showModelDialog = false;
-                "
-              >
-                <img
-                  :src="getVendorLogo(provider.vendor)"
-                  class="mini-vendor-logo"
-                />
-                <span>{{ provider.modelId }}</span>
-              </div>
-              <div v-if="Object.keys(modelProviders).length === 0" class="empty-tip">
-                  {{ t('firstTimeUse') }}
-                  <el-link
-                    type="primary"
-                    :underline="false"
-                    class="font-medium"
-                    @click="switchToApiBox"
-                  >
-                    <el-icon class="mr-1">
-                      <i class="fa-solid fa-key"></i>
-                    </el-icon>{{ t('keyBoxInterface') }}
-                  </el-link>
-                  {{ t('addProviderReturnSelect') }}
-                  {{ t('mainmodelnotice') }}
               </div>
             </div>
           </el-dialog>
