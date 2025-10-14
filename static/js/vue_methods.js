@@ -8359,6 +8359,7 @@ JSON 结构必须为：
         buffer = chunks[chunks.length - 1];
       }
       this.promptForm.content = this.quickCreateSystemPrompt;
+      this.promptForm.id = null;
       this.savePrompt();
       showNotification(this.t('genSuccess'));
       this.quickCreateSystemPrompt = '';
