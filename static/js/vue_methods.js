@@ -1068,6 +1068,7 @@ let vue_methods = {
           this.visionSettings = data.data.vision || this.visionSettings;
           this.webSearchSettings = data.data.webSearch || this.webSearchSettings;
           this.codeSettings = data.data.codeSettings || this.codeSettings;
+          this.CLISettings = data.data.CLISettings || this.CLISettings;
           this.HASettings = data.data.HASettings || this.HASettings;
           this.chromeMCPSettings = data.data.chromeMCPSettings || this.chromeMCPSettings;
           this.KBSettings = data.data.KBSettings || this.KBSettings;
@@ -1802,6 +1803,7 @@ let vue_methods = {
           vision: this.visionSettings,
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,
+          CLISettings: this.CLISettings,
           HASettings: this.HASettings,
           chromeMCPSettings: this.chromeMCPSettings,
           KBSettings: this.KBSettings,
@@ -8458,5 +8460,23 @@ JSON 结构必须为：
     this.activeMemoryTab = 'prompts';
     this.promptForm = { id: null, name: '', content: systemPrompt };
     this.showPromptDialog = true;
-  }
+  },
+  async browseDirectory() {
+    if (!this.isElectron) {
+      // 浏览器环境
+      return;
+    } else {
+      // Electron 环境
+      try {
+        const result = await window.electronAPI.openDirectoryDialog();
+        if (!result.canceled && result.filePaths.length > 0) {
+          this.CLISettings.cc_path = result.filePaths[0];
+          this.autoSaveSettings();
+        }
+      } catch (error) {
+        console.error('选择目录出错:', error);
+        showNotification('选择目录失败', 'error');
+      }
+    }
+  },
 }

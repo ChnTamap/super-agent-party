@@ -658,7 +658,13 @@ app.whenReady().then(async () => {
         const win = BrowserWindow.fromWebContents(event.sender);
         win.setIgnoreMouseEvents(ignore, options);
     });
-
+    ipcMain.handle('dialog:openDirectory', async () => {
+      const { dialog } = require('electron');
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory']
+      });
+      return result;
+    });
     // 添加新的IPC处理器
     ipcMain.handle('get-ignore-mouse-status', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);

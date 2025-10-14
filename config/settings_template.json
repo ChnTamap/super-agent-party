@@ -143,6 +143,11 @@
       "e2b_api_key": "",
       "sandbox_url":"http://127.0.0.1:8080"
     },
+    "CLISettings": {
+      "enabled": false,
+      "engine": "cc",
+      "cc_path": ""
+    },
     "HASettings": {
       "enabled": false,
       "api_key": "",

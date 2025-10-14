@@ -307,6 +307,11 @@ let vue_data = {
       e2b_api_key: '',
       sandbox_url: 'http://127.0.0.1:8080',
     },
+    CLISettings: {
+      enabled: false,
+      engine: 'cc',
+      cc_path: '',
+    },
     HASettings: {
       enabled: false,
       api_key: '',
@@ -1001,6 +1006,7 @@ let vue_data = {
       { id: 'websearch', title: 'webSearch', icon: 'fa-solid fa-globe' },
       { id: 'document', title: 'knowledgeBase', icon: 'fa-solid fa-book' },
       { id: 'interpreter', title: 'interpreter', icon: 'fa-solid fa-code'},
+      { id: 'CLI', title: 'CLItool', icon: 'fa-solid fa-terminal'},
       { id: 'sticker', title: 'sticker/image', icon: 'fa-solid fa-face-smile'},
       { id: 'HA', title: 'homeAssistant', icon: 'fa-solid fa-house'},
       { id: 'chromeMCP', title: 'browserControl', icon: 'fa-brands fa-chrome' },
