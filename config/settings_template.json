@@ -143,6 +143,11 @@
       "e2b_api_key": "",
       "sandbox_url":"http://127.0.0.1:8080"
     },
+    "CLISettings": {
+      "enabled": false,
+      "engine": "cc",
+      "cc_path": ""
+    },
     "HASettings": {
       "enabled": false,
       "api_key": "",
@@ -245,6 +250,7 @@
       {"name": "webSearchButton", "enabled": true},
       {"name": "memoryButton", "enabled": true},
       {"name": "codeButton", "enabled": false},
+      {"name": "CLIButton", "enabled": false},
       {"name": "stickerButton", "enabled": false},
       {"name": "haButton", "enabled": false},
       {"name": "chromeButton", "enabled": false},
@@ -274,6 +280,7 @@
       {"name": "webSearchButton", "enabled": false},
       {"name": "memoryButton", "enabled": false},
       {"name": "codeButton", "enabled": false},
+      {"name": "CLIButton", "enabled": false},
       {"name": "stickerButton", "enabled": false},
       {"name": "haButton", "enabled": false},
       {"name": "chromeButton", "enabled": false},

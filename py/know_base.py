@@ -2,6 +2,8 @@ import asyncio
 import httpx
 from tiktoken_ext import openai_public
 import tiktoken_ext
+from langchain_core.embeddings import Embeddings
+import requests
 import os
 if __name__ == "__main__":
     from load_files import get_files_json
@@ -24,12 +26,32 @@ from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings
-from langchain_ollama import OllamaEmbeddings
 from typing import List, Dict
 
 from langchain_core.documents import Document
 from py.get_setting import KB_DIR
+
+class MyOpenAICompatibleEmbeddings(Embeddings):
+    def __init__(self, base_url: str, model: str, api_key: str = "empty"):
+        self.base_url = base_url
+        self.model = model
+        self.api_key = api_key
+
+    def embed_query(self, text: str) -> List[float]:
+        response = requests.post(
+            f"{self.base_url}/embeddings",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json={"model": self.model, "input": text}
+        )
+        return response.json()["data"][0]["embedding"]
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        response = requests.post(
+            f"{self.base_url}/embeddings",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json={"model": self.model, "input": texts}
+        )
+        return [r["embedding"] for r in response.json()["data"]]
 
 def chunk_documents(results: List[Dict], cur_kb) -> List[Dict]:
     """为每个文件单独分块并添加元数据"""
@@ -87,17 +109,11 @@ def build_vector_store(docs: List[Document], kb_id, cur_kb: Dict, cur_vendor: st
         raise RuntimeError(f"Failed to save BM25 index: {str(e)}")
     # ========== 向量索引构建 ==========
     try:
-        if cur_vendor == "Ollama":
-            embeddings = OllamaEmbeddings(
-                model=cur_kb["model"],
-                base_url=cur_kb["base_url"].rstrip("/v1").rstrip("/v1/")
-            )
-        else:
-            embeddings = OpenAIEmbeddings(
-                model=cur_kb["model"],
-                openai_api_key=cur_kb["api_key"],
-                openai_api_base=cur_kb["base_url"],
-            )
+        embeddings = MyOpenAICompatibleEmbeddings(
+            model=cur_kb["model"],
+            api_key=cur_kb["api_key"],
+            base_url=cur_kb["base_url"],
+        )
         # 批量处理文档
         batch_size = 5  # 根据显存调整
         vector_db = None
@@ -136,17 +152,11 @@ def load_retrievers(kb_id, cur_kb, cur_vendor):
     bm25_retriever.k = cur_kb["chunk_k"]
     # 加载向量检索器
     kb_path = Path(KB_DIR) / str(kb_id)
-    if cur_vendor == "Ollama":
-        embeddings = OllamaEmbeddings(
-            model=cur_kb["model"],
-            base_url=cur_kb["base_url"].rstrip("/v1").rstrip("/v1/")
-        )
-    else:
-        embeddings = OpenAIEmbeddings(
-            model=cur_kb["model"],
-            openai_api_key=cur_kb["api_key"],
-            openai_api_base=cur_kb["base_url"],
-        )
+    embeddings = MyOpenAICompatibleEmbeddings(
+        model=cur_kb["model"],
+        api_key=cur_kb["api_key"],
+        base_url=cur_kb["base_url"],
+    )
     
     vector_db = FAISS.load_local(
         folder_path=str(kb_path),

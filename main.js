@@ -4,6 +4,7 @@ const { clipboard, nativeImage,desktopCapturer  } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
+const { exec } = require('child_process');
 const { download } = require('electron-dl');
 const sharp = require('sharp')   // 轻量裁剪库，npm i sharp
 const fs = require('fs')
@@ -658,7 +659,13 @@ app.whenReady().then(async () => {
         const win = BrowserWindow.fromWebContents(event.sender);
         win.setIgnoreMouseEvents(ignore, options);
     });
-
+    ipcMain.handle('dialog:openDirectory', async () => {
+      const { dialog } = require('electron');
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory']
+      });
+      return result;
+    });
     // 添加新的IPC处理器
     ipcMain.handle('get-ignore-mouse-status', (event) => {
         const win = BrowserWindow.fromWebContents(event.sender);
@@ -913,7 +920,14 @@ app.whenReady().then(async () => {
         `);
       }
     });
-
+    ipcMain.handle('exec-command', (event, command) => {
+      return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve(stdout);
+        });
+      });
+    });
     // 其他IPC处理...
     ipcMain.on('open-external', (event, url) => {
       shell.openExternal(url)

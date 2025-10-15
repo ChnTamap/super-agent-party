@@ -101,7 +101,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setAlwaysOnTop: (flag) => ipcRenderer.invoke('set-always-on-top', flag),
   showScreenshotOverlay: () => ipcRenderer.invoke('show-screenshot-overlay'),
   cropDesktop:        (opts) => ipcRenderer.invoke('crop-desktop', opts),
-  cancelScreenshotOverlay: () => ipcRenderer.invoke('cancel-screenshot-overlay')
+  cancelScreenshotOverlay: () => ipcRenderer.invoke('cancel-screenshot-overlay'),
+  openDirectoryDialog: async () => {
+    return ipcRenderer.invoke('dialog:openDirectory');
+  },
+  execCommand: (command) => ipcRenderer.invoke('exec-command', command),
+  getPlatform: () => process.platform,
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {

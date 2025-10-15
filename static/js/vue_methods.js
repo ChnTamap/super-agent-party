@@ -1068,6 +1068,7 @@ let vue_methods = {
           this.visionSettings = data.data.vision || this.visionSettings;
           this.webSearchSettings = data.data.webSearch || this.webSearchSettings;
           this.codeSettings = data.data.codeSettings || this.codeSettings;
+          this.CLISettings = data.data.CLISettings || this.CLISettings;
           this.HASettings = data.data.HASettings || this.HASettings;
           this.chromeMCPSettings = data.data.chromeMCPSettings || this.chromeMCPSettings;
           this.KBSettings = data.data.KBSettings || this.KBSettings;
@@ -1077,8 +1078,24 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
-          this.largeMoreButtonDict = data.data.largeMoreButtonDict || this.largeMoreButtonDict;
-          this.smallMoreButtonDict = data.data.smallMoreButtonDict || this.smallMoreButtonDict;
+          if (data.data.largeMoreButtonDict) {
+            this.largeMoreButtonDict = this.largeMoreButtonDict.map(existingButton => {
+              const newButton = data.data.largeMoreButtonDict.find(button => button.name === existingButton.name);
+              if (newButton) {
+                return { ...existingButton, enabled: newButton.enabled };
+              }
+              return existingButton;
+            });
+          }
+          if (data.data.smallMoreButtonDict) {
+            this.smallMoreButtonDict = this.smallMoreButtonDict.map(existingButton => {
+              const newButton = data.data.smallMoreButtonDict.find(button => button.name === existingButton.name);
+              if (newButton) {
+                return { ...existingButton, enabled: newButton.enabled };
+              }
+              return existingButton;
+            });
+          }
           this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
@@ -1110,6 +1127,7 @@ let vue_methods = {
           this.loadDefaultModels();
           this.loadDefaultMotions();
           this.loadGaussScenes();
+          this.checkMobile();
           if (this.asrSettings.enabled) {
             this.startASR();
           }
@@ -1530,37 +1548,44 @@ let vue_methods = {
                   }
                 }
                 // 处理 reasoning_content 逻辑
-                if (parsed.choices?.[0]?.delta?.reasoning_content || parsed.choices?.[0]?.delta?.tool_content) {
-                  let newContent = '';
-                  if (parsed.choices?.[0]?.delta?.reasoning_content) {
-                    newContent = parsed.choices[0].delta.reasoning_content;
+                if (parsed.choices?.[0]?.delta?.reasoning_content) {
+                  let newContent = parsed.choices[0].delta.reasoning_content;
+                  const lastMessage = this.messages[this.messages.length - 1];
+                  
+                  // 初始化高亮块
+                  if (!this.isThinkOpen) {
+                    lastMessage.content += '<div class="highlight-block-reasoning">';
+                    this.isThinkOpen = true;
                   }
-                  if (parsed.choices?.[0]?.delta?.tool_content) {
-                    newContent = parsed.choices[0].delta.tool_content;
+                  
+                  // 处理换行（保留原始换行，通过 CSS 控制显示）
+                  newContent = newContent.replace(/\n/g, '<br>'); // 可选：如果需要 HTML 换行
+                  
+                  // 追加内容到高亮块
+                  lastMessage.content += newContent;
+                  lastMessage.briefly = false;
+                  
+                  this.scrollToBottom();
+                }
+                // 处理 tool_content 逻辑
+                if (parsed.choices?.[0]?.delta?.tool_content) {
+                  const lastMessage = this.messages[this.messages.length - 1];
+                  if (this.isThinkOpen) {
+                    lastMessage.content += '</div>\n\n';
+                    this.isThinkOpen = false; // 重置状态
                   }
                   if (parsed.choices?.[0]?.delta?.tool_link && this.toolsSettings.toolMemorandum.enabled) {
                     this.fileLinks.push(parsed.choices[0].delta.tool_link);
                   }
-                  
-                  // 将新内容中的换行符转换为换行+引用符号
-                  newContent = newContent.replace(/\n/g, '\n> ');
+                  lastMessage.content += parsed.choices[0].delta.tool_content + '\n\n';
                   lastMessage.briefly = false;
-                  if (!this.isThinkOpen) {
-                    // 新增思考块时换行并添加 "> " 前缀
-                    lastMessage.content += '\n> ' + newContent;
-                    this.isThinkOpen = true;
-                  } else {
-                    // 追加内容时直接拼接
-                    lastMessage.content += newContent;
-                  }
-
                   this.scrollToBottom();
                 }
                 // 处理 content 逻辑
                 if (parsed.choices?.[0]?.delta?.content) {
                   const lastMessage = this.messages[this.messages.length - 1];
                   if (this.isThinkOpen) {
-                    lastMessage.content += '\n\n';
+                    lastMessage.content += '</div>\n\n';
                     this.isThinkOpen = false; // 重置状态
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
@@ -1802,6 +1827,7 @@ let vue_methods = {
           vision: this.visionSettings,
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,
+          CLISettings: this.CLISettings,
           HASettings: this.HASettings,
           chromeMCPSettings: this.chromeMCPSettings,
           KBSettings: this.KBSettings,
@@ -8458,5 +8484,51 @@ JSON 结构必须为：
     this.activeMemoryTab = 'prompts';
     this.promptForm = { id: null, name: '', content: systemPrompt };
     this.showPromptDialog = true;
-  }
+  },
+  async browseDirectory() {
+    if (!this.isElectron) {
+      // 浏览器环境
+      return;
+    } else {
+      // Electron 环境
+      try {
+        const result = await window.electronAPI.openDirectoryDialog();
+        if (!result.canceled && result.filePaths.length > 0) {
+          this.CLISettings.cc_path = result.filePaths[0];
+          this.autoSaveSettings();
+        }
+      } catch (error) {
+        console.error('选择目录出错:', error);
+        showNotification('选择目录失败', 'error');
+      }
+    }
+  },
+  async installClaudeCode() {
+    try {
+      const scriptUrl = `${this.partyURL}/sh/claude_code_install.sh`;
+      const platform = await window.electronAPI.getPlatform();
+
+      if (platform === 'win32') {
+        // Windows
+        await window.electronAPI.execCommand(
+          `start powershell -NoExit -Command "Invoke-WebRequest -Uri ${scriptUrl} -OutFile claude_install.ps1; .\\claude_install.ps1"`
+        );
+      } else if (platform === 'darwin') {
+        // macOS
+        await window.electronAPI.execCommand(
+          `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
+        );
+      } else {
+        // Linux
+        await window.electronAPI.execCommand(
+          `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
+        );
+      }
+      showNotification(this.t('scriptExecuting'));
+    } catch (error) {
+      showNotification(`failed to install Claude Code: ${error.message}`, 'error');
+    } finally {
+
+    }
+  },
 }
