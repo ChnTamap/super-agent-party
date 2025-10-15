@@ -1,27 +1,6 @@
-import os
-import pathlib
-import subprocess
-import sys
 import anyio
 from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage, TextBlock
 from py.get_setting import load_settings
-
-def global_npm_bin_to_path():
-    """获取全局 npm bin 目录，失败时抛出异常"""
-    try:
-        prefix = subprocess.check_output(["npm", "prefix", "-g"], text=True, stderr=subprocess.DEVNULL).strip()
-    except Exception:
-        raise RuntimeError("未找到 Node.js 或 npm，请先安装并确保其在 PATH 中！")
-    
-    bin_dir = prefix if sys.platform == "win32" else str(pathlib.Path(prefix) / "bin")
-    print(f"获取到 npm 全局 bin 目录: {bin_dir}")
-    return bin_dir
-
-# 动态处理 PATH 分隔符
-path_sep = ";" if sys.platform == "win32" else ":"
-env = {
-    "PATH": f"{global_npm_bin_to_path()}{path_sep}{os.environ.get('PATH', '')}"
-}
 
 async def claude_code_async(prompt):
     settings = await load_settings()
@@ -34,7 +13,6 @@ async def claude_code_async(prompt):
         cwd=cwd,
         permission_mode='acceptEdits',
         continue_conversation=True,
-        env=env  # 显式传递更新后的环境变量
     )
     buffer = []
     async for message in query(prompt=prompt, options=options):
