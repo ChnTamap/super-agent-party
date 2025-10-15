@@ -1078,8 +1078,24 @@ let vue_methods = {
           this.knowledgeBases = data.data.knowledgeBases || this.knowledgeBases;
           this.modelProviders = data.data.modelProviders || this.modelProviders;
           this.systemSettings = data.data.systemSettings || this.systemSettings;
-          this.largeMoreButtonDict = data.data.largeMoreButtonDict || this.largeMoreButtonDict;
-          this.smallMoreButtonDict = data.data.smallMoreButtonDict || this.smallMoreButtonDict;
+          if (data.data.largeMoreButtonDict) {
+            this.largeMoreButtonDict = this.largeMoreButtonDict.map(existingButton => {
+              const newButton = data.data.largeMoreButtonDict.find(button => button.name === existingButton.name);
+              if (newButton) {
+                return { ...existingButton, enabled: newButton.enabled };
+              }
+              return existingButton;
+            });
+          }
+          if (data.data.smallMoreButtonDict) {
+            this.smallMoreButtonDict = this.smallMoreButtonDict.map(existingButton => {
+              const newButton = data.data.smallMoreButtonDict.find(button => button.name === existingButton.name);
+              if (newButton) {
+                return { ...existingButton, enabled: newButton.enabled };
+              }
+              return existingButton;
+            });
+          }
           this.currentLanguage = data.data.currentLanguage || this.currentLanguage;
           this.mcpServers = data.data.mcpServers || this.mcpServers;
           this.a2aServers = data.data.a2aServers || this.a2aServers;
@@ -1111,6 +1127,7 @@ let vue_methods = {
           this.loadDefaultModels();
           this.loadDefaultMotions();
           this.loadGaussScenes();
+          this.checkMobile();
           if (this.asrSettings.enabled) {
             this.startASR();
           }
