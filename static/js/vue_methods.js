@@ -8486,4 +8486,32 @@ JSON 结构必须为：
       }
     }
   },
+  async installClaudeCode() {
+    try {
+      const scriptUrl = `${this.partyURL}/sh/claude_code_install.sh`;
+      const platform = await window.electronAPI.getPlatform();
+
+      if (platform === 'win32') {
+        // Windows
+        await window.electronAPI.execCommand(
+          `start powershell -NoExit -Command "Invoke-WebRequest -Uri ${scriptUrl} -OutFile claude_install.ps1; .\\claude_install.ps1"`
+        );
+      } else if (platform === 'darwin') {
+        // macOS
+        await window.electronAPI.execCommand(
+          `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
+        );
+      } else {
+        // Linux
+        await window.electronAPI.execCommand(
+          `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
+        );
+      }
+      showNotification(this.t('scriptExecuting'));
+    } catch (error) {
+      showNotification(`failed to install Claude Code: ${error.message}`, 'error');
+    } finally {
+
+    }
+  },
 }

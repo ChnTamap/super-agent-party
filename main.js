@@ -4,6 +4,7 @@ const { clipboard, nativeImage,desktopCapturer  } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { spawn } = require('child_process')
+const { exec } = require('child_process');
 const { download } = require('electron-dl');
 const sharp = require('sharp')   // 轻量裁剪库，npm i sharp
 const fs = require('fs')
@@ -919,7 +920,14 @@ app.whenReady().then(async () => {
         `);
       }
     });
-
+    ipcMain.handle('exec-command', (event, command) => {
+      return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+          if (error) reject(error);
+          else resolve(stdout);
+        });
+      });
+    });
     // 其他IPC处理...
     ipcMain.on('open-external', (event, url) => {
       shell.openExternal(url)

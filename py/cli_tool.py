@@ -7,7 +7,7 @@ async def claude_code_async(prompt):
     CLISettings= settings["CLISettings"]
     cwd = CLISettings["cc_path"]
     if cwd is None or cwd.strip() == "":
-        raise "没有设置工作目录，请先设置工作目录！"
+        return "No working directory is set, please set the working directory first!"
     # With options
     options = ClaudeAgentOptions(
         cwd=cwd,

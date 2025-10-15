@@ -4987,7 +4987,30 @@ if ('serviceWorker' in navigator) {
                         </el-input>
                       </el-form-item>
                     </div>
+                    <el-alert
+                      type="info"
+                      :closable="false"
+                      class="mb-2"
+                    >
+                      <template #default>
+                        <div class="alert-content">
+                          {{ t('ClaudeCodeNotice1') }}
+                        </div>
+                      </template>
+                    </el-alert>
+                    <div class="browser-mode-btn-container" v-show="CLISettings.engine === 'cc'">
+                      <el-button
+                        class="browser-mode-btn"
+                        type="primary"
+                        @click="installClaudeCode"
+                        round
+                        size="large">
+                          <i class="fa-solid fa-download"></i>
+                          {{ t('installClaudeCode') }}
+                      </el-button>
+                    </div>
                   </div>
+
                 </el-form> 
                 <!-- Web端提示 -->
                 <div v-else >

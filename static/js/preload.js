@@ -105,6 +105,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openDirectoryDialog: async () => {
     return ipcRenderer.invoke('dialog:openDirectory');
   },
+  execCommand: (command) => ipcRenderer.invoke('exec-command', command),
+  getPlatform: () => process.platform,
 });
 
 contextBridge.exposeInMainWorld('vmcAPI', {
