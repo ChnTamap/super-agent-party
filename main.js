@@ -380,20 +380,27 @@ async function startBackend() {
         '--host', BACKEND_HOST,
       ], spawnOptions);
     } else {
-      // 生产模式
-      let serverExecutable = process.platform === 'win32' ? 'server.exe' : 'server'
-      const resourcesPath = process.resourcesPath || path.join(process.execPath, '..', 'resources')
-      const exePath = path.join(resourcesPath, 'server', serverExecutable)
-      
-      console.log(`Starting backend from: ${exePath}`)
-      
-      backendProcess = spawn(exePath, [
-        '--port', PORT.toString(),
-        '--host', BACKEND_HOST,
-      ], {
+      // 生产模式：通过用户登录级 shell 启动后端
+      const shell = process.env.SHELL || (process.platform === 'win32' ? 'cmd.exe' : '/bin/sh');
+      const serverExecutable = process.platform === 'win32' ? 'server.exe' : 'server';
+      const resourcesPath = process.resourcesPath || path.join(process.execPath, '..', 'resources');
+      let exePath = path.join(resourcesPath, 'server', serverExecutable);
+      if (!fs.existsSync(exePath)) {
+        exePath = path.join(__dirname, 'dist', serverExecutable);
+      }
+      console.log(`Starting backend via login shell: ${shell}`);
+      console.log(`Executable path: ${exePath}`);
+
+      const command = process.platform === 'win32'
+        ? `"${exePath}" --port ${PORT} --host ${BACKEND_HOST}`
+        : `"${exePath}" --port ${PORT} --host ${BACKEND_HOST}`;
+
+      backendProcess = spawn(shell, ['-l','-c', command], {
         ...spawnOptions,
-        cwd: path.dirname(exePath)
-      })
+        cwd: path.dirname(exePath),
+        stdio: 'inherit', // 可选：让用户看到子进程输出
+        env:process.env
+      });
     }
 
     // 简化日志处理
