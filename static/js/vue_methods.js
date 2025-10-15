@@ -1550,7 +1550,7 @@ let vue_methods = {
                   
                   this.scrollToBottom();
                 }
-                // 处理 content 逻辑
+                // 处理 tool_content 逻辑
                 if (parsed.choices?.[0]?.delta?.tool_content) {
                   const lastMessage = this.messages[this.messages.length - 1];
                   if (this.isThinkOpen) {
@@ -1561,6 +1561,7 @@ let vue_methods = {
                     this.fileLinks.push(parsed.choices[0].delta.tool_link);
                   }
                   lastMessage.content += parsed.choices[0].delta.tool_content + '\n\n';
+                  lastMessage.briefly = false;
                   this.scrollToBottom();
                 }
                 // 处理 content 逻辑
