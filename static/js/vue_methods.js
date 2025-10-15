@@ -1532,30 +1532,29 @@ let vue_methods = {
                 }
                 // 处理 reasoning_content 逻辑
                 if (parsed.choices?.[0]?.delta?.reasoning_content) {
-                  let newContent = '';
-                  if (parsed.choices?.[0]?.delta?.reasoning_content) {
-                    newContent = parsed.choices[0].delta.reasoning_content;
+                  let newContent = parsed.choices[0].delta.reasoning_content;
+                  const lastMessage = this.messages[this.messages.length - 1];
+                  
+                  // 初始化高亮块
+                  if (!this.isThinkOpen) {
+                    lastMessage.content += '<div class="highlight-block-reasoning">';
+                    this.isThinkOpen = true;
                   }
                   
-                  // 将新内容中的换行符转换为换行+引用符号
-                  newContent = newContent.replace(/\n/g, '\n> ');
+                  // 处理换行（保留原始换行，通过 CSS 控制显示）
+                  newContent = newContent.replace(/\n/g, '<br>'); // 可选：如果需要 HTML 换行
+                  
+                  // 追加内容到高亮块
+                  lastMessage.content += newContent;
                   lastMessage.briefly = false;
-                  if (!this.isThinkOpen) {
-                    // 新增思考块时换行并添加 "> " 前缀
-                    lastMessage.content += '\n> ' + newContent;
-                    this.isThinkOpen = true;
-                  } else {
-                    // 追加内容时直接拼接
-                    lastMessage.content += newContent;
-                  }
-
+                  
                   this.scrollToBottom();
                 }
                 // 处理 content 逻辑
                 if (parsed.choices?.[0]?.delta?.tool_content) {
                   const lastMessage = this.messages[this.messages.length - 1];
                   if (this.isThinkOpen) {
-                    lastMessage.content += '\n\n';
+                    lastMessage.content += '</div>\n\n';
                     this.isThinkOpen = false; // 重置状态
                   }
                   if (parsed.choices?.[0]?.delta?.tool_link && this.toolsSettings.toolMemorandum.enabled) {
@@ -1568,7 +1567,7 @@ let vue_methods = {
                 if (parsed.choices?.[0]?.delta?.content) {
                   const lastMessage = this.messages[this.messages.length - 1];
                   if (this.isThinkOpen) {
-                    lastMessage.content += '\n\n';
+                    lastMessage.content += '</div>\n\n';
                     this.isThinkOpen = false; // 重置状态
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
