@@ -998,6 +998,7 @@ key3`,
         'scriptExecuting': '脚本执行中,请请在终端中查看并添加配置',
         'installClaudeCode': '安装Claude Code',
         'ClaudeCodeNotice1': '如果你还没有安装Claude Code，请点击下方按钮进行安装，或者在终端中直接输入`bash -c "$(curl -fsSL http://127.0.0.1:3456/sh/claude_code_install.sh)"`即可安装并配置自定义的API地址和API Key；注意！你需要在Claude Code配置支持Anthropic类型的接口，否则会报错',
+        'browserEmbedCodeInstructions': '浏览器嵌入代码，你可以将以下代码嵌入到你的网页中，以实现嵌入功能',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1994,6 +1995,7 @@ Key3`,
         'webNotSupported': 'Browser mode not supported, desktop only',
         'scriptExecuting': 'Script executing, please check and add configuration in the terminal',
         'installClaudeCode': 'Install Claude Code',
-        'ClaudeCodeNotice1': 'If you haven\'t installed Claude Code yet, please click the button below to install it, or simply enter `bash -c "$(curl -fsSL http://127.0.0.1:3456/sh/claude_code_install.sh)"` in the terminal to install and configure a custom API address and API Key. Note! You need to ensure Claude Code is configured to support Anthropic-type interfaces, otherwise errors will occur.'
+        'ClaudeCodeNotice1': 'If you haven\'t installed Claude Code yet, please click the button below to install it, or simply enter `bash -c "$(curl -fsSL http://127.0.0.1:3456/sh/claude_code_install.sh)"` in the terminal to install and configure a custom API address and API Key. Note! You need to ensure Claude Code is configured to support Anthropic-type interfaces, otherwise errors will occur.',
+        'browserEmbedCodeInstructions': 'Browser embed code, you can embed the following code into your webpage to enable the embedding feature',
     },
   };

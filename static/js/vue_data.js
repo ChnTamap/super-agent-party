@@ -1479,6 +1479,16 @@ docker run -d \\
   -v ./super-agent-data:/app/data \\
   ailm32442/super-agent-party:latest
 `,
+    browserEmbedCodeExamples: `<div id="super-agent-party">
+  <iframe 
+    src="${backendURL}/" 
+    width="100%" 
+    height="100%"
+    frameborder="0" 
+    allowfullscreen>
+  </iframe>
+  <p>Powered By<a href="${backendURL}/">Super Agent Party</a></p>
+</div>`,
     codeExamples: {
       python: `from openai import OpenAI
 client = OpenAI(
