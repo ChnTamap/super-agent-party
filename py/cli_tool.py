@@ -45,47 +45,43 @@ get_shell_environment()
 
 # 现在导入 Claude SDK
 import anyio
-from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage, TextBlock
+from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage,ResultMessage, TextBlock
 from py.get_setting import load_settings
 
-async def claude_code_async(prompt):
-    # Validate environment variables
-    if 'ANTHROPIC_API_KEY' not in os.environ:
-        return "Error: ANTHROPIC_API_KEY environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
+from typing import AsyncIterator
 
-    if 'ANTHROPIC_BASE_URL' not in os.environ:
-        return "Error: ANTHROPIC_BASE_URL environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
-    
-    if 'ANTHROPIC_MODEL' not in os.environ:
-        return "Error: ANTHROPIC_MODEL environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
-    
-    
+async def claude_code_async(prompt) -> str | AsyncIterator[str]:
+    """返回 str（报错）或 AsyncIterator[str]（正常流式输出）。"""
+    # 1. 环境变量检查
+    for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "ANTHROPIC_MODEL"):
+        if key not in os.environ:
+            return f"Error: {key} environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
+
+    # 2. 工作目录检查
     settings = await load_settings()
-    CLISettings = settings["CLISettings"]
-    cwd = CLISettings["cc_path"]
-    
-    if cwd is None or cwd.strip() == "":
+    cwd = settings.get("CLISettings", {}).get("cc_path")
+    if not cwd or not cwd.strip():
         return "No working directory is set, please set the working directory first!"
-    
-    options = ClaudeAgentOptions(
-        cwd=cwd,
-        permission_mode='acceptEdits',
-        continue_conversation=True,
-        env={
-            'ANTHROPIC_API_KEY': os.environ['ANTHROPIC_API_KEY'],
-            'ANTHROPIC_BASE_URL': os.environ['ANTHROPIC_BASE_URL'],
-            'ANTHROPIC_MODEL': os.environ['ANTHROPIC_MODEL'],
-        }
-    )
-    
-    buffer = []
-    async for message in query(prompt=prompt, options=options):
-        if isinstance(message, AssistantMessage):
-            for block in message.content:
-                if isinstance(block, TextBlock):
-                    print(block.text)
-                    buffer.append(block.text)
-    return "\n\n".join(buffer)
+
+    # 3. 正常场景：返回异步生成器
+    async def _stream() -> AsyncIterator[str]:
+        options = ClaudeAgentOptions(
+            cwd=cwd,
+            permission_mode='acceptEdits',
+            continue_conversation=True,
+            env={
+                'ANTHROPIC_API_KEY': os.environ['ANTHROPIC_API_KEY'],
+                'ANTHROPIC_BASE_URL': os.environ['ANTHROPIC_BASE_URL'],
+                'ANTHROPIC_MODEL': os.environ['ANTHROPIC_MODEL'],
+            }
+        )
+        async for message in query(prompt=prompt, options=options):
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        yield block.text
+
+    return _stream()
 
 claude_info = """Claude Code，Anthropic 官方的 Claude CLI
   工具。这是一个交互式命令行工具，专门帮助用户完成软件工程任务。

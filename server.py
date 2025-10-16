@@ -40,13 +40,13 @@ from fastapi import status
 from fastapi.responses import JSONResponse, StreamingResponse,Response
 import uuid
 import time
-from typing import Any, List, Dict,Optional, Tuple
+from typing import Any, AsyncIterator, List, Dict,Optional, Tuple
 import shortuuid
 from py.mcp_clients import McpClient
 from contextlib import asynccontextmanager
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
+import aiofiles
 import argparse
 from mem0 import Memory
 from py.qq_bot_manager import QQBotManager
@@ -353,6 +353,12 @@ async_tools_lock = asyncio.Lock()
 async def execute_async_tool(tool_id: str, tool_name: str, args: dict, settings: dict,user_prompt: str):
     try:
         results = await dispatch_tool(tool_name, args, settings)
+        if isinstance(results, AsyncIterator):
+            buffer = []
+            async for chunk in results:
+                buffer.append(chunk)
+            results = "".join(buffer)
+                
         if tool_name in ["query_knowledge_base"] and type(results) == list:
             from py.know_base import rerank_knowledge_base
             if settings["KBSettings"]["is_rerank"]:
@@ -416,7 +422,7 @@ async def get_image_content(image_url: str) -> str:
                 f.write(str(response.choices[0].message.content))
     return content
 
-async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str | List | None:
+async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str | List | AsyncIterator[str] | None :
     global mcp_client_list,_TOOL_HOOKS,HA_client,ChromeMCP_client
     print("dispatch_tool",tool_name,tool_params)
     from py.web_search import (
@@ -2038,38 +2044,74 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 "content": str(response_content),
                             }
                         )
-                        request.messages.append(
-                            {
-                                "role": "tool",
-                                "tool_call_id": tool_calls[0].id,
-                                "name": response_content.name,
-                                "content": str(results),
-                            }
-                        )
                         if (settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both') and settings['tools']['asyncTools']['enabled'] is False:
                             request.messages[-1]['content'] += f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。"
                         if settings['tools']['asyncTools']['enabled']:
                             pass
                         else:
-                            # 获取时间戳和uuid
                             timestamp = time.time()
-                            uid = str(uuid.uuid4())
-                            # 构造文件名
+                            uid     = str(uuid.uuid4())
                             filename = f"{timestamp}_{uid}.txt"
-                            # 将搜索结果写入uploaded_file文件夹下的filename文件
-                            with open(os.path.join(TOOL_TEMP_DIR, filename), "w", encoding='utf-8') as f:
-                                f.write(str(results))            
-                            # 将文件链接更新为新的链接
-                            fileLink=f"{fastapi_base_url}tool_temp/{filename}"
-                            tool_chunk = {
-                                "choices": [{
-                                    "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{response_content.name}{await t("tool_result")}</div><div>{str(results)}</div></div>""",
-                                        "tool_link": fileLink,
-                                    }
-                                }]
+                            file_path = os.path.join(TOOL_TEMP_DIR, filename)
+
+                            # 工具名国际化
+                            tool_name_text = f"{response_content.name}{await t('tool_result')}"
+
+                            # ---------- 统一 SSE 封装 ----------
+                            def make_sse(tool_html: str) -> str:
+                                chunk = {
+                                    "choices": [{
+                                        "delta": {
+                                            "tool_content": tool_html,
+                                            "tool_link": f"{fastapi_base_url}tool_temp/{filename}",
+                                        }
+                                    }]
+                                }
+                                return f"data: {json.dumps(chunk)}\n\n"
+
+                            # ---------- 分情况处理 ----------
+                            if not isinstance(results, AsyncIterator):
+                                # 老逻辑：一次性写完、一次性发
+                                async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+                                    await f.write(results)
+                                html = (
+                                    '<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">'
+                                    f'<div style="margin-bottom: 10px;">{tool_name_text}</div>'
+                                    f'<div>{results}</div>'
+                                    '</div>'
+                                )
+                                yield make_sse(html)
+                            else:  # AsyncIterator[str]
+                                buffer = []
+                                first = True
+                                async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+                                    async for chunk in results:
+                                        await f.write(chunk)
+                                        await f.flush()
+                                        buffer.append(chunk)
+                                        if first:                       # 第一次：带头部
+                                            html = (
+                                                '<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">'
+                                                f'<div style="margin-bottom: 10px;">{tool_name_text}</div>'
+                                                f'<div>{chunk}'
+                                            )
+                                            first = False
+                                        else:                           # 中间：只拼裸文本
+                                            html = chunk
+
+                                        yield make_sse(html)
+
+                                    # 迭代结束：补尾部
+                                    yield make_sse('</div></div>')
+                                results = "".join(buffer)
+                        request.messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_calls[0].id,
+                                "name": response_content.name,
+                                "content": str("".join(results)),
                             }
-                            yield f"data: {json.dumps(tool_chunk)}\n\n"
+                        )    
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
@@ -3144,10 +3186,14 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 results = []
                 for data in data_list:
                     result = await dispatch_tool(response_content.name, data,settings) # 将结果添加到results列表中
+                    if isinstance(results, AsyncIterator):
+                        buffer = []
+                        async for chunk in results:
+                            buffer.append(chunk)
+                        results = "".join(buffer)
                     if result is not None:
                         # 将结果添加到results列表中
                         results.append(json.dumps(result))
-
                 # 将所有结果拼接成一个连续的字符串
                 combined_results = ''.join(results)
                 if combined_results:
