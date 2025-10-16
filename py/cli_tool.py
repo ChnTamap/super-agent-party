@@ -49,11 +49,16 @@ from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage, TextBl
 from py.get_setting import load_settings
 
 async def claude_code_async(prompt):
-    # 验证环境变量
+    # Validate environment variables
     if 'ANTHROPIC_API_KEY' not in os.environ:
-        return "错误：ANTHROPIC_API_KEY 环境变量未设置。请检查您的 shell 配置文件 (.zshrc, .bash_profile 等)"
+        return "Error: ANTHROPIC_API_KEY environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
+
+    if 'ANTHROPIC_BASE_URL' not in os.environ:
+        return "Error: ANTHROPIC_BASE_URL environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
     
-    print(f"ANTHROPIC_API_KEY is set: {'Yes' if os.environ.get('ANTHROPIC_API_KEY') else 'No'}")
+    if 'ANTHROPIC_MODEL' not in os.environ:
+        return "Error: ANTHROPIC_MODEL environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
+    
     
     settings = await load_settings()
     CLISettings = settings["CLISettings"]
