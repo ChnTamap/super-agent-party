@@ -1964,7 +1964,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         tool_call_chunk = {
                             "choices": [{
                                 "delta": {
-                                    "tool_content": f'\n\n<div class="highlight-block">\n{modified_tool}\n</div>\n\n',
+                                    "tool_content": f'\n\n<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">\n{modified_tool}\n</div>\n\n',
                                 }
                             }]
                         }
@@ -2056,7 +2056,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
 
                             # 工具名国际化
                             tool_name_text = f"{response_content.name}{await t('tool_result')}"
-
+                            stream_tool_name_text = f"{response_content.name}{await t('stream_tool_result')}"
                             # ---------- 统一 SSE 封装 ----------
                             def make_sse(tool_html: str) -> str:
                                 chunk = {
@@ -2092,7 +2092,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                         if first:                       # 第一次：带头部
                                             html = (
                                                 '<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">'
-                                                f'<div style="margin-bottom: 10px;">{tool_name_text}</div>'
+                                                f'<div style="margin-bottom: 10px;">{stream_tool_name_text}</div>'
                                                 f'<div>{chunk}'
                                             )
                                             first = False
