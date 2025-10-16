@@ -87,11 +87,25 @@ async def claude_code_async(prompt):
                     buffer.append(block.text)
     return "\n\n".join(buffer)
 
+claude_info = """Claude Code，Anthropic 官方的 Claude CLI
+  工具。这是一个交互式命令行工具，专门帮助用户完成软件工程任务。
+
+  可以协助您：
+  - 编写、调试和重构代码
+  - 搜索和分析文件内容
+  - 运行构建和测试
+  - 管理 Git 操作
+  - 代码审查和优化
+  - 以及其他编程相关的任务
+
+  运行在您的本地环境中，可以访问文件系统并使用各种工具来帮助您完成工作。
+"""
+
 claude_code_tool = {
     "type": "function",
     "function": {
         "name": "claude_code_async",
-        "description": "你可以和控制CLI的智能体Claude Code进行交互，他可以帮你控制本地文件系统、例如增删查改本地文件，也可以生成代码文件并执行和返回结果。当用户提出一些需要和本地文件系统交互的需求时，你可以使用这个工具来满足用户需求。",
+        "description": f"你可以和控制CLI的智能体Claude Code进行交互。{claude_info}",
         "parameters": {
             "type": "object",
             "properties": {
