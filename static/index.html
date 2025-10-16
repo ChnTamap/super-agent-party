@@ -1033,8 +1033,9 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
-            <el-tooltip :content="t('interpreter')" placement="top">
+            <el-tooltip :content="t('CLItool')" placement="top">
               <el-button
+                :disabled="!isElectron"
                 @click="CLISettings.enabled = !CLISettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="CLISettings.enabled ? 'primary' : 'default'"
