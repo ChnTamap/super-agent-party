@@ -2771,6 +2771,14 @@ if ('serviceWorker' in navigator) {
                               </el-select>
                             </el-form-item>
                             <div v-for="(event, eventIdx) in b.action.random.events" :key="eventIdx">
+                              <div class="event-button-group" v-if="b.action.type === 'random'">
+                                <el-button @click="addNewEvent(idx)" type="primary" circle size="small">
+                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
+                                </el-button>
+                                <el-button v-show="eventIdx>0" @click="removeEvent(idx,eventIdx)" type="danger" circle size="small">
+                                  <el-icon><i class="fa-solid fa-trash"></i></el-icon>
+                                </el-button>
+                              </div>
                               <el-form-item v-if="b.action.type === 'random'">
                                 <el-input
                                   type="textarea"
@@ -2780,14 +2788,6 @@ if ('serviceWorker' in navigator) {
                                   @input="autoSaveSettings"
                                   class="full-width-input"/>
                               </el-form-item>
-                              <div class="event-button-group" v-if="b.action.type === 'random'">
-                                <el-button @click="addNewEvent(idx)" type="primary" circle size="small">
-                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
-                                </el-button>
-                                <el-button v-show="eventIdx>0" @click="removeEvent(idx,eventIdx)" type="danger" circle size="small">
-                                  <el-icon><i class="fa-solid fa-trash"></i></el-icon>
-                                </el-button>
-                              </div>
                             </div>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
                               <el-tooltip :content="t('resetBehavior')" placement="top">
