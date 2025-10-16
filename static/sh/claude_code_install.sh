@@ -224,6 +224,7 @@ echo "export ANTHROPIC_MODEL=\"$model\"" >> "$rc_file"
 echo -e "${GREEN}✅ Environment variables successfully updated in $rc_file${NC}"
 
 echo -e "\n🎉 Configuration completed successfully｜配置已完成 🎉"
+echo -e "\n🔄 Please restart the super agent party for the configuration to take effect.｜请重启super agent party以使配置生效"
 echo -e "\n🔄 Please restart your terminal or run｜重新启动终端并运行:"
 echo -e "   source $rc_file"
 echo -e "\n🚀 Then you can start using Claude Code with｜使用下面命令进入 Claude Code:"

@@ -71,6 +71,11 @@ async def claude_code_async(prompt):
         cwd=cwd,
         permission_mode='acceptEdits',
         continue_conversation=True,
+        env={
+            'ANTHROPIC_API_KEY': os.environ['ANTHROPIC_API_KEY'],
+            'ANTHROPIC_BASE_URL': os.environ['ANTHROPIC_BASE_URL'],
+            'ANTHROPIC_MODEL': os.environ['ANTHROPIC_MODEL'],
+        }
     )
     
     buffer = []

@@ -1238,7 +1238,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 120px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
                                         "async_tool_id": tid,
                                         "tool_link": fileLink,
                                     }
@@ -1280,7 +1280,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 120px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
                                         "async_tool_id": tid,
                                         "tool_link": fileLink,
                                     }
@@ -1364,7 +1364,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 120px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(all_kb_content)}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(all_kb_content)}</div></div>""",
                                         "tool_link": fileLink,
                                     }
                                 }]
@@ -1429,7 +1429,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 120px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(results)}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(results)}</div></div>""",
                                         "tool_link": fileLink,
                                     }
                                 }]
@@ -2064,7 +2064,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 120px; overflow-y: auto;"><div style="margin-bottom: 10px;">{response_content.name}{await t("tool_result")}</div><div>{str(results)}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{response_content.name}{await t("tool_result")}</div><div>{str(results)}</div></div>""",
                                         "tool_link": fileLink,
                                     }
                                 }]
