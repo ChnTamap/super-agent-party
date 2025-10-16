@@ -1893,7 +1893,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     if tool_calls:
                         response_content = tool_calls[0].function
                         print(response_content)
-                        if response_content.name in  ["DDGsearch_async","searxng_async", "Bing_search_async", "Google_search_async", "Brave_search_async", "Exa_search_async", "Serper_search_async","bochaai_search_async"]:
+                        if response_content.name in  ["DDGsearch_async","searxng_async", "Bing_search_async", "Google_search_async", "Brave_search_async", "Exa_search_async", "Serper_search_async","bochaai_search_async","Tavily_search_async"]:
                             chunk_dict = {
                                 "id": "agentParty",
                                 "choices": [
