@@ -3300,6 +3300,17 @@ if ('serviceWorker' in navigator) {
                           </el-button>
                         </div>
                       </div>
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            {{ t('extraParamsNotice') }}
+                          </div>
+                        </template>
+                      </el-alert>
                     </div>
                   </div>
                 </el-form>

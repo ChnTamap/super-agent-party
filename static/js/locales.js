@@ -999,6 +999,7 @@ key3`,
         'installClaudeCode': '安装Claude Code',
         'ClaudeCodeNotice1': '如果你还没有安装Claude Code，请点击下方按钮进行安装，或者在终端中直接输入`bash -c "$(curl -fsSL http://127.0.0.1:3456/sh/claude_code_install.sh)"`即可安装并配置自定义的API地址和API Key；注意！你需要在Claude Code配置支持Anthropic类型的接口，否则会报错。如果你重新配置了Claude code，需要重启agent party以获取最新的配置',
         'browserEmbedCodeInstructions': '浏览器嵌入代码，你可以将以下代码嵌入到你的网页中，以实现嵌入功能',
+        'extraParamsNotice': '由于不同的服务商可能会给出不同的参数，这可能超出了标准的OpenAI格式，因此，你可能需要手动添加这些参数以适应你的服务商。如果你不确定如何调整这些参数，你可以查询服务商的接口文档。比较常见的参数例如：`enable_thinking`在一些服务商接口中可以控制部分模型是否开启推理。',
     },
     'en-US': {
         'chat': 'Chat',
@@ -1997,5 +1998,6 @@ Key3`,
         'installClaudeCode': 'Install Claude Code',
         'ClaudeCodeNotice1': 'If you have not yet installed Claude Code, click the button below to install it, or enter `bash -c "$(curl -fsSL http://127.0.0.1:3456/sh/claude_code_install.sh)"` directly in the terminal to install and configure a custom API address and API Key. Note! You must configure Claude Code to support the Anthropic interface type, otherwise an error will occur. If you reconfigure Claude Code, you need to restart the agent party to obtain the latest configuration.',
         'browserEmbedCodeInstructions': 'Browser embed code, you can embed the following code into your webpage to enable the embedding feature',
+        'extraParamsNotice': 'Since different service providers may offer different parameters, which might go beyond the standard OpenAI format, you may need to manually add these parameters to suit your provider. If you are unsure how to adjust these parameters, you can refer to the provider’s API documentation. Common parameters include, for example, `enable_thinking`, which in some provider interfaces can control whether certain models enable reasoning.'
     },
   };
