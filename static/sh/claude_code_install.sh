@@ -174,7 +174,7 @@ if [ "$existing_config" = false ]; then
     echo -e "\n🔧 请配置 Claude Code 参数，API接口必须为Anthropic类型的接口"
     
     # API URL
-    echo -e "\n🌐 Enter the API URL (e.g. https://api.siliconflow.cn/)｜输入 API URL (例如 https://api.siliconflow.cn/):"
+    echo -e "\n🌐 Enter the API URL (e.g. https://api.deepseek.com/anthropic/)｜输入 API URL (例如 https://api.deepseek.com/anthropic/):"
     read -p "API URL: " api_url
     while [ -z "$api_url" ]; do
         echo -e "${RED}⚠️  API URL cannot be empty｜API URL 不能为空${NC}"
@@ -193,7 +193,7 @@ if [ "$existing_config" = false ]; then
     done
 
     # Model
-    echo -e "\n🤖 Enter the model name (e.g. moonshotai/Kimi-K2-Instruct)｜输入模型名称 (例如 moonshotai/Kimi-K2-Instruct):"
+    echo -e "\n🤖 Enter the model name (e.g. deepseek-chat)｜输入模型名称 (例如 deepseek-chat):"
     read -p "Model: " model
     while [ -z "$model" ]; do
         echo -e "${RED}⚠️  Model name cannot be empty｜模型名称不能为空${NC}"

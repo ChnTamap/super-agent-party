@@ -8509,18 +8509,19 @@ JSON 结构必须为：
       const platform = await window.electronAPI.getPlatform();
 
       if (platform === 'win32') {
-        // Windows
-        await window.electronAPI.execCommand(
-          `start powershell -NoExit -Command "Invoke-WebRequest -Uri ${scriptUrl} -OutFile claude_install.ps1; .\\claude_install.ps1"`
+        // 一条命令：先 curl 拉取远程 bat，再立即执行；/k 保持窗口
+        const batUrl = `${this.partyURL}/sh/claude_code_install.bat`;
+        window.electronAPI.execCommand(
+          `start "" cmd /k "curl -fsSL ${batUrl} -o \"%TEMP%\\claude_install.bat\" && \"%TEMP%\\claude_install.bat\""`
         );
       } else if (platform === 'darwin') {
         // macOS
-        await window.electronAPI.execCommand(
+        window.electronAPI.execCommand(
           `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
         );
       } else {
         // Linux
-        await window.electronAPI.execCommand(
+        window.electronAPI.execCommand(
           `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
         );
       }
