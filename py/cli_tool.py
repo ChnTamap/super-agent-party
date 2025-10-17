@@ -83,8 +83,7 @@ async def claude_code_async(prompt) -> str | AsyncIterator[str]:
 
     return _stream()
 
-claude_info = """Claude Code，Anthropic 官方的 Claude CLI
-  工具。这是一个交互式命令行工具，专门帮助用户完成软件工程任务。
+claude_info = """Claude Code，Anthropic 官方的 Claude CLI工具。这是一个交互式命令行工具，专门帮助用户完成软件工程任务。
 
   可以协助您：
   - 编写、调试和重构代码
@@ -107,7 +106,7 @@ claude_code_tool = {
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": "你想让Claude Code执行的指令，例如：请帮我创建一个文件，文件名为test.txt，文件内容为hello world",
+                    "description": "你想让Claude Code执行的指令，最好用自然语言交流，例如：请帮我创建一个文件，文件名为test.txt，文件内容为hello world",
                 }
             },
             "required": ["prompt"],
