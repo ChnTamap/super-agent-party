@@ -73,6 +73,9 @@ const app = Vue.createApp({
     this.$nextTick(() => {
       this.initPreviewButtons();
     });
+    this.$nextTick(() => {               // 保证 DOM 已渲染
+      document.addEventListener('click', this._toggleHighlight, false);
+    });
     document.documentElement.setAttribute('data-theme', this.systemSettings.theme);
     if (isElectron) {
       window.stopQQBotHandler = this.requestStopQQBotIfRunning;
@@ -148,6 +151,7 @@ const app = Vue.createApp({
     if (this.ttsWebSocket) {
       this.ttsWebSocket.close();
     }
+    document.removeEventListener('click', this._toggleHighlight, false);
   },
   watch: {
     selectedCodeLang() {

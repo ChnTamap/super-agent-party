@@ -349,7 +349,7 @@ if ('serviceWorker' in navigator) {
                   {{ t('first_sentence_latency')+': '+message?.first_sentence_latency +'ms,    '+ t('TTSelapsedTime')+': '+message?.TTSelapsedTime + 's'}}
                 </span>
               </div>
-              <div class="message-content">
+              <div class="message-content" :class="{ typing: message.role === 'assistant' && isTyping && index === messages.length - 1 }">
                 <!-- 用户消息内容 -->
                 <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
                   <div v-html="message.content" class = "user-msg"></div>
@@ -1033,8 +1033,9 @@ if ('serviceWorker' in navigator) {
               </el-button>
             </el-tooltip>
 
-            <el-tooltip :content="t('interpreter')" placement="top">
+            <el-tooltip :content="t('CLItool')" placement="top">
               <el-button
+                :disabled="!isElectron"
                 @click="CLISettings.enabled = !CLISettings.enabled; autoSaveSettings()"
                 class="icon-btn web-search-btn"
                 :type="CLISettings.enabled ? 'primary' : 'default'"
@@ -2770,6 +2771,14 @@ if ('serviceWorker' in navigator) {
                               </el-select>
                             </el-form-item>
                             <div v-for="(event, eventIdx) in b.action.random.events" :key="eventIdx">
+                              <div class="event-button-group" v-if="b.action.type === 'random'">
+                                <el-button @click="addNewEvent(idx)" type="primary" circle size="small">
+                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
+                                </el-button>
+                                <el-button v-show="eventIdx>0" @click="removeEvent(idx,eventIdx)" type="danger" circle size="small">
+                                  <el-icon><i class="fa-solid fa-trash"></i></el-icon>
+                                </el-button>
+                              </div>
                               <el-form-item v-if="b.action.type === 'random'">
                                 <el-input
                                   type="textarea"
@@ -2779,14 +2788,6 @@ if ('serviceWorker' in navigator) {
                                   @input="autoSaveSettings"
                                   class="full-width-input"/>
                               </el-form-item>
-                              <div class="event-button-group" v-if="b.action.type === 'random'">
-                                <el-button @click="addNewEvent(idx)" type="primary" circle size="small">
-                                  <el-icon><i class="fa-solid fa-plus"></i></el-icon>
-                                </el-button>
-                                <el-button v-show="eventIdx>0" @click="removeEvent(idx,eventIdx)" type="danger" circle size="small">
-                                  <el-icon><i class="fa-solid fa-trash"></i></el-icon>
-                                </el-button>
-                              </div>
                             </div>
                             <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
                               <el-tooltip :content="t('resetBehavior')" placement="top">
@@ -3299,6 +3300,17 @@ if ('serviceWorker' in navigator) {
                           </el-button>
                         </div>
                       </div>
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        <template #default>
+                          <div class="alert-content">
+                            {{ t('extraParamsNotice') }}
+                          </div>
+                        </template>
+                      </el-alert>
                     </div>
                   </div>
                 </el-form>
@@ -8982,6 +8994,23 @@ if ('serviceWorker' in navigator) {
                         </div>
                       </template>
                     </el-alert>
+                    <div class="tool-content">
+                      <el-alert
+                        type="info"
+                        :closable="false"
+                        class="mb-2"
+                      >
+                        {{ t('browserEmbedCodeInstructions') }}
+                      </el-alert>
+                      <!-- 修改index.html中的代码块结构 -->
+                      <div class="code-block">
+                        <div class="code-header">
+                          <span class="code-lang">html</span>
+                          <button class="copy-button" @click.prevent="handleCopy"><i class="fa-solid fa-copy"></i></button>
+                        </div>
+                        <pre><code class="hljs language-html">{{ browserEmbedCodeExamples }}</code></pre>
+                      </div>
+                    </div>
                   </div>
                 </el-form>
               </div>

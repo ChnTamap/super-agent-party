@@ -939,7 +939,7 @@ let vue_methods = {
         const container = this.$refs.messagesContainer;
         if (container) {
           // 定义一个阈值，用来判断是否接近底部
-          const threshold = 200; // 阈值可以根据实际情况调整
+          const threshold = 300; // 阈值可以根据实际情况调整
           const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
     
           if (isAtBottom) {
@@ -8509,18 +8509,19 @@ JSON 结构必须为：
       const platform = await window.electronAPI.getPlatform();
 
       if (platform === 'win32') {
-        // Windows
-        await window.electronAPI.execCommand(
-          `start powershell -NoExit -Command "Invoke-WebRequest -Uri ${scriptUrl} -OutFile claude_install.ps1; .\\claude_install.ps1"`
+        // 一条命令：先 curl 拉取远程 bat，再立即执行；/k 保持窗口
+        const batUrl = `${this.partyURL}/sh/claude_code_install.bat`;
+        window.electronAPI.execCommand(
+          `start "" cmd /k "curl -fsSL ${batUrl} -o \"%TEMP%\\claude_install.bat\" && \"%TEMP%\\claude_install.bat\""`
         );
       } else if (platform === 'darwin') {
         // macOS
-        await window.electronAPI.execCommand(
+        window.electronAPI.execCommand(
           `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
         );
       } else {
         // Linux
-        await window.electronAPI.execCommand(
+        window.electronAPI.execCommand(
           `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
         );
       }
@@ -8530,5 +8531,10 @@ JSON 结构必须为：
     } finally {
 
     }
+  },
+  _toggleHighlight(e) {
+    const blk = e.target.closest('.highlight-block');
+    if (!blk) return;
+    blk.classList.toggle('expanded');
   },
 }

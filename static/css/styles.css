@@ -1264,6 +1264,42 @@ body {
   margin-bottom: 0;
 }
 
+/* 光扫动效：挂在气泡本身，而不是 markdown 文字层 */
+.assistant .message-content.typing {
+  position: relative;
+  overflow: hidden;                /* 裁掉光带多余部分 */
+  border-radius: 12px 12px 12px 0; /* 与气泡圆角一致 */
+}
+
+/* ===== 现代光带 ===== */
+.assistant .message-content.typing::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+
+  /* 两段渐变拼成“亮-暗-亮”波带 */
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--el-color-primary-light-7) 18%,
+    var(--el-color-primary) 50%,
+    var(--el-color-primary-light-7) 82%,
+    transparent 100%
+  );
+  background-size: 60px 100%;   /* 光带固定 60 px 宽 */
+  background-repeat: no-repeat;
+  animation: modern-shine 1.6s linear infinite;
+}
+
+@keyframes modern-shine {
+  0%   { background-position: -60px 0; } /* 起点：藏在左边外 */
+  100% { background-position: calc(100% + 60px) 0; } /* 终点：完全跑出右边 */
+}
+
+
 /* 添加Markdown正文样式 */
 .markdown-body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -3408,6 +3444,11 @@ body {
     inset 0 1px 2px rgba(255, 255, 255, 0.3);
   margin-bottom: 12px;
   color: var(--el-bg-color-page);
+  max-height: 200px;
+  overflow-y: auto;
+}
+.highlight-block.expanded {
+    max-height: none !important;  /* 展开 */
 }
 /* 滚动条样式 */
 .highlight-block table::-webkit-scrollbar {

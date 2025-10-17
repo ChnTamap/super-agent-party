@@ -42,3 +42,4 @@ wikipedia-api
 arxiv
 ddgs
 claude-agent-sdk
+aiofiles
