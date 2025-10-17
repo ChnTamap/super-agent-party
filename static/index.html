@@ -349,7 +349,7 @@ if ('serviceWorker' in navigator) {
                   {{ t('first_sentence_latency')+': '+message?.first_sentence_latency +'ms,    '+ t('TTSelapsedTime')+': '+message?.TTSelapsedTime + 's'}}
                 </span>
               </div>
-              <div class="message-content">
+              <div class="message-content" :class="{ typing: message.role === 'assistant' && isTyping && index === messages.length - 1 }">
                 <!-- 用户消息内容 -->
                 <div v-if="message.role === 'user'" class="user-content" data-mjx-disabled="true">
                   <div v-html="message.content" class = "user-msg"></div>

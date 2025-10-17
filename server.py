@@ -1244,7 +1244,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
                                         "async_tool_id": tid,
                                         "tool_link": fileLink,
                                     }
@@ -1286,7 +1286,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block"><div style="margin-bottom: 10px;">{tid}{await t("tool_result")}</div><div>{str(response["result"])}</div></div>""",
                                         "async_tool_id": tid,
                                         "tool_link": fileLink,
                                     }
@@ -1370,7 +1370,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(all_kb_content)}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(all_kb_content)}</div></div>""",
                                         "tool_link": fileLink,
                                     }
                                 }]
@@ -1435,7 +1435,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             tool_chunk = {
                                 "choices": [{
                                     "delta": {
-                                        "tool_content": f"""<div class="highlight-block" style="max-height: 200px; overflow-y: auto;"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(results)}</div></div>""",
+                                        "tool_content": f"""<div class="highlight-block"><div style="margin-bottom: 10px;">{await t("search_result")}</div><div>{str(results)}</div></div>""",
                                         "tool_link": fileLink,
                                     }
                                 }]
@@ -1964,7 +1964,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         tool_call_chunk = {
                             "choices": [{
                                 "delta": {
-                                    "tool_content": f'\n\n<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">\n{modified_tool}\n</div>\n\n',
+                                    "tool_content": f'\n\n<div class="highlight-block">\n{modified_tool}\n</div></div>\n\n',
                                 }
                             }]
                         }
@@ -2075,10 +2075,10 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
                                     await f.write(results)
                                 html = (
-                                    '<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">'
+                                    '<div class="highlight-block">'
                                     f'<div style="margin-bottom: 10px;">{tool_name_text}</div>'
                                     f'<div>{results}</div>'
-                                    '</div>'
+                                    '</div></div>'
                                 )
                                 yield make_sse(html)
                             else:  # AsyncIterator[str]
@@ -2091,7 +2091,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                         buffer.append(chunk)
                                         if first:                       # 第一次：带头部
                                             html = (
-                                                '<div class="highlight-block" style="max-height: 200px; overflow-y: auto;">'
+                                                '<div class="highlight-block">'
                                                 f'<div style="margin-bottom: 10px;">{stream_tool_name_text}</div>'
                                                 f'<div>{chunk}'
                                             )
@@ -2102,7 +2102,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                         yield make_sse(html)
 
                                     # 迭代结束：补尾部
-                                    yield make_sse('</div></div>')
+                                    yield make_sse('</div></div></div>')
                                 results = "".join(buffer)
                         request.messages.append(
                             {
