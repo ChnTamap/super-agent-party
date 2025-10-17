@@ -8531,4 +8531,9 @@ JSON 结构必须为：
 
     }
   },
+  _toggleHighlight(e) {
+    const blk = e.target.closest('.highlight-block');
+    if (!blk) return;
+    blk.classList.toggle('expanded');
+  },
 }

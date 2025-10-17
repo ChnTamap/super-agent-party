@@ -3447,6 +3447,9 @@ body {
   max-height: 200px;
   overflow-y: auto;
 }
+.highlight-block.expanded {
+    max-height: none !important;  /* 展开 */
+}
 /* 滚动条样式 */
 .highlight-block table::-webkit-scrollbar {
   width: 5px; /* 横向滚动条宽度（如果有横向滚动的话） */
