@@ -52,10 +52,6 @@ from typing import AsyncIterator
 
 async def claude_code_async(prompt) -> str | AsyncIterator[str]:
     """返回 str（报错）或 AsyncIterator[str]（正常流式输出）。"""
-    # 1. 环境变量检查
-    for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "ANTHROPIC_MODEL"):
-        if key not in os.environ:
-            return f"Error: {key} environment variable not set. Please check your shell configuration files (.zshrc, .bash_profile, etc.)"
 
     # 2. 工作目录检查
     settings = await load_settings()
@@ -70,9 +66,7 @@ async def claude_code_async(prompt) -> str | AsyncIterator[str]:
             permission_mode='acceptEdits',
             continue_conversation=True,
             env={
-                'ANTHROPIC_API_KEY': os.environ['ANTHROPIC_API_KEY'],
-                'ANTHROPIC_BASE_URL': os.environ['ANTHROPIC_BASE_URL'],
-                'ANTHROPIC_MODEL': os.environ['ANTHROPIC_MODEL'],
+                **os.environ,
             }
         )
         async for message in query(prompt=prompt, options=options):
