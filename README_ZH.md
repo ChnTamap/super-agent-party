@@ -24,7 +24,7 @@
 
 - ✅ 全渠道一键部署：支持将智能体配置快速部署至多类终端，已兼容经典聊天界面、QQ官方机器人、B站直播互动、VRM虚拟桌宠等场景，开箱即用。
 
-- ✅ 生态工具互联：可自由接入第三方智能体与工作流作为工具链（已适配Dify/ComfyUI/MCP/A2A等系统），通过agent-party架构实现跨平台能力聚合。
+- ✅ 生态工具互联：可自由接入第三方智能体与工作流作为工具链（已适配Home Assistant/Claude code/Dify/ComfyUI/MCP/A2A等系统），通过agent-party架构实现跨平台能力聚合。
 
 - ✅ 标准化接口开放：提供OpenAI API兼容接口及MCP协议支持，便于开发者直接对接外部系统，实现智能体能力的快速转接与二次开发。
 
@@ -40,19 +40,32 @@
 
 ### windows整合包（推荐！免安装源码版本，支持一键同步到仓库最新版本，无需等待桌面版打包）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/super-agent-party-v0.3.0.zip)
+  👉 [点击下载](https://pan.baidu.com/share/init?surl=VBSnq4Ga3fRX_NcyPwsV7Q&pwd=2333)
 
 ⭐注意！你可以双击`一键更新(update).bat`更新软件，也可以双击`一键启动(start).bat`启动软件。
 
 ### windows桌面版安装
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-Setup-0.3.0.exe)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-Setup-0.3.1.exe)
 
 ⭐注意！安装时选择仅为当前用户安装，否则启动时需要管理员权限。
 
+### MacOS整合包（目前只支持M芯片，适合开发者，同样是免安装源码版本，支持一键同步到仓库最新版本，无需等待桌面版打包）
+
+  👉 [点击下载](https://pan.baidu.com/share/init?surl=VBSnq4Ga3fRX_NcyPwsV7Q&pwd=2333)
+
+⭐注意！你可以在终端使用`一键更新(update).sh`更新软件，也可以在终端使用`一键启动(start).sh`启动软件。在使用前，记得给文件加权限！
+
+  ```shell
+  chmod +x 一键更新(update).sh
+  ./一键更新(update).sh
+  chmod +x 一键启动(start).sh
+  ./一键启动(start).sh
+  ```
+
 ### MacOS桌面版安装（目前只支持M芯片）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Mac.dmg)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Mac.dmg)
 
 ⭐注意！下载后将dmg文件的app文件拖入`/Applications`目录下，然后打开终端，执行以下命令并输入root密码，从而移除从网络下载附加的Quarantine属性：
 
@@ -68,11 +81,11 @@
 
 `.AppImage` 是一种无需安装、即开即用的 Linux 应用格式。适用于大多数 Linux 发行版。
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.AppImage)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Linux.AppImage)
 
 #### 2. 使用 `.deb` 包安装（适用于 Ubuntu / Debian 系统）
 
-  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.deb)
+  👉 [点击下载](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Linux.deb)
 
 ### docker部署（该版本桌宠只能通过浏览器查看）
 
@@ -113,7 +126,7 @@
 ![image](doc/image/model1.jpeg)
 
 ### 海量工具：内置各种工具(如知识库、联网、智能家居、浏览器控制)，支持异步调用，不阻塞智能体回复
-![image](doc/image/HA2.jpeg)
+![image](doc/image/CC2.jpeg)
 
 ### VRM桌宠：支持上传自定义VRM模型，打造专属桌面伴侣
 ![image](doc/image/vrmbot3.jpeg)
@@ -188,7 +201,7 @@
 | 播报机器人 | 支持长文播报，多语音播报，数字人口播，超长文本批量转语音（可下载），支持常见电子书epub等格式解析，后续开发分章节转录功能 |
 | 对话界面 | 对话界面已支持公式、mermaid绘图、HTML代码绘图等前端渲染功能，图像支持下载和复制。支持胶囊模式和小助手模式，方便将对话界面缩小停靠，配合桌面视觉和截图，无缝融入工作娱乐 |
 | 角色扮演 | 支持酒馆角色卡上传、编辑及下载，可为不同角色配置不同语音和形象。支持长期记忆，使用角色卡时，支持多语音，非角色文字支持使用旁白音色，支持表情包 |
-| 大量原生工具 | 工具调用支持异步，支持联网、知识库、控制智能家居、控制浏览器、在沙盒中执行代码、控制comfyui绘图等 |
+| 大量原生工具 | 工具调用支持异步，支持联网、知识库、控制智能家居、控制浏览器、在沙盒中执行代码、控制comfyui绘图、Claude code操作文件系统等 |
 | 自定义工具接口 | 已支持MCP、A2A、HTTP请求、任意LLM接口作为主智能体的工具使用，让用户以完全自由的方式定制自己的智能体工具链 |
 | 对外接口开放 | 开发者友好，对外开放模拟openAI和MCP的API接口，以及桌宠API接口 |
 | 存储空间 | 所有的文件资料均存放在用户本地的数据文件夹中，如果使用NAS部署，还可以作为内网的个人图床、文件床使用 |
