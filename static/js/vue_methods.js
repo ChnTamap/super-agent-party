@@ -524,11 +524,11 @@ let vue_methods = {
           const thinkTagRegexOpenOnly = /<think>[\s\S]*$/;
           
           let formatted = part.content
-            .replace(thinkTagRegexWithClose, (_, p1) => 
-              p1.split('\n').map(line => `> ${line}`).join('\n')
+            .replace(thinkTagRegexWithClose, match => 
+              match.replace('<think>', '<div class="highlight-block-reasoning">').replace('</think>', '</div>')
             )
             .replace(thinkTagRegexOpenOnly, match => 
-              match.replace('<think>', '').split('\n').map(line => `> ${line}`).join('\n')
+              match.replace('<think>', '<div class="highlight-block-reasoning">')
             );
     
           // 处理LaTeX公式

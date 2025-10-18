@@ -2525,7 +2525,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 error_chunk = {
                     "choices": [{
                         "delta": {
-                            "tool_content": f'\n\n<div class="highlight-block">\n❌ {str(e)}</div>\n\n',
+                            "tool_content": f'\n\n<div class="highlight-block-error">\n❎︎ {str(e)}</div>\n\n',
                         }
                     }]
                 }
