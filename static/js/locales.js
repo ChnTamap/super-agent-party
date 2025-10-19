@@ -525,6 +525,7 @@ const translations = {
         'auto':'自动',
         'manual': '手动',
         'wakeWord': '唤醒词',
+        'wakeWordAndEndWord': '唤醒词与结束词',
         'wakeWordMode': '唤醒词：开启唤醒词模式后可用，只有带唤醒词的消息才会被识别并发送',
         'wakeWordPlaceholder': '请输入唤醒词',
         'hotkey': '快捷键：按下时录音，松开时自动发送',
