@@ -78,6 +78,7 @@ let vue_data = {
       name: '',
       content: ''
     },
+    selectSystemPromptId: null,    // 选择的系统提示词id
     isdocker: false,
     isExpanded: true,
     isElectron: isElectron,

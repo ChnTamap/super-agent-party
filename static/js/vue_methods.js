@@ -141,6 +141,7 @@ let vue_methods = {
     this.editContent = content;
     this.editIndex = index;
     this.showEditDialog = true;
+    this.selectSystemPromptId =null;
   },
   async saveEdit() {
     this.showEditDialog = false;
@@ -8566,5 +8567,8 @@ JSON 结构必须为：
     const blk = e.target.closest('.highlight-block');
     if (!blk) return;
     blk.classList.toggle('expanded');
+  },
+  changeSystemPrompt() {
+    this.editContent = this.SystemPromptsList.find(prompt => prompt.id === this.selectSystemPromptId)?.content;
   },
 }
