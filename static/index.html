@@ -5020,7 +5020,7 @@ if ('serviceWorker' in navigator) {
                           class="tool-switch"
                         ></el-switch>
                       </el-form-item>
-                      <el-form-item :label="t('anthropicSupportedProviders')" class="form-item-align" v-if="ccSettings.enabled">
+                      <el-form-item :label="t('anthropicSupportedProviders')" class="form-item-align">
                         <el-select
                           v-model="ccSettings.selectedProvider"
                           :placeholder="t('selectProvider')"
