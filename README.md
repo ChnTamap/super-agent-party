@@ -40,7 +40,7 @@
 
 ### Windows portable package (Recommended! Installation-free source version, support one-click synchronization to the latest version of the warehouse, no need to wait for the desktop version to be packaged)
 
-  👉 [Click to download](https://drive.google.com/drive/folders/1xu8U1FCIZ5iqWpmf1w3TLX8AqGWft3zg?usp=sharing)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/super-agent-party-win-v0.3.1.zip)
 
 ⭐Attention! You can double-click `一键更新(update).bat` to update the software, or you can double-click `一键启动(start).bat` to start the software.
 
@@ -52,7 +52,7 @@
 
 ### macOS Bundle (M-series chips only, developer-oriented, no-install source version, one-click sync to latest repo, no need to wait for desktop build)
 
-  👉 [Download here](https://drive.google.com/drive/folders/1xu8U1FCIZ5iqWpmf1w3TLX8AqGWft3zg?usp=sharing)
+  👉 [Download here](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/super-agent-party-mac-v0.3.1.zip)
 
 ⭐ Note! You can update the software in Terminal with `one-click update(update).sh` or launch it with `one-click start(start).sh`. Remember to grant permissions before use!
 
