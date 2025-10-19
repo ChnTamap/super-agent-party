@@ -312,6 +312,13 @@ let vue_data = {
       engine: 'cc',
       cc_path: '',
     },
+    ccSettings: {
+      enabled: false,
+      selectedProvider: null,
+      base_url:'',
+      api_key:'',
+      model:''
+    },
     HASettings: {
       enabled: false,
       api_key: '',

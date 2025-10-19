@@ -55,10 +55,24 @@ async def claude_code_async(prompt) -> str | AsyncIterator[str]:
 
     # 2. 工作目录检查
     settings = await load_settings()
-    cwd = settings.get("CLISettings", {}).get("cc_path")
+    CLISettings = settings.get("CLISettings", {})
+    cwd = CLISettings.get("cc_path")
+    ccSettings = settings.get("ccSettings", {})
     if not cwd or not cwd.strip():
         return "No working directory is set, please set the working directory first!"
-
+    extra_config = {}
+    if ccSettings.get("enabled"):
+        extra_config = {
+            "ANTHROPIC_BASE_URL": ccSettings.get("base_url"),
+            "ANTHROPIC_API_KEY": ccSettings.get("api_key"),
+            "ANTHROPIC_MODEL": ccSettings.get("model"),
+        }
+        # 确保所有环境变量的值为字符串
+        extra_config = {
+            k: str(v) if v is not None else ""
+            for k, v in extra_config.items()
+        }
+        print(f"Using Claude Code with the following settings: {extra_config}")
     # 3. 正常场景：返回异步生成器
     async def _stream() -> AsyncIterator[str]:
         options = ClaudeAgentOptions(
@@ -67,6 +81,7 @@ async def claude_code_async(prompt) -> str | AsyncIterator[str]:
             continue_conversation=True,
             env={
                 **os.environ,
+                **extra_config
             }
         )
         async for message in query(prompt=prompt, options=options):

@@ -4998,6 +4998,38 @@ if ('serviceWorker' in navigator) {
                           </template>
                         </el-input>
                       </el-form-item>
+                      <el-form-item required :label="t('enabledCCconfig')" class="form-item-align" label-position="left">
+                        <el-switch
+                          v-model="ccSettings.enabled"
+                          @change="autoSaveSettings"
+                          class="tool-switch"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('anthropicSupportedProviders')" class="form-item-align" v-if="ccSettings.enabled">
+                        <el-select
+                          v-model="ccSettings.selectedProvider"
+                          :placeholder="t('selectProvider')"
+                          filterable
+                          @change="selectCCProvider"
+                          @visible-change="handleCCProviderVisibleChange"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="provider in filteredClaudeModelProviders"
+                            :key="provider.id"
+                            :label="provider.vendor+' - '+provider.modelId"
+                            :value="provider.id"
+                          >
+                            <div class="provider-option">
+                              <img 
+                                :src="getVendorLogo(provider.vendor)" 
+                                class="mini-vendor-logo"
+                              />
+                              <span class="model-id">{{ provider.modelId }}</span>
+                            </div>
+                          </el-option>
+                        </el-select>
+                      </el-form-item>
                     </div>
                     <el-alert
                       type="info"

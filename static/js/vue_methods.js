@@ -1069,6 +1069,7 @@ let vue_methods = {
           this.webSearchSettings = data.data.webSearch || this.webSearchSettings;
           this.codeSettings = data.data.codeSettings || this.codeSettings;
           this.CLISettings = data.data.CLISettings || this.CLISettings;
+          this.ccSettings = data.data.ccSettings || this.ccSettings;
           this.HASettings = data.data.HASettings || this.HASettings;
           this.chromeMCPSettings = data.data.chromeMCPSettings || this.chromeMCPSettings;
           this.KBSettings = data.data.KBSettings || this.KBSettings;
@@ -1828,6 +1829,7 @@ let vue_methods = {
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,
           CLISettings: this.CLISettings,
+          ccSettings: this.ccSettings,
           HASettings: this.HASettings,
           chromeMCPSettings: this.chromeMCPSettings,
           KBSettings: this.KBSettings,
@@ -2426,6 +2428,29 @@ let vue_methods = {
       }
     },
 
+    // Claude code 供应商选择
+    async selectCCProvider(providerId) {
+      const provider = this.modelProviders.find(p => p.id === providerId);
+      let vendor_list = {
+        "Anthropic": "https://api.anthropic.com",
+        "Deepseek": "https://api.deepseek.com/anthropic",
+        "siliconflow": "https://api.siliconflow.cn",
+        "ZhipuAI":"https://open.bigmodel.cn/api/anthropic",
+        "moonshot":"https://api.moonshot.cn/anthropic",
+        "aliyun": "https://dashscope.aliyuncs.com/apps/anthropic",
+        "modelscope":"https://api-inference.modelscope.cn"
+      };
+
+      let cc_url = vendor_list[provider.vendor] || provider.url;
+
+      if (provider) {
+        this.ccSettings.model = provider.modelId;
+        this.ccSettings.base_url = cc_url;
+        this.ccSettings.api_key = provider.apiKey;
+        await this.autoSaveSettings();
+      }
+    },
+
     // 推理模型供应商选择
     async selectReasonerProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
@@ -2507,6 +2532,11 @@ let vue_methods = {
     handleMainProviderVisibleChange(visible) {
       if (!visible) {
         this.selectMainProvider(this.settings.selectedProvider);
+      }
+    },
+    handleCCProviderVisibleChange(visible) {
+      if (!visible) {
+        this.selectCCProvider(this.ccSettings.selectedProvider);
       }
     },
     handleReasonerProviderVisibleChange(visible) {
