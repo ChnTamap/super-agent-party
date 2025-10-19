@@ -1623,9 +1623,6 @@ let vue_methods = {
           lastMessage.chunks_voice.push(this.cur_voice);
           lastMessage.ttsChunks.push(tts_buffer);
         }
-        if (this.allBriefly){
-          lastMessage.briefly = true;
-        }
       } catch (error) {
         if (error.name === 'AbortError') {
           showNotification(this.t('message.stopGenerate'), 'info');
@@ -1633,6 +1630,9 @@ let vue_methods = {
           showNotification(error.message, 'error');
         }
       } finally {
+        if (this.allBriefly){
+          lastMessage.briefly = true;
+        }
         // 如果conversationId为null
         if (this.conversationId === null) {
           //创建一个新的对话
