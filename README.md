@@ -24,7 +24,7 @@
 
 - ✅ One-click deployment across all channels: It supports the rapid deployment of intelligent agents to multiple types of terminals, and is compatible with scenarios such as classic chat interfaces, QQ official robots, Bilibili live interaction, and VRM virtual desktop pets, ready to use out of the box.
 
-- ✅ Ecological tool interconnection: It can freely access third-party intelligent entities and workflows as a tool chain (already adapted to systems such as Dify/ComfyUI/MCP/A2A), and achieve cross-platform capability aggregation through the agent-party architecture.
+- ✅ Ecological tool interconnection: It can freely access third-party intelligent entities and workflows as a tool chain (already adapted to systems such as Home Assistant/Claude code/Dify/ComfyUI/MCP/A2A), and achieve cross-platform capability aggregation through the agent-party architecture.
 
 - ✅ Standardized interface opening: Provide OpenAI API-compatible interfaces and MCP protocol support, making it easy for developers to directly connect to external systems and achieve rapid transfer and secondary development of the agent's capabilities.
 
@@ -40,19 +40,32 @@
 
 ### Windows portable package (Recommended! Installation-free source version, support one-click synchronization to the latest version of the warehouse, no need to wait for the desktop version to be packaged)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/super-agent-party-v0.3.0.zip)
+  👉 [Click to download](https://drive.google.com/drive/folders/1xu8U1FCIZ5iqWpmf1w3TLX8AqGWft3zg?usp=sharing)
 
 ⭐Attention! You can double-click `一键更新(update).bat` to update the software, or you can double-click `一键启动(start).bat` to start the software.
 
 ### Windows Desktop Installation
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-Setup-0.3.0.exe)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-Setup-0.3.1.exe)
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
 
+### macOS Bundle (M-series chips only, developer-oriented, no-install source version, one-click sync to latest repo, no need to wait for desktop build)
+
+  👉 [Download here](https://drive.google.com/drive/folders/1xu8U1FCIZ5iqWpmf1w3TLX8AqGWft3zg?usp=sharing)
+
+⭐ Note! You can update the software in Terminal with `one-click update(update).sh` or launch it with `one-click start(start).sh`. Remember to grant permissions before use!
+
+  ```shell
+  chmod +x 一键更新(update).sh
+  ./一键更新(update).sh
+  chmod +x 一键启动(start).sh
+  ./一键启动(start).sh
+  ```
+
 ### MacOS Desktop Installation (Currently only M chips are supported.)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Mac.dmg)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Mac.dmg)
 
 ⭐Attention! After downloading, drag the app file of the dmg file into the `/Applications` directory, then open end point, execute the following command and enter the root password to remove the attached Quarantine attribute from the network download:
 
@@ -68,11 +81,11 @@ We provide two mainstream Linux installation package formats for your convenienc
 
 `.AppImage` is a Linux application format that does not require installation and can be used immediately. Suitable for most Linux distributions.
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.AppImage)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Linux.AppImage)
 
 #### 2. Install using `.deb` package (Suitable for Ubuntu/Debian systems)
 
-  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.0/Super-Agent-Party-0.3.0-Linux.deb)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/Super-Agent-Party-0.3.1-Linux.deb)
 
 ### Docker Deployment (This version of the table pet can only be viewed through the browser.)
 
@@ -113,7 +126,7 @@ We provide two mainstream Linux installation package formats for your convenienc
 ![image](doc/image/model1.jpeg)
 
 ### Extensive Tool Integration: Built-in various tools (e.g., knowledge base, web search, smart home control, browser automation), supporting asynchronous invocation without blocking agent responses.
-![image](doc/image/HA2.jpeg)
+![image](doc/image/CC2.jpeg)
 
 ### VRM Desktop Pet: Supports uploading custom VRM models to create a personalized desktop companion.
 ![image](doc/image/vrmbot3.jpeg)
@@ -188,7 +201,7 @@ Please refer to the following document for the main functions:
 | Announcer Bot | Supports long text narration, multi-voice narration, digital human video narration, batch conversion of ultra-long texts to speech (with download capability), and parsing of common ebook formats like EPUB. Chapter-based conversion will be developed later. |
 | Chat Interface | The chat interface supports front-end rendering features such as mathematical formulas, mermaid diagrams, and HTML code graphics. Images can be downloaded or copied.Supports capsule mode and assistant mode, making it easy to shrink and dock the conversation interface. Combined with desktop vision and screenshots, it seamlessly integrates into work and entertainment |
 | Role-Playing | Supports uploading, editing, and downloading tavern character cards. Allows configuring different voices and avatars for different characters. Features long-term memory, multi-voice support when using character cards, narrator voice for non-character text, and supports emojis and memes. |
-| Extensive Native Tools | Tool calling supports asynchronous execution, including web search, knowledge base access, smart home control, browser control, code execution in sandbox environments, and controlling ComfyUI for image generation. |
+| Extensive Native Tools | Tool calling supports asynchronous execution, including web search, knowledge base access, smart home control, browser control, code execution in sandbox environments, controlling ComfyUI for image generation, and Claude code operates the file system. |
 | Custom Tool Interfaces | Supports MCP, A2A, HTTP requests, and any LLM interface as tools for the main agent, enabling users to freely customize their agent's toolchain. |
 | Open External APIs | Developer-friendly with open APIs simulating OpenAI and MCP, as well as desktop pet APIs. |
 | Storage Space | All files and data are stored in the user's local data folder. When deployed with NAS, it can also serve as a personal image or file host within the local network. |
