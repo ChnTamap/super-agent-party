@@ -2439,7 +2439,8 @@ let vue_methods = {
         "ZhipuAI":"https://open.bigmodel.cn/api/anthropic",
         "moonshot":"https://api.moonshot.cn/anthropic",
         "aliyun": "https://dashscope.aliyuncs.com/apps/anthropic",
-        "modelscope":"https://api-inference.modelscope.cn"
+        "modelscope":"https://api-inference.modelscope.cn",
+        "302.AI":"https://api.302.ai/cc"
       };
 
       let cc_url = vendor_list[provider.vendor] || provider.url;

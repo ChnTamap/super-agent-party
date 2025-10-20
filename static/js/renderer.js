@@ -325,7 +325,7 @@ const app = Vue.createApp({
       return [...this.defaultSeparators, ...custom];
     },
     filteredClaudeModelProviders() {
-      let vendors = ["Anthropic", "Deepseek", "siliconflow", "ZhipuAI", "moonshot", "aliyun", "modelscope"];
+      let vendors = ["Anthropic", "Deepseek", "siliconflow", "ZhipuAI", "moonshot", "aliyun", "modelscope","302.AI"];
       // this.modelProviders中，vendor在vendors中的，添加到filteredClaudeModelProviders
       return this.modelProviders.filter((item) => vendors.includes(item.vendor));
     },
