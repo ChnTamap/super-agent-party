@@ -278,6 +278,7 @@ let vue_data = {
 }`
     },
     activeKbTab: 'settings', // 默认激活的标签页
+    activeReadTab: 'full', // 默认激活的标签页
     webSearchSettings: {
       enabled: false,
       engine: 'tavily',
