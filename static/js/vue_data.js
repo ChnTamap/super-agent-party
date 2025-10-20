@@ -78,6 +78,9 @@ let vue_data = {
       name: '',
       content: ''
     },
+    selectSystemPromptId: null,    // 选择的系统提示词id
+    wakeWindowTimer: null,   // 计时器
+    withinWakeWindow: false, // 是否处于“免唤醒”30s 窗口
     isdocker: false,
     isExpanded: true,
     isElectron: isElectron,
@@ -125,6 +128,8 @@ let vue_data = {
       selectedProvider: null,
       temperature: 0.7,  // 默认温度值
       desktopVision: false,
+      wakeWord: '看\nsee\nlook',
+      enableWakeWord: false,
     },
     paramTypes: [
       { value: 'string', label: 'string' },
@@ -311,6 +316,20 @@ let vue_data = {
       enabled: false,
       engine: 'cc',
       cc_path: '',
+    },
+    ccSettings: {
+      enabled: false,
+      selectedProvider: null,
+      base_url:'',
+      api_key:'',
+      model:''
+    },
+    qcSettings: {
+      enabled: false,
+      selectedProvider: null,
+      base_url:'',
+      api_key:'',
+      model:''
     },
     HASettings: {
       enabled: false,

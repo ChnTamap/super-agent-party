@@ -450,6 +450,21 @@ if ('serviceWorker' in navigator) {
             v-model="showEditDialog"
             :title="editType === 'system' ? t('editSystemPrompt') : t('editMessage')"
             width="600px">
+            <el-form-item :label="t('selectSystemPrompt')" class="form-item-align" label-position="left">
+              <el-select 
+                v-model="selectSystemPromptId" 
+                :placeholder="t('selectSystemPromptPlaceholder')"
+                class="full-width-input"
+                @change="changeSystemPrompt"
+                >
+                <el-option
+                  v-for="prompt in SystemPromptsList"
+                  :key="prompt.id"
+                  :label="prompt.name"
+                  :value="prompt.id"
+                />
+              </el-select>
+            </el-form-item>
             <el-input
               v-model="editContent"
               type="textarea"
@@ -3218,6 +3233,21 @@ if ('serviceWorker' in navigator) {
                           @change="autoSaveSettings"
                         ></el-switch>
                       </el-form-item>
+                      <el-form-item :label="t('enableDesktopVisionWakeWord')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="visionSettings.enableWakeWord" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('desktopVisionWakeWord')" class="form-item-align">
+                        <el-input
+                          v-model="visionSettings.wakeWord"
+                          :placeholder="t('desktopVisionWakeWordPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                          :rows="3"
+                        />
+                      </el-form-item>
                       <div class="param-header">
                         <span>{{ t('extraParams') }}</span>
                         <el-button 
@@ -3510,6 +3540,21 @@ if ('serviceWorker' in navigator) {
                           v-model="visionSettings.desktopVision" 
                           @change="autoSaveSettings"
                         ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('enableDesktopVisionWakeWord')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="visionSettings.enableWakeWord" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('desktopVisionWakeWord')" class="form-item-align">
+                        <el-input
+                          v-model="visionSettings.wakeWord"
+                          :placeholder="t('desktopVisionWakeWordPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                          :rows="3"
+                        />
                       </el-form-item>
                     </div>
                   </div>
@@ -4959,6 +5004,7 @@ if ('serviceWorker' in navigator) {
                           class="full-width-input"
                         >
                           <el-option label="Claude Code" value="cc" ></el-option>
+                          <el-option label="Qwen Code" value="qc" ></el-option>
                         </el-select>
                       </el-form-item>
                     </div>
@@ -4998,6 +5044,38 @@ if ('serviceWorker' in navigator) {
                           </template>
                         </el-input>
                       </el-form-item>
+                      <el-form-item required :label="t('enabledCCconfig')" class="form-item-align" label-position="left">
+                        <el-switch
+                          v-model="ccSettings.enabled"
+                          @change="autoSaveSettings"
+                          class="tool-switch"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('anthropicSupportedProviders')" class="form-item-align">
+                        <el-select
+                          v-model="ccSettings.selectedProvider"
+                          :placeholder="t('selectProvider')"
+                          filterable
+                          @change="selectCCProvider"
+                          @visible-change="handleCCProviderVisibleChange"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="provider in filteredClaudeModelProviders"
+                            :key="provider.id"
+                            :label="provider.vendor+' - '+provider.modelId"
+                            :value="provider.id"
+                          >
+                            <div class="provider-option">
+                              <img 
+                                :src="getVendorLogo(provider.vendor)" 
+                                class="mini-vendor-logo"
+                              />
+                              <span class="model-id">{{ provider.modelId }}</span>
+                            </div>
+                          </el-option>
+                        </el-select>
+                      </el-form-item>
                     </div>
                     <el-alert
                       type="info"
@@ -5022,7 +5100,97 @@ if ('serviceWorker' in navigator) {
                       </el-button>
                     </div>
                   </div>
-
+                  <div class="tool-item" v-show="CLISettings.engine === 'qc'">
+                    <div class="tool-header">
+                      <div class="header-left">
+                        <span>
+                          <el-icon>
+                            <i class="fa-solid fa-terminal"></i>
+                          </el-icon>
+                          Qwen Code
+                          <el-link
+                            type="primary"
+                            :underline="false"
+                            href="https://github.com/QwenLM/qwen-code" 
+                            target="_blank"
+                          >
+                            <el-icon class="mr-1">
+                              <i class="fa-solid fa-key"></i>
+                            </el-icon>{{ t('gotoGithub') }}
+                          </el-link>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="tool-content">
+                      <el-form-item required :label="t('workspace')" class="form-item-align">
+                        <el-input
+                          v-model="CLISettings.cc_path"
+                          @input="autoSaveSettings"
+                          class="full-width-input"
+                        >
+                          <template #append>
+                            <el-button @click="browseDirectory">
+                                <i class="fa-solid fa-folder"></i>
+                            </el-button>
+                          </template>
+                        </el-input>
+                      </el-form-item>
+                      <el-form-item required :label="t('enabledCCconfig')" class="form-item-align" label-position="left">
+                        <el-switch
+                          v-model="qcSettings.enabled"
+                          @change="autoSaveSettings"
+                          class="tool-switch"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('provider')" class="form-item-align">
+                        <el-select
+                          v-model="qcSettings.selectedProvider"
+                          :placeholder="t('selectProvider')"
+                          filterable
+                          @change="selectQCProvider"
+                          @visible-change="handleQCProviderVisibleChange"
+                          class="full-width-input"
+                        >
+                          <el-option
+                            v-for="provider in modelProviders"
+                            :key="provider.id"
+                            :label="provider.vendor+' - '+provider.modelId"
+                            :value="provider.id"
+                          >
+                            <div class="provider-option">
+                              <img 
+                                :src="getVendorLogo(provider.vendor)" 
+                                class="mini-vendor-logo"
+                              />
+                              <span class="model-id">{{ provider.modelId }}</span>
+                            </div>
+                          </el-option>
+                        </el-select>
+                      </el-form-item>
+                    </div>
+                    <el-alert
+                      type="info"
+                      :closable="false"
+                      class="mb-2"
+                    >
+                      <template #default>
+                        <div class="alert-content">
+                          {{ t('QwenCodeNotice1') }}
+                        </div>
+                      </template>
+                    </el-alert>
+                    <div class="browser-mode-btn-container" v-show="CLISettings.engine === 'qc'">
+                      <el-button
+                        class="browser-mode-btn"
+                        type="primary"
+                        @click="installQwenCode"
+                        round
+                        size="large">
+                          <i class="fa-solid fa-download"></i>
+                          {{ t('installQwenCode') }}
+                      </el-button>
+                    </div>
+                  </div>
                 </el-form> 
                 <!-- Web端提示 -->
                 <div v-else >
@@ -7045,7 +7213,7 @@ if ('serviceWorker' in navigator) {
         <!-- logo页面 -->
         <div v-show="activeMenu === 'logo'" class="page logo-container">
           <div class="license-notice">
-            <h1>Super Agent Party v0.3.1</h1>
+            <h1>Super Agent Party v0.3.2</h1>
             <h3>开源协议声明 / Open Source License</h3>
             <div class="notice-section">
               <p class="warning-text">❗ 注意！本项目是基于AGPL协议开源的，请遵守AGPL协议，以避免不必要的法律问题！</p>

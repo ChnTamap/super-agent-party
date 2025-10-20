@@ -141,6 +141,7 @@ let vue_methods = {
     this.editContent = content;
     this.editIndex = index;
     this.showEditDialog = true;
+    this.selectSystemPromptId =null;
   },
   async saveEdit() {
     this.showEditDialog = false;
@@ -1069,6 +1070,8 @@ let vue_methods = {
           this.webSearchSettings = data.data.webSearch || this.webSearchSettings;
           this.codeSettings = data.data.codeSettings || this.codeSettings;
           this.CLISettings = data.data.CLISettings || this.CLISettings;
+          this.ccSettings = data.data.ccSettings || this.ccSettings;
+          this.qcSettings = data.data.qcSettings || this.qcSettings;
           this.HASettings = data.data.HASettings || this.HASettings;
           this.chromeMCPSettings = data.data.chromeMCPSettings || this.chromeMCPSettings;
           this.KBSettings = data.data.KBSettings || this.KBSettings;
@@ -1232,15 +1235,34 @@ let vue_methods = {
       }
       // 👈 桌面截图：仅在 Electron 且 desktopVision 开启时
       if (isElectron && this.visionSettings?.desktopVision) {
-        try {
-          const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
-          const blob = new Blob([pngBuffer], { type: 'image/png' })
-          const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
-          // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
-          this.images.push({ file, name: file.name, path: '' })
-        } catch (e) {
-          console.error('桌面截图失败:', e)
-          showNotification(this.t('desktop_capture_failed'), 'error')
+        if (this.visionSettings.enableWakeWord && this.visionSettings.wakeWord) {
+          // this.visionSettings.wakeWord以换行符分割成数组
+          const wakeWords = this.visionSettings.wakeWord.split('\n');
+          // this.userInput中不包含wakeWords中的元素，就不启用
+          if (wakeWords.some(word => this.userInput.includes(word))) {
+            try {
+              const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
+              const blob = new Blob([pngBuffer], { type: 'image/png' })
+              const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+              // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
+              this.images.push({ file, name: file.name, path: '' })
+            } catch (e) {
+              console.error('桌面截图失败:', e)
+              showNotification(this.t('desktop_capture_failed'), 'error')
+            }
+          }
+        }
+        else {
+          try {
+            const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
+            const blob = new Blob([pngBuffer], { type: 'image/png' })
+            const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+            // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
+            this.images.push({ file, name: file.name, path: '' })
+          } catch (e) {
+            console.error('桌面截图失败:', e)
+            showNotification(this.t('desktop_capture_failed'), 'error')
+          }
         }
       }
       // 声明变量并初始化为 null
@@ -1623,9 +1645,6 @@ let vue_methods = {
           lastMessage.chunks_voice.push(this.cur_voice);
           lastMessage.ttsChunks.push(tts_buffer);
         }
-        if (this.allBriefly){
-          lastMessage.briefly = true;
-        }
       } catch (error) {
         if (error.name === 'AbortError') {
           showNotification(this.t('message.stopGenerate'), 'info');
@@ -1633,6 +1652,9 @@ let vue_methods = {
           showNotification(error.message, 'error');
         }
       } finally {
+        if (this.allBriefly){
+          lastMessage.briefly = true;
+        }
         // 如果conversationId为null
         if (this.conversationId === null) {
           //创建一个新的对话
@@ -1828,6 +1850,8 @@ let vue_methods = {
           webSearch: this.webSearchSettings, 
           codeSettings: this.codeSettings,
           CLISettings: this.CLISettings,
+          ccSettings: this.ccSettings,
+          qcSettings: this.qcSettings,
           HASettings: this.HASettings,
           chromeMCPSettings: this.chromeMCPSettings,
           KBSettings: this.KBSettings,
@@ -2426,6 +2450,38 @@ let vue_methods = {
       }
     },
 
+    // Claude code 供应商选择
+    async selectCCProvider(providerId) {
+      const provider = this.modelProviders.find(p => p.id === providerId);
+      let vendor_list = {
+        "Anthropic": "https://api.anthropic.com",
+        "Deepseek": "https://api.deepseek.com/anthropic",
+        "siliconflow": "https://api.siliconflow.cn",
+        "ZhipuAI":"https://open.bigmodel.cn/api/anthropic",
+        "moonshot":"https://api.moonshot.cn/anthropic",
+        "aliyun": "https://dashscope.aliyuncs.com/apps/anthropic",
+        "modelscope":"https://api-inference.modelscope.cn",
+        "302.AI":"https://api.302.ai/cc"
+      };
+
+      let cc_url = vendor_list[provider.vendor] || provider.url;
+
+      if (provider) {
+        this.ccSettings.model = provider.modelId;
+        this.ccSettings.base_url = cc_url;
+        this.ccSettings.api_key = provider.apiKey;
+        await this.autoSaveSettings();
+      }
+    },
+    async selectQCProvider(providerId) {
+      const provider = this.modelProviders.find(p => p.id === providerId);
+      if (provider) {
+        this.qcSettings.model = provider.modelId;
+        this.qcSettings.base_url = provider.url;
+        this.qcSettings.api_key = provider.apiKey;
+        await this.autoSaveSettings();
+      }
+    },
     // 推理模型供应商选择
     async selectReasonerProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
@@ -2507,6 +2563,16 @@ let vue_methods = {
     handleMainProviderVisibleChange(visible) {
       if (!visible) {
         this.selectMainProvider(this.settings.selectedProvider);
+      }
+    },
+    handleCCProviderVisibleChange(visible) {
+      if (!visible) {
+        this.selectCCProvider(this.ccSettings.selectedProvider);
+      }
+    },
+    handleQCProviderVisibleChange(visible) {
+      if (!visible) {
+        this.selectQCProvider(this.ccSettings.selectedProvider);
       }
     },
     handleReasonerProviderVisibleChange(visible) {
@@ -4811,7 +4877,24 @@ let vue_methods = {
 
       return true;
     },
+    openWakeWindow() {
+      this.withinWakeWindow = true;
+      this.wakeWindowTimer = setTimeout(() => {
+        this.withinWakeWindow = false;
+      }, 30_000);
+    },
 
+    /* 刷新 30s 窗口（每次成功交互后调用） */
+    resetWakeWindow() {
+      clearTimeout(this.wakeWindowTimer);
+      this.openWakeWindow();
+    },
+
+    /* 清理计时器，可在组件销毁时调用 */
+    clearWakeWindow() {
+      clearTimeout(this.wakeWindowTimer);
+      this.withinWakeWindow = false;
+    },
 
     // 修改：统一的ASR结果处理函数
     handleASRResult(data) {
@@ -4864,14 +4947,22 @@ let vue_methods = {
           }
           
           if (this.asrSettings.interactionMethod == "wakeWord") {
-            if (this.userInput.toLowerCase().includes(this.asrSettings.wakeWord.toLowerCase())) {
-              if (this.ttsSettings.enabledInterruption) {
-                this.sendMessage();
-              } else if (!this.TTSrunning ||  !this.ttsSettings.enabled) {
-                this.sendMessage();
-              }
+            const lowerInput = this.userInput.toLowerCase();
+            const hasWakeWord = lowerInput.includes(this.asrSettings.wakeWord.toLowerCase());
+
+            /* 1. 如果在 30s 免唤醒窗口，直接发送 */
+            if (this.withinWakeWindow) {
+              this.sendMessage();
+              this.resetWakeWindow();          // 刷新 30s
+              return;
+            }
+
+            /* 2. 否则必须检测唤醒词 */
+            if (hasWakeWord) {
+              this.sendMessage();
+              this.openWakeWindow();           // 进入 30s 免唤醒
             } else {
-              this.userInput = '';
+              this.userInput = '';             // 未唤醒，清空输入
             }
           }
         } else {
@@ -8532,9 +8623,43 @@ JSON 结构必须为：
 
     }
   },
+
+  async installQwenCode() {
+    try {
+      const scriptUrl = `${this.partyURL}/sh/qwen_code_install.sh`;
+      const platform = await window.electronAPI.getPlatform();
+
+      if (platform === 'win32') {
+        // 一条命令：先 curl 拉取远程 bat，再立即执行；/k 保持窗口
+        const batUrl = `${this.partyURL}/sh/qwen_code_install.bat`;
+        window.electronAPI.execCommand(
+          `start "" cmd /k "curl -fsSL ${batUrl} -o \"%TEMP%\\qwen_install.bat\" && \"%TEMP%\\qwen_install.bat\""`
+        );
+      } else if (platform === 'darwin') {
+        // macOS
+        window.electronAPI.execCommand(
+          `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
+        );
+      } else {
+        // Linux
+        window.electronAPI.execCommand(
+          `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
+        );
+      }
+      showNotification(this.t('scriptExecuting'));
+    } catch (error) {
+      showNotification(`failed to install Qwen Code: ${error.message}`, 'error');
+    } finally {
+
+    }
+  },
+  
   _toggleHighlight(e) {
     const blk = e.target.closest('.highlight-block');
     if (!blk) return;
     blk.classList.toggle('expanded');
+  },
+  changeSystemPrompt() {
+    this.editContent = this.SystemPromptsList.find(prompt => prompt.id === this.selectSystemPromptId)?.content;
   },
 }

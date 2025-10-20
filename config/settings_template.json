@@ -82,7 +82,9 @@
       "api_key": "",
       "selectedProvider": null,
       "temperature": 0.7,
-      "desktopVision": false
+      "desktopVision": false,
+      "wakeWord": "看\nsee\nlook",
+      "enableWakeWord": false
     },
     "webSearch": {
       "enabled": false,
@@ -147,6 +149,20 @@
       "enabled": false,
       "engine": "cc",
       "cc_path": ""
+    },
+    "ccSettings": {
+      "enabled":true,
+      "selectedProvider": null,
+      "base_url":"",
+      "api_key":"",
+      "model":""
+    },
+    "qcSettings": {
+      "enabled":true,
+      "selectedProvider": null,
+      "base_url":"",
+      "api_key":"",
+      "model":""
     },
     "HASettings": {
       "enabled": false,

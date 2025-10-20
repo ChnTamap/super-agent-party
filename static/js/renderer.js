@@ -162,7 +162,7 @@ const app = Vue.createApp({
       handler(newProviders) {
         const existingIds = new Set(newProviders.map(p => p.id));
         // 自动清理无效的 selectedProvider
-        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings].forEach(config => {
+        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings,this.ccSettings,this.qcSettings].forEach(config => {
           if (config.selectedProvider && !existingIds.has(config.selectedProvider)) {
             config.selectedProvider = null;
             // 可选项：同时重置相关字段
@@ -174,7 +174,7 @@ const app = Vue.createApp({
             config.selectedProvider = newProviders[0].id;
           }
         });
-        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings].forEach(config => {
+        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings,this.ccSettings].forEach(config => {
           if (config.selectedProvider) this.syncProviderConfig(config);
         });
       }
@@ -324,6 +324,12 @@ const app = Vue.createApp({
         }));
       return [...this.defaultSeparators, ...custom];
     },
+    filteredClaudeModelProviders() {
+      let vendors = ["Anthropic", "Deepseek", "siliconflow", "ZhipuAI", "moonshot", "aliyun", "modelscope","302.AI"];
+      // this.modelProviders中，vendor在vendors中的，添加到filteredClaudeModelProviders
+      return this.modelProviders.filter((item) => vendors.includes(item.vendor));
+    },
+
     // 计算属性，判断配置是否有效
     isQQBotConfigValid() {
         return this.qqBotConfig.appid && this.qqBotConfig.secret;
