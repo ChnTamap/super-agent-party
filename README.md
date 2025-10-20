@@ -50,9 +50,9 @@
 
 ⭐ Note! Choose to install only for the current user during installation, otherwise, administrator privileges will be required to start.
 
-### macOS Bundle (M-series chips only, developer-oriented, no-install source version, one-click sync to latest repo, no need to wait for desktop build)
+### macOS portable package (Currently only M chips are supported, developer-oriented, no-install source version, one-click sync to latest repo, no need to wait for desktop build)
 
-  👉 [Download here](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/super-agent-party-mac-v0.3.1.zip)
+  👉 [Click to download](https://github.com/heshengtao/super-agent-party/releases/download/v0.3.1/super-agent-party-mac-v0.3.1.zip)
 
 ⭐ Note! You can update the software in Terminal with `one-click update(update).sh` or launch it with `one-click start(start).sh`. Remember to grant permissions before use!
 

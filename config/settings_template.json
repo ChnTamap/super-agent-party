@@ -83,7 +83,7 @@
       "selectedProvider": null,
       "temperature": 0.7,
       "desktopVision": false,
-      "wakeWord": "看\nsee\nlook",
+      "wakeWord": "看\nsee\nlook\n桌面\ndesktop",
       "enableWakeWord": false
     },
     "webSearch": {
@@ -212,11 +212,12 @@
       "base_url": "",
       "api_key": "",
       "funasr_ws_url": "ws://127.0.0.1:10095",
-      "funasr_mode": "2pass",
+      "funasr_mode": "offline",
       "interactionMethod": "auto",
       "hotkey" : "Alt",
       "wakeWord": "小派",
-      "hotwords": "小派 80\nagent party 60"
+      "endWord": "结束对话",
+      "hotwords": "小派 80\nagent party 60\n结束对话 80"
     },
     "ttsSettings": {
       "enabled": false,
