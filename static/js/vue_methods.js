@@ -747,8 +747,8 @@ let vue_methods = {
         </html>`;
       
       sandbox.style.cssText = `
-        width: 80vw;
-        height: 80vh;
+        width: 70vw;
+        height: 70vh;
         border: none;
         border-radius: 8px;
         background: transparent;
