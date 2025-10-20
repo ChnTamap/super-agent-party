@@ -128,7 +128,7 @@ let vue_data = {
       selectedProvider: null,
       temperature: 0.7,  // 默认温度值
       desktopVision: false,
-      wakeWord: '看\nsee\nlook',
+      wakeWord: '看\nsee\nlook\n桌面\ndesktop',
       enableWakeWord: false,
     },
     paramTypes: [
