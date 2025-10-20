@@ -5149,15 +5149,15 @@ if ('serviceWorker' in navigator) {
                         </div>
                       </template>
                     </el-alert>
-                    <div class="browser-mode-btn-container" v-show="CLISettings.engine === 'cc'">
+                    <div class="browser-mode-btn-container" v-show="CLISettings.engine === 'qc'">
                       <el-button
                         class="browser-mode-btn"
                         type="primary"
-                        @click="installClaudeCode"
+                        @click="installQwenCode"
                         round
                         size="large">
                           <i class="fa-solid fa-download"></i>
-                          {{ t('installClaudeCode') }}
+                          {{ t('installQwenCode') }}
                       </el-button>
                     </div>
                   </div>

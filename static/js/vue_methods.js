@@ -8604,6 +8604,37 @@ JSON 结构必须为：
 
     }
   },
+
+  async installQwenCode() {
+    try {
+      const scriptUrl = `${this.partyURL}/sh/qwen_code_install.sh`;
+      const platform = await window.electronAPI.getPlatform();
+
+      if (platform === 'win32') {
+        // 一条命令：先 curl 拉取远程 bat，再立即执行；/k 保持窗口
+        const batUrl = `${this.partyURL}/sh/qwen_code_install.bat`;
+        window.electronAPI.execCommand(
+          `start "" cmd /k "curl -fsSL ${batUrl} -o \"%TEMP%\\qwen_install.bat\" && \"%TEMP%\\qwen_install.bat\""`
+        );
+      } else if (platform === 'darwin') {
+        // macOS
+        window.electronAPI.execCommand(
+          `osascript -e 'tell app "Terminal" to do script "bash -c \\\"$(curl -fsSL ${scriptUrl}) \\\""'`
+        );
+      } else {
+        // Linux
+        window.electronAPI.execCommand(
+          `gnome-terminal -- bash -c "curl -fsSL ${scriptUrl} | bash; exec bash"`
+        );
+      }
+      showNotification(this.t('scriptExecuting'));
+    } catch (error) {
+      showNotification(`failed to install Qwen Code: ${error.message}`, 'error');
+    } finally {
+
+    }
+  },
+  
   _toggleHighlight(e) {
     const blk = e.target.closest('.highlight-block');
     if (!blk) return;
