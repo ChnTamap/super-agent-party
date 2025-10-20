@@ -322,6 +322,13 @@ let vue_data = {
       api_key:'',
       model:''
     },
+    qcSettings: {
+      enabled: false,
+      selectedProvider: null,
+      base_url:'',
+      api_key:'',
+      model:''
+    },
     HASettings: {
       enabled: false,
       api_key: '',

@@ -162,7 +162,7 @@ const app = Vue.createApp({
       handler(newProviders) {
         const existingIds = new Set(newProviders.map(p => p.id));
         // 自动清理无效的 selectedProvider
-        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings,this.ccSettings].forEach(config => {
+        [this.settings, this.reasonerSettings,this.visionSettings,this.KBSettings,this.text2imgSettings,this.ccSettings,this.qcSettings].forEach(config => {
           if (config.selectedProvider && !existingIds.has(config.selectedProvider)) {
             config.selectedProvider = null;
             // 可选项：同时重置相关字段

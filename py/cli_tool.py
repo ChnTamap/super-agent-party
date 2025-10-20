@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 import os
 import subprocess
 import sys
@@ -48,7 +49,7 @@ import anyio
 from claude_agent_sdk import query, ClaudeAgentOptions, AssistantMessage,ResultMessage, TextBlock
 from py.get_setting import load_settings
 
-from typing import AsyncIterator
+from typing import AsyncIterator, Union
 
 async def claude_code_async(prompt) -> str | AsyncIterator[str]:
     """返回 str（报错）或 AsyncIterator[str]（正常流式输出）。"""
@@ -92,7 +93,7 @@ async def claude_code_async(prompt) -> str | AsyncIterator[str]:
 
     return _stream()
 
-claude_info = """Claude Code，Anthropic 官方的 Claude CLI工具。这是一个交互式命令行工具，专门帮助用户完成软件工程任务。
+cli_info = """这是一个交互式命令行工具，专门帮助用户完成软件工程任务。
 
   可以协助您：
   - 编写、调试和重构代码
@@ -109,13 +110,93 @@ claude_code_tool = {
     "type": "function",
     "function": {
         "name": "claude_code_async",
-        "description": f"你可以和控制CLI的智能体Claude Code进行交互。{claude_info}",
+        "description": f"你可以和控制CLI的智能体Claude Code进行交互。{cli_info}",
         "parameters": {
             "type": "object",
             "properties": {
                 "prompt": {
                     "type": "string",
                     "description": "你想让Claude Code执行的指令，最好用自然语言交流，例如：请帮我创建一个文件，文件名为test.txt，文件内容为hello world",
+                }
+            },
+            "required": ["prompt"],
+        },
+    },
+}
+
+async def qwen_code_async(prompt: str) -> str | AsyncIterator[str]:
+    """
+    返回：
+      str                    – 出错信息（如未设置工作目录）
+      AsyncIterator[str]     – 正常流式输出/错误流
+    """
+    # 1. 参数校验（工作目录）
+    settings = await load_settings()
+    CLISettings = settings.get("CLISettings", {})
+    cwd = CLISettings.get("cc_path")
+    qcSettings = settings.get("qcSettings", {})
+
+    if not cwd or not cwd.strip():
+        return "No working directory is set, please set the working directory first!"
+
+    # 2. 构造环境变量
+    extra_config: dict[str, str] = {}
+    if qcSettings.get("enabled"):
+        extra_config = {
+            "OPENAI_BASE_URL": str(qcSettings.get("base_url") or ""),
+            "OPENAI_API_KEY":  str(qcSettings.get("api_key")  or ""),
+            "OPENAI_MODEL":    str(qcSettings.get("model")    or ""),
+        }
+
+    # 3. 内层异步生成器：真正干活
+    async def _stream() -> AsyncIterator[str]:
+        process = await asyncio.create_subprocess_shell(
+            f'qwen -p "{prompt}"',
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=cwd,
+            env={**os.environ, **extra_config},
+        )
+
+        async def read_stream(stream, *, is_error: bool = False):
+            async for line in stream:
+                prefix = "[ERROR] " if is_error else ""
+                yield f"{prefix}{line.decode('utf-8').rstrip()}"
+
+        async for out in _merge_streams(
+            read_stream(process.stdout),
+            read_stream(process.stderr, is_error=True),
+        ):
+            yield out
+
+        await process.wait()
+
+    # 4. 返回生成器
+    return _stream()
+
+async def _merge_streams(*streams):
+    """合并多个异步流"""
+    streams = [s.__aiter__() for s in streams]
+    while streams:
+        for stream in list(streams):
+            try:
+                item = await stream.__anext__()
+                yield item
+            except StopAsyncIteration:
+                streams.remove(stream)
+
+
+qwen_code_tool = {
+    "type": "function",
+    "function": {
+        "name": "qwen_code_async",
+        "description": f"你可以和控制CLI的智能体Qwen Code进行交互。{cli_info}",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "你想让Qwen Code执行的指令，最好用自然语言交流，例如：请帮我创建一个文件，文件名为test.txt，文件内容为hello world",
                 }
             },
             "required": ["prompt"],

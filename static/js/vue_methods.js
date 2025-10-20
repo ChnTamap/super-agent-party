@@ -1071,6 +1071,7 @@ let vue_methods = {
           this.codeSettings = data.data.codeSettings || this.codeSettings;
           this.CLISettings = data.data.CLISettings || this.CLISettings;
           this.ccSettings = data.data.ccSettings || this.ccSettings;
+          this.qcSettings = data.data.qcSettings || this.qcSettings;
           this.HASettings = data.data.HASettings || this.HASettings;
           this.chromeMCPSettings = data.data.chromeMCPSettings || this.chromeMCPSettings;
           this.KBSettings = data.data.KBSettings || this.KBSettings;
@@ -1831,6 +1832,7 @@ let vue_methods = {
           codeSettings: this.codeSettings,
           CLISettings: this.CLISettings,
           ccSettings: this.ccSettings,
+          qcSettings: this.qcSettings,
           HASettings: this.HASettings,
           chromeMCPSettings: this.chromeMCPSettings,
           KBSettings: this.KBSettings,
@@ -2452,7 +2454,15 @@ let vue_methods = {
         await this.autoSaveSettings();
       }
     },
-
+    async selectQCProvider(providerId) {
+      const provider = this.modelProviders.find(p => p.id === providerId);
+      if (provider) {
+        this.qcSettings.model = provider.modelId;
+        this.qcSettings.base_url = provider.url;
+        this.qcSettings.api_key = provider.apiKey;
+        await this.autoSaveSettings();
+      }
+    },
     // 推理模型供应商选择
     async selectReasonerProvider(providerId) {
       const provider = this.modelProviders.find(p => p.id === providerId);
@@ -2539,6 +2549,11 @@ let vue_methods = {
     handleCCProviderVisibleChange(visible) {
       if (!visible) {
         this.selectCCProvider(this.ccSettings.selectedProvider);
+      }
+    },
+    handleQCProviderVisibleChange(visible) {
+      if (!visible) {
+        this.selectQCProvider(this.ccSettings.selectedProvider);
       }
     },
     handleReasonerProviderVisibleChange(visible) {

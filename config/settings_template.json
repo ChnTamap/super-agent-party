@@ -149,7 +149,14 @@
       "cc_path": ""
     },
     "ccSettings": {
-      "enabled":false,
+      "enabled":true,
+      "selectedProvider": null,
+      "base_url":"",
+      "api_key":"",
+      "model":""
+    },
+    "qcSettings": {
+      "enabled":true,
       "selectedProvider": null,
       "base_url":"",
       "api_key":"",

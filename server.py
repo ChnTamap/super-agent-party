@@ -457,7 +457,7 @@ async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str
         search_arxiv_papers
     )
     from py.autoBehavior import auto_behavior
-    from py.cli_tool import claude_code_async
+    from py.cli_tool import claude_code_async,qwen_code_async
     _TOOL_HOOKS = {
         "DDGsearch_async": DDGsearch_async,
         "searxng_async": searxng_async,
@@ -490,7 +490,8 @@ async def dispatch_tool(tool_name: str, tool_params: dict,settings: dict) -> str
         "get_wikipedia_section_content": get_wikipedia_section_content,
         "search_arxiv_papers": search_arxiv_papers,
         "auto_behavior": auto_behavior,
-        "claude_code_async": claude_code_async
+        "claude_code_async": claude_code_async,
+        "qwen_code_async": qwen_code_async
     }
     if "multi_tool_use." in tool_name:
         tool_name = tool_name.replace("multi_tool_use.", "")
@@ -898,7 +899,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
         arxiv_tool 
     ) 
     from py.autoBehavior import auto_behavior_tool
-    from py.cli_tool import claude_code_tool
+    from py.cli_tool import claude_code_tool,qwen_code_tool
     m0 = None
     memoryId = None
     if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
@@ -976,6 +977,8 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
         if settings['CLISettings']['enabled']:
             if settings['CLISettings']['engine'] == 'cc':
                 tools.append(claude_code_tool)
+            elif settings['CLISettings']['engine'] == 'qc':
+                tools.append(qwen_code_tool)
         if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'afterThinking':
             tools.append(time_tool)
         if settings["tools"]["accuweather"]['enabled']:
@@ -2592,7 +2595,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
         arxiv_tool
     ) 
     from py.autoBehavior import auto_behavior_tool
-    from py.cli_tool import claude_code_tool
+    from py.cli_tool import claude_code_tool,qwen_code_tool
     m0 = None
     if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
         memoryId = settings["memorySettings"]["selectedMemory"]
@@ -2671,6 +2674,8 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
     if settings['CLISettings']['enabled']:
         if settings['CLISettings']['engine'] == 'cc':
             tools.append(claude_code_tool)
+        elif settings['CLISettings']['engine'] == 'qc':
+            tools.append(qwen_code_tool)
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'afterThinking':
         tools.append(time_tool)
     if settings["tools"]["accuweather"]['enabled']:
