@@ -742,18 +742,16 @@ let vue_methods = {
         <html>
           <head>
             <base href="/">
-            <link rel="stylesheet" href="/css/styles.css">
-            <style>body { margin: 0; padding: 15px; }</style>
           </head>
           <body>${code}</body>
         </html>`;
       
       sandbox.style.cssText = `
-        width: 100%;
-        height: 800px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: white;
+        width: 80vw;
+        height: 80vh;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
       `;
       
       container.replaceChildren(sandbox);
