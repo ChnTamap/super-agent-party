@@ -3781,6 +3781,7 @@ if ('serviceWorker' in navigator) {
                           <el-option :label="t('auto')" value="auto" ></el-option>
                           <el-option :label="t('manual')" value="manual" ></el-option>
                           <el-option :label="t('wakeWord')" value="wakeWord" ></el-option>
+                          <el-option :label="t('wakeWordAndEndWord')" value="wakeWordAndEndWord" ></el-option>
                           <el-option :label="t('keyTriggered')" value="keyTriggered" ></el-option>
                         </el-select>
                       </el-form-item>
@@ -3802,6 +3803,14 @@ if ('serviceWorker' in navigator) {
                         <el-input
                           v-model="asrSettings.wakeWord"
                           :placeholder="t('wakeWordPlaceholder')"
+                          @input="autoSaveSettings"
+                          class="full-width-input"
+                        />
+                      </el-form-item>
+                      <el-form-item :label="t('endWordMode')" class="form-item-align">
+                        <el-input
+                          v-model="asrSettings.endWord"
+                          :placeholder="t('endWordPlaceholder')"
                           @input="autoSaveSettings"
                           class="full-width-input"
                         />

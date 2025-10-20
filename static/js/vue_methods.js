@@ -383,6 +383,7 @@ let vue_methods = {
           m.briefly = false;
         })
       }
+      this.inAutoMode = false; // 重置自动模式状态
       this.scrollToBottom();
       await this.autoSaveSettings();
     },
@@ -1999,6 +2000,7 @@ let vue_methods = {
       this.fileLinks = [];
       this.isThinkOpen = false; // 重置思考模式状态
       this.asyncToolsID = [];
+      this.inAutoMode = false; // 重置自动模式状态
       this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
       this.autoSaveSettings();
@@ -4962,6 +4964,43 @@ let vue_methods = {
               this.sendMessage();
               this.openWakeWindow();           // 进入 30s 免唤醒
             } else {
+              this.userInput = '';             // 未唤醒，清空输入
+            }
+          }
+          
+          if (this.asrSettings.interactionMethod == "wakeWordAndEndWord") {
+            const userInputLower = this.userInput.toLowerCase();
+            const wakeWordLower = this.asrSettings.wakeWord.toLowerCase();
+            const endWordLower = this.asrSettings.endWord.toLowerCase();
+            
+            // 检查是否包含结束词
+            if (userInputLower.includes(endWordLower)) {
+              this.inAutoMode = false;
+              console.log('End word detected, exiting auto mode');
+              showNotification(this.t('endWordDetected'));
+              // 可以选择发送包含结束词的消息，或者清空不发送
+              this.userInput = '';
+            }
+            // 检查是否包含唤醒词
+            else if (userInputLower.includes(wakeWordLower)) {
+              this.inAutoMode = true;
+              console.log('ake word detected, entering auto mode');
+              // 发送包含唤醒词的消息
+              if (this.ttsSettings.enabledInterruption) {
+                this.sendMessage();
+              } else if (!this.TTSrunning ||  !this.ttsSettings.enabled) {
+                this.sendMessage();
+              }
+            }
+            // 如果在自动模式下，所有消息都自动发送
+            else if (this.inAutoMode) {
+              if (this.ttsSettings.enabledInterruption) {
+                this.sendMessage();
+              } else if (!this.TTSrunning ||  !this.ttsSettings.enabled) {
+                this.sendMessage();
+              }
+            }
+            else{
               this.userInput = '';             // 未唤醒，清空输入
             }
           }

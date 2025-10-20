@@ -451,11 +451,12 @@ let vue_data = {
       base_url: "",
       api_key: "",
       funasr_ws_url: "ws://127.0.0.1:10095",
-      funasr_mode: "2pass",
+      funasr_mode: "offline",
       interactionMethod: "auto",
       hotkey : "Alt",
       wakeWord: "小派",
-      hotwords: "小派 80\nagent party 60",
+      endWord: "结束对话",
+      hotwords: "小派 80\nagent party 60\n结束对话 80",
     },
     supportedLanguages: [
       { code: 'zh-CN', name: '中文' },
@@ -1577,4 +1578,5 @@ main();`,
     textInputOptions: [], // 确保这里是一个空数组
     imageInputOptions: [], // 确保这里是一个空数组
     seedInputOptions: [], // 确保这里是一个空数组
+    inAutoMode: false, // 内存变量，不在设置中保存
 };
