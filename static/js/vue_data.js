@@ -79,6 +79,8 @@ let vue_data = {
       content: ''
     },
     selectSystemPromptId: null,    // 选择的系统提示词id
+    wakeWindowTimer: null,   // 计时器
+    withinWakeWindow: false, // 是否处于“免唤醒”30s 窗口
     isdocker: false,
     isExpanded: true,
     isElectron: isElectron,

@@ -4842,7 +4842,24 @@ let vue_methods = {
 
       return true;
     },
+    openWakeWindow() {
+      this.withinWakeWindow = true;
+      this.wakeWindowTimer = setTimeout(() => {
+        this.withinWakeWindow = false;
+      }, 30_000);
+    },
 
+    /* 刷新 30s 窗口（每次成功交互后调用） */
+    resetWakeWindow() {
+      clearTimeout(this.wakeWindowTimer);
+      this.openWakeWindow();
+    },
+
+    /* 清理计时器，可在组件销毁时调用 */
+    clearWakeWindow() {
+      clearTimeout(this.wakeWindowTimer);
+      this.withinWakeWindow = false;
+    },
 
     // 修改：统一的ASR结果处理函数
     handleASRResult(data) {
@@ -4895,14 +4912,22 @@ let vue_methods = {
           }
           
           if (this.asrSettings.interactionMethod == "wakeWord") {
-            if (this.userInput.toLowerCase().includes(this.asrSettings.wakeWord.toLowerCase())) {
-              if (this.ttsSettings.enabledInterruption) {
-                this.sendMessage();
-              } else if (!this.TTSrunning ||  !this.ttsSettings.enabled) {
-                this.sendMessage();
-              }
+            const lowerInput = this.userInput.toLowerCase();
+            const hasWakeWord = lowerInput.includes(this.asrSettings.wakeWord.toLowerCase());
+
+            /* 1. 如果在 30s 免唤醒窗口，直接发送 */
+            if (this.withinWakeWindow) {
+              this.sendMessage();
+              this.resetWakeWindow();          // 刷新 30s
+              return;
+            }
+
+            /* 2. 否则必须检测唤醒词 */
+            if (hasWakeWord) {
+              this.sendMessage();
+              this.openWakeWindow();           // 进入 30s 免唤醒
             } else {
-              this.userInput = '';
+              this.userInput = '';             // 未唤醒，清空输入
             }
           }
         } else {
