@@ -3233,6 +3233,21 @@ if ('serviceWorker' in navigator) {
                           @change="autoSaveSettings"
                         ></el-switch>
                       </el-form-item>
+                      <el-form-item :label="t('enableDesktopVisionWakeWord')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="visionSettings.enableWakeWord" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('desktopVisionWakeWord')" class="form-item-align">
+                        <el-input
+                          v-model="visionSettings.wakeWord"
+                          :placeholder="t('desktopVisionWakeWordPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                          :rows="3"
+                        />
+                      </el-form-item>
                       <div class="param-header">
                         <span>{{ t('extraParams') }}</span>
                         <el-button 
@@ -3525,6 +3540,21 @@ if ('serviceWorker' in navigator) {
                           v-model="visionSettings.desktopVision" 
                           @change="autoSaveSettings"
                         ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('enableDesktopVisionWakeWord')" class="form-item-align" label-position="left">
+                        <el-switch 
+                          v-model="visionSettings.enableWakeWord" 
+                          @change="autoSaveSettings"
+                        ></el-switch>
+                      </el-form-item>
+                      <el-form-item :label="t('desktopVisionWakeWord')" class="form-item-align">
+                        <el-input
+                          v-model="visionSettings.wakeWord"
+                          :placeholder="t('desktopVisionWakeWordPlaceholder')"
+                          @input="autoSaveSettings"
+                          type="textarea"
+                          :rows="3"
+                        />
                       </el-form-item>
                     </div>
                   </div>

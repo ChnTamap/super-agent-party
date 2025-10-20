@@ -1235,15 +1235,34 @@ let vue_methods = {
       }
       // 👈 桌面截图：仅在 Electron 且 desktopVision 开启时
       if (isElectron && this.visionSettings?.desktopVision) {
-        try {
-          const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
-          const blob = new Blob([pngBuffer], { type: 'image/png' })
-          const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
-          // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
-          this.images.push({ file, name: file.name, path: '' })
-        } catch (e) {
-          console.error('桌面截图失败:', e)
-          showNotification(this.t('desktop_capture_failed'), 'error')
+        if (this.visionSettings.enableWakeWord && this.visionSettings.wakeWord) {
+          // this.visionSettings.wakeWord以换行符分割成数组
+          const wakeWords = this.visionSettings.wakeWord.split('\n');
+          // this.userInput中不包含wakeWords中的元素，就不启用
+          if (wakeWords.some(word => this.userInput.includes(word))) {
+            try {
+              const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
+              const blob = new Blob([pngBuffer], { type: 'image/png' })
+              const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+              // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
+              this.images.push({ file, name: file.name, path: '' })
+            } catch (e) {
+              console.error('桌面截图失败:', e)
+              showNotification(this.t('desktop_capture_failed'), 'error')
+            }
+          }
+        }
+        else {
+          try {
+            const pngBuffer = await window.electronAPI.captureDesktop() // Buffer
+            const blob = new Blob([pngBuffer], { type: 'image/png' })
+            const file = new File([blob], `desktop_${Date.now()}.png`, { type: 'image/png' })
+            // 直接塞进本次要上传的 images 数组，复用原有上传逻辑
+            this.images.push({ file, name: file.name, path: '' })
+          } catch (e) {
+            console.error('桌面截图失败:', e)
+            showNotification(this.t('desktop_capture_failed'), 'error')
+          }
         }
       }
       // 声明变量并初始化为 null
