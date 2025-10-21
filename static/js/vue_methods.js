@@ -8786,11 +8786,13 @@ async playSingleSegment(idx) {
 /* -------------------------------------------------- */
 async toggleContinuousPlay() {
   if (this.readState.isPlaying) {          // 暂停
-    this.stopSegmentTTS();
+    this.stopSegmentTTS(isEnd=false);
     return;
   }
   this.readState.isPlaying   = true;
-  this.readState.currentChunk = 0;         // 从第一句开始
+  if (this.readState.currentChunk < 0 || this.readState.currentChunk >= this.readState.ttsChunks.length) { // 从头开始
+    this.readState.currentChunk = 0;         // 从第一句开始
+  }
   await this.playNextInQueue(true);        // true 表示连续
 },
 
@@ -8811,8 +8813,11 @@ async playNextSegmentOnce() {
 /* -------------------------------------------------- */
 /* 5. 停止所有分段音频                               */
 /* -------------------------------------------------- */
-stopSegmentTTS() {
-  
+stopSegmentTTS(isEnd = true) {
+  this.stopTTSActivities();
+  if (isEnd){
+    this.readState.currentChunk = -1;
+  }
   if (this._curAudio) {
     this._curAudio.pause();
     this._curAudio = null;
