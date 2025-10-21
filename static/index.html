@@ -450,7 +450,7 @@ if ('serviceWorker' in navigator) {
             v-model="showEditDialog"
             :title="editType === 'system' ? t('editSystemPrompt') : t('editMessage')"
             width="600px">
-            <el-form-item :label="t('selectSystemPrompt')" class="form-item-align" label-position="left">
+            <el-form-item v-if="editType === 'system'" :label="t('selectSystemPrompt')" class="form-item-align" label-position="left">
               <el-select 
                 v-model="selectSystemPromptId" 
                 :placeholder="t('selectSystemPromptPlaceholder')"
@@ -4024,6 +4024,7 @@ if ('serviceWorker' in navigator) {
                           allow-create
                           @keyup.enter.native="handleEnter"
                           @create="handleCreateSeparator"
+                          @change="autoSaveSettings"
                         >
                           <el-option
                             v-for="sep in filteredSeparators"
@@ -7713,6 +7714,7 @@ if ('serviceWorker' in navigator) {
                                 allow-create
                                 @keyup.enter.native="handleEnter"
                                 @create="handleCreateSeparator"
+                                @change="autoSaveSettings"
                               >
                                 <el-option
                                   v-for="sep in filteredSeparators"
@@ -8391,202 +8393,290 @@ if ('serviceWorker' in navigator) {
 
                   <!-- 朗读页面 -->
                   <div v-show="subMenu === 'read_bot'">
-                    <el-form class="settings-form" :model="readConfig" label-position="top">
-                      <div class="tool-item">
-                        <!-- 配置头部 -->
-                        <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center;">
-                          <span>
-                            <el-icon><i class="fa-solid fa-book-open-reader"></i></el-icon>
-                            {{ t('readBot') }}
-                          </span>
-                          <div>
-                            
-                            <!-- 启动按钮 -->
-                            <el-tooltip :content="t('start_read')" placement="top">
-                              <el-button 
-                                type="primary" 
-                                @click="startRead" 
-                                :disabled="!readConfig.longText || isReadRunning || isReadStarting"
-                                circle
-                              >
-                                <template v-if="isReadStarting">
-                                  <i class="fa-solid fa-spinner fa-spin"></i>
-                                </template>
-                                <template v-else>
-                                  <i class="fa-solid fa-play"></i>
-                                </template>
-                              </el-button>
-                            </el-tooltip>
-                            <!-- 转换音频按钮 -->
-                            <el-tooltip :content="t('convertAudioOnly')" placement="top">
-                              <el-button 
-                                type="success" 
-                                @click="convertAudioOnly" 
-                                circle
-                                :disabled="!readConfig.longText || isConvertingAudio"
-                              >
-                                <i v-if="isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
-                                <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
-                              </el-button>
-                            </el-tooltip>
-                            <!-- 下载音频按钮 -->
-                            <el-tooltip :content="t('downloadAudio')" placement="top">
-                              <el-button 
-                                type="default" 
-                                @click="downloadAudio" 
-                                circle
-                                :disabled="(isAudioSynthesizing && isConvertingAudio) || audioChunksCount === 0"
-                              >
-                                <i v-if="isAudioSynthesizing && isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
-                                <i v-else class="fa-solid fa-download"></i>
-                              </el-button>
-                            </el-tooltip>
-
-                            <!-- 停止按钮（更新为通用停止功能） -->
-                            <el-tooltip :content="t('stop_all_tts')" placement="top">
-                              <el-button 
-                                type="danger" 
-                                @click="stopTTSActivities" 
-                                :disabled="(!isReadRunning && !isConvertingAudio) || isReadStopping || isConvertStopping"
-                                circle
-                              >
-                                <template v-if="isReadStopping || isConvertStopping">
-                                  <i class="fa-solid fa-spinner fa-spin"></i>
-                                </template>
-                                <template v-else>
-                                  <i class="fa-solid fa-stop"></i>
-                                </template>
-                              </el-button>
-                            </el-tooltip>
-                          </div>
-                        </div>
-                        <div class="tool-item">
-                          <div class="tool-content">
-                            <!-- 新增：进度条区域 -->
-                            <div class="progress-container" style="margin-top: 15px;">
-                              <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span>{{ t('processingProgress') }}</span>
-                                <span>{{ processingProgressText }}</span>
-                              </div>
-                              <el-progress 
-                                :percentage="processingPercentage" 
-                                :status="progressStatus"
-                                :stroke-width="20"
-                                :text-inside="true"
-                              />
-                            </div>
-                            <!-- 文件选择区域 -->
-                            <el-form-item>
-                              <!-- 选择textFiles中的文件 -->
-                              <el-select class="full-width-input" v-model="selectedFile" @change="parseSelectedFile" :placeholder="t('selectFile')">
-                                <el-option
-                                  v-for="file in textFiles"
-                                  :key="file.unique_filename"
-                                  :label="file.original_filename"
-                                  :value="file.unique_filename"
-                                ></el-option>
-                              </el-select>
-                            </el-form-item>
-                            <el-form-item :label="t('separators')">
-                              <el-select
-                                v-model="ttsSettings.separators"
-                                multiple
-                                filterable
-                                allow-create
-                                @keyup.enter.native="handleEnter"
-                                @create="handleCreateSeparator"
-                              >
-                                <el-option
-                                  v-for="sep in filteredSeparators"
-                                  :key="sep.value"
-                                  :label="sep.label"
-                                  :value="sep.value"
-                                />
-                              </el-select>
-                            </el-form-item>
-                            <el-alert
-                              type="info"
-                              :closable="false"
-                              class="mb-2"
-                            >
-                              <template #default>
-                                <div class="alert-content">
-                                  {{ t('SeparatorNotice1') }}
-                                  <el-link
-                                    type="primary"
-                                    :underline="false"
-                                    class="font-medium"
-                                    @click="switchToTTS"
+                    <el-tabs v-model="activeReadTab">
+                      <!-- 配置标签页 -->
+                      <el-tab-pane :label="t('FullTextReading')" name="full" key="full">
+                        <el-form class="settings-form" :model="readConfig" label-position="top">
+                          <div class="tool-item">
+                            <!-- 配置头部 -->
+                            <div class="tool-header" style="display: flex; justify-content: space-between; align-items: center;">
+                              <span>
+                                <el-icon><i class="fa-solid fa-book-open-reader"></i></el-icon>
+                                {{ t('readBot') }}
+                              </span>
+                              <div>
+                                
+                                <!-- 启动按钮 -->
+                                <el-tooltip :content="t('start_read')" placement="top">
+                                  <el-button 
+                                    type="primary" 
+                                    @click="startRead" 
+                                    :disabled="!readConfig.longText || isReadRunning || isReadStarting"
+                                    circle
                                   >
-                                    <el-icon class="mr-1">
-                                      <i class="fa-solid fa-key"></i>
-                                    </el-icon>{{ t('TTSInterface') }}
-                                  </el-link>
-                                </div>
-                              </template>
-                            </el-alert>
-                            <el-form-item :label="t('maxConcurrency')" class="form-item-align">
-                              <el-slider
-                                v-model="ttsSettings.maxConcurrency"
-                                :min="1"
-                                :max="16"
-                                :step="1"
-                                @change="autoSaveSettings">
-                            </el-form-item>
-                            <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
-                              <el-tooltip :content="t('prevChapter')" placement="top">
-                                <el-button 
-                                  v-show="this.readConfig.longTextList?.length > 0"
-                                  type="default" 
-                                  @click="PrevPage" 
-                                  circle
-                                >
-                                  <i class="fa-solid fa-arrow-left"></i>
-                                </el-button>
-                              </el-tooltip>
-                              <el-tooltip :content="t('nextChapter')" placement="top">
-                                <el-button 
-                                  v-show="this.readConfig.longTextList?.length > 0"
-                                  type="default" 
-                                  @click="NextPage" 
-                                  circle
-                                >
-                                  <i class="fa-solid fa-arrow-right"></i>
-                                </el-button>
-                              </el-tooltip>
-                              <!-- 新增上传文件按钮 -->
-                              <el-tooltip :content="t('uploadFile')" placement="top">
-                                <el-button 
-                                  type="success" 
-                                  @click="showFileDialog = true" 
-                                  circle
-                                >
-                                  <i class="fa-solid fa-file-arrow-up"></i>
-                                </el-button>
-                              </el-tooltip>
-                              <el-tooltip :content="t('clearText')" placement="top">
-                                <el-button 
-                                  type="danger" 
-                                  @click="clearLongText" 
-                                  circle
-                                >
-                                  <i class="fa-solid fa-broom"></i>
-                                </el-button>
-                              </el-tooltip>
+                                    <template v-if="isReadStarting">
+                                      <i class="fa-solid fa-spinner fa-spin"></i>
+                                    </template>
+                                    <template v-else>
+                                      <i class="fa-solid fa-play"></i>
+                                    </template>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 转换音频按钮 -->
+                                <el-tooltip :content="t('convertAudioOnly')" placement="top">
+                                  <el-button 
+                                    type="success" 
+                                    @click="convertAudioOnly" 
+                                    circle
+                                    :disabled="!readConfig.longText || isConvertingAudio"
+                                  >
+                                    <i v-if="isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
+                                    <i v-else class="fa-solid fa-wand-magic-sparkles"></i>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 下载音频按钮 -->
+                                <el-tooltip :content="t('downloadAudio')" placement="top">
+                                  <el-button 
+                                    type="default" 
+                                    @click="downloadAudio" 
+                                    circle
+                                    :disabled="(isAudioSynthesizing && isConvertingAudio) || audioChunksCount === 0"
+                                  >
+                                    <i v-if="isAudioSynthesizing && isConvertingAudio" class="fa-solid fa-spinner fa-spin"></i>
+                                    <i v-else class="fa-solid fa-download"></i>
+                                  </el-button>
+                                </el-tooltip>
+
+                                <!-- 停止按钮（更新为通用停止功能） -->
+                                <el-tooltip :content="t('stop_all_tts')" placement="top">
+                                  <el-button 
+                                    type="danger" 
+                                    @click="stopTTSActivities" 
+                                    :disabled="(!isReadRunning && !isConvertingAudio) || isReadStopping || isConvertStopping"
+                                    circle
+                                  >
+                                    <template v-if="isReadStopping || isConvertStopping">
+                                      <i class="fa-solid fa-spinner fa-spin"></i>
+                                    </template>
+                                    <template v-else>
+                                      <i class="fa-solid fa-stop"></i>
+                                    </template>
+                                  </el-button>
+                                </el-tooltip>
+                              </div>
                             </div>
-                            <el-form-item>
-                              <el-input
-                                  v-model="readConfig.longText"
-                                  type="textarea"
-                                  :rows=32
-                                  :placeholder="t('longTextPlaceholder')"
-                                  class="input-box">
-                              </el-input>
-                            </el-form-item>
+                            <div class="tool-item">
+                              <div class="tool-content">
+                                <!-- 新增：进度条区域 -->
+                                <div class="progress-container" style="margin-top: 15px;">
+                                  <div class="progress-info" style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>{{ t('processingProgress') }}</span>
+                                    <span>{{ processingProgressText }}</span>
+                                  </div>
+                                  <el-progress 
+                                    :percentage="processingPercentage" 
+                                    :status="progressStatus"
+                                    :stroke-width="20"
+                                    :text-inside="true"
+                                  />
+                                </div>
+                                <!-- 文件选择区域 -->
+                                <el-form-item>
+                                  <!-- 选择textFiles中的文件 -->
+                                  <el-select class="full-width-input" v-model="selectedFile" @change="parseSelectedFile" :placeholder="t('selectFile')">
+                                    <el-option
+                                      v-for="file in textFiles"
+                                      :key="file.unique_filename"
+                                      :label="file.original_filename"
+                                      :value="file.unique_filename"
+                                    ></el-option>
+                                  </el-select>
+                                </el-form-item>
+                                <el-alert
+                                  type="info"
+                                  :closable="false"
+                                  class="mb-2"
+                                >
+                                  <template #default>
+                                    <div class="alert-content">
+                                      {{ t('SeparatorNotice1') }}
+                                      <el-link
+                                        type="primary"
+                                        :underline="false"
+                                        class="font-medium"
+                                        @click="switchToTTS"
+                                      >
+                                        <el-icon class="mr-1">
+                                          <i class="fa-solid fa-key"></i>
+                                        </el-icon>{{ t('TTSInterface') }}
+                                      </el-link>
+                                    </div>
+                                  </template>
+                                </el-alert>
+                                <div style="display: flex; justify-content: flex-end;margin-bottom: 16px;">
+                                  <el-tooltip :content="t('prevChapter')" placement="top">
+                                    <el-button 
+                                      v-show="this.readConfig.longTextList?.length > 0"
+                                      type="default" 
+                                      @click="PrevPage" 
+                                      circle
+                                    >
+                                      <i class="fa-solid fa-arrow-left"></i>
+                                    </el-button>
+                                  </el-tooltip>
+                                  <el-tooltip :content="t('nextChapter')" placement="top">
+                                    <el-button 
+                                      v-show="this.readConfig.longTextList?.length > 0"
+                                      type="default" 
+                                      @click="NextPage" 
+                                      circle
+                                    >
+                                      <i class="fa-solid fa-arrow-right"></i>
+                                    </el-button>
+                                  </el-tooltip>
+                                  <!-- 新增上传文件按钮 -->
+                                  <el-tooltip :content="t('uploadFile')" placement="top">
+                                    <el-button 
+                                      type="success" 
+                                      @click="showFileDialog = true" 
+                                      circle
+                                    >
+                                      <i class="fa-solid fa-file-arrow-up"></i>
+                                    </el-button>
+                                  </el-tooltip>
+                                  <el-tooltip :content="t('clearText')" placement="top">
+                                    <el-button 
+                                      type="danger" 
+                                      @click="clearLongText" 
+                                      circle
+                                    >
+                                      <i class="fa-solid fa-broom"></i>
+                                    </el-button>
+                                  </el-tooltip>
+                                </div>
+                                <el-form-item>
+                                  <el-input
+                                      v-model="readConfig.longText"
+                                      type="textarea"
+                                      :rows=32
+                                      :placeholder="t('longTextPlaceholder')"
+                                      class="input-box">
+                                  </el-input>
+                                </el-form-item>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </el-form>
+                        </el-form>
+                      </el-tab-pane>  
+                      <el-tab-pane :label="t('SegmentedReading')" name="segment" key="segment">
+                        <el-form class="settings-form" label-position="top">
+                          <div class="tool-item">
+                            <!-- 顶部工具栏 -->
+                            <div class="tool-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                              <span><el-icon><i class="fa-solid fa-list-ol"></i></el-icon> {{ t('segmentRead') }}</span>
+                              <div>
+                                <el-tooltip :content="t('playNextSegment')" placement="top">
+                                  <el-button
+                                    type="primary"
+                                    circle
+                                    :disabled="readState.ttsChunks.length===0 || readState.isPlaying"
+                                    @click="playNextSegmentOnce"
+                                  >
+                                    <i class="fa-solid fa-step-forward"></i>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 连续播放 / 暂停 -->
+                                <el-tooltip :content="t('continuousPlay')" placement="top">
+                                  <el-button
+                                    type="primary"
+                                    circle
+                                    :disabled="readState.ttsChunks.length===0 || isReadRunning"
+                                    @click="toggleContinuousPlay"
+                                  >
+                                    <i :class="readState.isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 停止 -->
+                                <el-tooltip :content="t('stopSegmentTTS')" placement="top">
+                                  <el-button
+                                    type="danger"
+                                    circle
+                                    :disabled="!readState.isPlaying && !isReadRunning"
+                                    @click="stopSegmentTTS"
+                                  >
+                                    <i class="fa-solid fa-stop"></i>
+                                  </el-button>
+                                </el-tooltip>
+                              </div>
+                            </div>
+
+                            <!-- 分段列表 -->
+                            <!-- 外层只控制列表显隐，不控制行 -->
+                            <div v-if="readState.ttsChunks.length"
+                                key="seg-list-box"
+                                class="segment-list"
+                                style="max-height:420px;overflow:auto">
+
+                              <!-- 直接对行做 v-for，避免 template 带来的 diff 问题 -->
+                              <div v-for="(chunk, idx) in readState.ttsChunks"
+                                  :key="idx"
+                                  class="segment-item"
+                                  :style="{ background: idx === readState.currentChunk ? '#ecf5ff' : '' }"
+                                  style="display:flex;align-items:center;margin-bottom:8px;padding:8px;border:1px solid #dcdfe6;border-radius:4px">
+
+                                <span style="min-width:30px;text-align:center">{{ idx + 1 }}</span>
+
+                                <!-- 音色标签 / 选择框：同场过渡，防止闪帧 -->
+                                <Transition name="el-fade-in-linear" mode="out-in">
+                                  <!-- 关键：mode="out-in" 保证旧元素完全退场后再进新元素 -->
+                                  <el-tag v-if="activeSegmentIdx !== idx"
+                                          size="default"
+                                          style="margin-right:8px;width:80px">
+                                    {{ readState.chunks_voice[idx] }}
+                                  </el-tag>
+
+                                  <el-select v-else
+                                            v-model="segmentVoiceEditBuffer[idx]"
+                                            size="small"
+                                            style="margin-right:8px;width:80px">
+                                    <el-option key="default" label="default" value="default"></el-option>
+                                    <el-option v-for="(cfg,name) in ttsSettings.newtts"
+                                              :key="name"
+                                              :label="name"
+                                              :value="name" >
+                                    </el-option>
+                                  </el-select>
+                                </Transition>
+
+                                <div style="flex:1;margin-right:8px">
+                                  <div v-if="activeSegmentIdx !== idx" class="segment-text">{{ chunk }}</div>
+                                  <el-input v-else v-model="segmentEditBuffer" type="textarea" ></el-input>
+                                </div>
+
+                                <div>
+                                  <el-button v-if="activeSegmentIdx !== idx"
+                                            type="text" size="small"
+                                            :disabled="isReadRunning||isReadingOnetext"
+                                            @click="playSingleSegment(idx)" >
+                                            <i class="fa-solid fa-play"></i>
+                                  </el-button>
+                                  <el-button type="text" size="small"
+                                            :disabled="isReadRunning||isReadingOnetext"
+                                            @click="toggleEditSegment(idx)" >
+                                            <i :class="activeSegmentIdx === idx ? 'fa-solid fa-check' : 'fa-solid fa-pen'"></i>
+                                  </el-button>
+                                </div>
+                              </div>
+                            </div>
+
+
+
+                            <!-- 空态 -->
+                            <el-empty v-else :description="t('noSegmentList')" />
+                          </div>
+                        </el-form>
+                      </el-tab-pane>
+                    </el-tabs>
 
                     <!-- 文件上传对话框 -->
                     <el-dialog 

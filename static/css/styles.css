@@ -1754,7 +1754,7 @@ body {
 }
 
 .code-lang {
-  color: var(--el-bg-color-page)!important;
+  color: #ffffff !important;
   font-size: 0.9em;
   font-family: var(--el-font-family);
   margin-right: auto;
@@ -1767,7 +1767,7 @@ body {
 }
 
 .copy-button, .preview-button{
-  background: var(--el-bg-color-page);
+  background:  #ffffff !important;
   border: none;
   color: var(--el-color-primary);
   cursor: pointer;
@@ -1777,7 +1777,7 @@ body {
 }
 
 .copy-button, .download-button{
-  background: var(--el-bg-color-page);
+  background: #ffffff !important;
   border: none;
   color: var(--el-color-primary);
   cursor: pointer;
@@ -3574,4 +3574,9 @@ body {
 /* 让 textarea 撑满 */
 .classic-panel .el-textarea{
   flex:1;
+}
+
+
+.segment-list {
+  scroll-behavior: smooth;
 }
