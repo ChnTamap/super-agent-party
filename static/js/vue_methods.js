@@ -7273,8 +7273,9 @@ async deleteGaussSceneOption(sceneId) {
         this.audioChunksCount++;
         
         /* 新增: 检查是否全部合成完成 */
-        if (this.audioChunksCount === this.totalChunksCount) {
+        if (this.audioChunksCount >= this.totalChunksCount) {
           this.isAudioSynthesizing = false;
+          this.audioChunksCount = this.totalChunksCount; // 重置计数
         }
 
         /* 立刻尝试播放 */
@@ -7288,8 +7289,9 @@ async deleteGaussSceneOption(sceneId) {
         this.audioChunksCount++;
         
         /* 新增: 检查是否全部合成完成 */
-        if (this.audioChunksCount === this.totalChunksCount) {
+        if (this.audioChunksCount >= this.totalChunksCount) {
           this.isAudioSynthesizing = false;
+          this.audioChunksCount = this.totalChunksCount; // 重置计数
         }
         
         this.checkReadAudioPlayback();
@@ -7646,18 +7648,28 @@ async deleteGaussSceneOption(sceneId) {
 
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-
-        // 缓存到 readState
+        /* Base64 给 VRM */
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        this.cur_audioDatas[index] = `data:${blob.type};base64,${base64}`;
+        /* 缓存两样东西 */
         this.readState.audioChunks[index] = {
-          url,
+          url,                       // 本地播放用
           expressions: exps,
+          base64: this.cur_audioDatas[index], // VRM 播放用
           text: chunk_text,
           index
         };
-
         // 增加计数
         this.audioChunksCount++;
-        
+        if (this.audioChunksCount >= this.totalChunksCount) {
+          this.isAudioSynthesizing = false;
+          this.audioChunksCount = this.totalChunksCount; // 重置计数
+        }
       } catch (e) {
         console.error(`TTS chunk ${index} error`, e);
         this.readState.audioChunks[index] = { 
@@ -7669,6 +7681,10 @@ async deleteGaussSceneOption(sceneId) {
         
         // 错误时也增加计数
         this.audioChunksCount++;
+        if (this.audioChunksCount >= this.totalChunksCount) {
+          this.isAudioSynthesizing = false;
+          this.audioChunksCount = this.totalChunksCount; // 重置计数
+        }
       }
     },
 
