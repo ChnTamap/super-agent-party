@@ -7226,7 +7226,7 @@ async deleteGaussSceneOption(sceneId) {
         const cachedAudio = this.readState.audioChunks[index];
 
         // 检查缓存是否命中
-        if (cachedAudio?.url && cachedAudio?.base64) {
+        if (cachedAudio?.url && cachedAudio?.base64 && cachedAudio?.text === chunk && cachedAudio?.voice === voice) {
           this.cur_audioDatas[index] = cachedAudio.base64;
         }
         else{
@@ -7273,7 +7273,8 @@ async deleteGaussSceneOption(sceneId) {
             expressions: exps,
             base64: this.cur_audioDatas[index], // VRM 播放用
             text: chunk_text,
-            index
+            index,
+            voice
           };
         }
 
@@ -7670,7 +7671,8 @@ async deleteGaussSceneOption(sceneId) {
           expressions: exps,
           base64: this.cur_audioDatas[index], // VRM 播放用
           text: chunk_text,
-          index
+          index,
+          voice
         };
         // 增加计数
         this.audioChunksCount++;
@@ -8791,8 +8793,12 @@ async playSingleSegment(idx) {
     if (!this.readState.ttsChunks[idx]) return;
     this.isReadingOnetext = true;
     this.readState.currentChunk = idx;
-    // 缓存命中直接播
-    if (this.readState.audioChunks[idx]?.url && this.readState.audioChunks[idx]?.base64) {
+    const chunk = this.readState.ttsChunks[idx];
+    const voice = this.readState.chunks_voice[idx];
+    const cachedAudio = this.readState.audioChunks[idx];
+
+    // 检查缓存是否命中
+    if (cachedAudio?.url && cachedAudio?.base64 && cachedAudio?.text === chunk && cachedAudio?.voice === voice) {
       this.doPlayAudio(this.readState.audioChunks[idx].url, idx, false); // false=不连播
       return;
     }
@@ -8852,14 +8858,16 @@ stopSegmentTTS(isEnd = true) {
 /* -------------------------------------------------- */
 toggleEditSegment(idx) {
   if (this.activeSegmentIdx === idx) {
-    // 保存
-    this.readState.ttsChunks[idx] = this.segmentEditBuffer.trim();
-    this.readState.audioChunks[idx] = null; // 强制重合成
-    this.activeSegmentIdx = -1;
+    // 保存：把临时值写回正式字段
+    this.readState.ttsChunks[idx] = this.segmentEditBuffer
+    this.readState.chunks_voice[idx] = this.segmentVoiceEditBuffer[idx] ?? this.readState.chunks_voice[idx]
+    this.activeSegmentIdx = -1
   } else {
-    // 进入编辑
-    this.activeSegmentIdx = idx;
-    this.segmentEditBuffer = this.readState.ttsChunks[idx];
+    // 进入编辑：先给“音色临时数组”对应位置塞个初始值
+    this.segmentEditBuffer = this.readState.ttsChunks[idx]
+    // Vue3 直接赋值即可
+    this.segmentVoiceEditBuffer[idx] = this.readState.chunks_voice[idx]
+    this.activeSegmentIdx = idx
   }
 },
 
@@ -8904,7 +8912,8 @@ async synthSegment(idx) {
       expressions: exps,
       base64: `data:${blob.type};base64,${base64}`, // VRM 播放用
       text: chunk_text,
-      idx
+      idx,
+      voice
     };
   } catch (e) {
     console.error(`TTS chunk ${idx} error`, e);
@@ -9005,7 +9014,16 @@ async doPlayAudio(url, idx, continuous = false) {
 // 连续播放专用：自动合成&播放下一帧
 async playNextInQueue(continuous) {
   const idx = this.readState.currentChunk;   // 当前要播的索引
-  if (!this.readState.audioChunks[idx]?.url) await this.synthSegment(idx);
+  const chunk = this.readState.ttsChunks[idx];
+  const voice = this.readState.chunks_voice[idx];
+  const cachedAudio = this.readState.audioChunks[idx];
+
+  // 检查缓存是否命中
+  if (cachedAudio?.url && cachedAudio?.base64 && cachedAudio?.text === chunk && cachedAudio?.voice === voice) {
+    // 命中就无事发生
+  }else{
+    await this.synthSegment(idx);
+  }
   this.doPlayAudio(this.readState.audioChunks[idx].url, idx, continuous);
 },
 

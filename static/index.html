@@ -4024,6 +4024,7 @@ if ('serviceWorker' in navigator) {
                           allow-create
                           @keyup.enter.native="handleEnter"
                           @create="handleCreateSeparator"
+                          @change="autoSaveSettings"
                         >
                           <el-option
                             v-for="sep in filteredSeparators"
@@ -7713,6 +7714,7 @@ if ('serviceWorker' in navigator) {
                                 allow-create
                                 @keyup.enter.native="handleEnter"
                                 @create="handleCreateSeparator"
+                                @change="autoSaveSettings"
                               >
                                 <el-option
                                   v-for="sep in filteredSeparators"
@@ -8624,11 +8626,31 @@ if ('serviceWorker' in navigator) {
 
                                 <span style="min-width:30px;text-align:center">{{ idx + 1 }}</span>
 
-                                <el-tag size="small" style="margin-right:8px">{{ readState.chunks_voice[idx] }}</el-tag>
+                                <!-- 音色标签 / 选择框：同场过渡，防止闪帧 -->
+                                <Transition name="el-fade-in-linear" mode="out-in">
+                                  <!-- 关键：mode="out-in" 保证旧元素完全退场后再进新元素 -->
+                                  <el-tag v-if="activeSegmentIdx !== idx"
+                                          size="default"
+                                          style="margin-right:8px;width:80px">
+                                    {{ readState.chunks_voice[idx] }}
+                                  </el-tag>
+
+                                  <el-select v-else
+                                            v-model="segmentVoiceEditBuffer[idx]"
+                                            size="small"
+                                            style="margin-right:8px;width:80px">
+                                    <el-option key="default" label="default" value="default"></el-option>
+                                    <el-option v-for="(cfg,name) in ttsSettings.newtts"
+                                              :key="name"
+                                              :label="name"
+                                              :value="name" >
+                                    </el-option>
+                                  </el-select>
+                                </Transition>
 
                                 <div style="flex:1;margin-right:8px">
                                   <div v-if="activeSegmentIdx !== idx" class="segment-text">{{ chunk }}</div>
-                                  <el-input v-else v-model="segmentEditBuffer" type="textarea" :rows="2" size="small" />
+                                  <el-input v-else v-model="segmentEditBuffer" type="textarea" ></el-input>
                                 </div>
 
                                 <div>
