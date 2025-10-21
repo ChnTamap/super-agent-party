@@ -8634,12 +8634,12 @@ if ('serviceWorker' in navigator) {
                                 <div>
                                   <el-button v-if="activeSegmentIdx !== idx"
                                             type="text" size="small"
-                                            :disabled="isReadRunning"
+                                            :disabled="isReadRunning||isReadingOnetext"
                                             @click="playSingleSegment(idx)" >
                                             <i class="fa-solid fa-play"></i>
                                   </el-button>
                                   <el-button type="text" size="small"
-                                            :disabled="isReadRunning"
+                                            :disabled="isReadRunning||isReadingOnetext"
                                             @click="toggleEditSegment(idx)" >
                                             <i :class="activeSegmentIdx === idx ? 'fa-solid fa-check' : 'fa-solid fa-pen'"></i>
                                   </el-button>
