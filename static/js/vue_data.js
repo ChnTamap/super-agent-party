@@ -1185,10 +1185,14 @@ let vue_data = {
     readState: {
       ttsChunks: [],
       audioChunks: [],
+      chunks_voice: [], 
       ttsQueue: new Set(),
       currentChunk: 0,
       isPlaying: false
     },
+    segmentEditBuffer: '',  // 单个段落临时编辑区
+    activeSegmentIdx: -1,    // 当前手动编辑的段落索引
+    _curAudio: null,        // 当前 Audio 实例
     liveConfig: {
       onlyDanmaku: true,
       danmakuQueueLimit: 5,

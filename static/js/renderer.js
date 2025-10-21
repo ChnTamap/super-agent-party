@@ -154,6 +154,17 @@ const app = Vue.createApp({
     document.removeEventListener('click', this._toggleHighlight, false);
   },
   watch: {
+    'readConfig.longText': {
+      immediate: true,
+      async handler(val) {          // ← 加 async
+        await this.$nextTick();     // ← 保证组件完成上一轮渲染
+        if (!val?.trim()) {
+          this.clearSegments();
+          return;
+        }
+        this.reSegment();
+      }
+    },
     selectedCodeLang() {
       this.highlightCode();
     },

@@ -8393,7 +8393,7 @@ if ('serviceWorker' in navigator) {
                   <div v-show="subMenu === 'read_bot'">
                     <el-tabs v-model="activeReadTab">
                       <!-- 配置标签页 -->
-                      <el-tab-pane :label="t('FullTextReading')" name="full">
+                      <el-tab-pane :label="t('FullTextReading')" name="full" key="full">
                         <el-form class="settings-form" :model="readConfig" label-position="top">
                           <div class="tool-item">
                             <!-- 配置头部 -->
@@ -8566,8 +8566,93 @@ if ('serviceWorker' in navigator) {
                           </div>
                         </el-form>
                       </el-tab-pane>  
-                      <el-tab-pane :label="t('SegmentedReading')" name="segment">
-                        
+                      <el-tab-pane :label="t('SegmentedReading')" name="segment" key="segment">
+                        <el-form class="settings-form" label-position="top">
+                          <div class="tool-item">
+                            <!-- 顶部工具栏 -->
+                            <div class="tool-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                              <span><el-icon><i class="fa-solid fa-list-ol"></i></el-icon> {{ t('segmentRead') }}</span>
+                              <div>
+                                <el-tooltip :content="t('playNextSegment')" placement="top">
+                                  <el-button
+                                    type="primary"
+                                    circle
+                                    :disabled="readState.ttsChunks.length===0 || readState.isPlaying"
+                                    @click="playNextSegmentOnce"
+                                  >
+                                    <i class="fa-solid fa-step-forward"></i>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 连续播放 / 暂停 -->
+                                <el-tooltip :content="t('continuousPlay')" placement="top">
+                                  <el-button
+                                    type="primary"
+                                    circle
+                                    :disabled="readState.ttsChunks.length===0 || isReadRunning"
+                                    @click="toggleContinuousPlay"
+                                  >
+                                    <i :class="readState.isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play'"></i>
+                                  </el-button>
+                                </el-tooltip>
+                                <!-- 停止 -->
+                                <el-tooltip :content="t('stopSegmentTTS')" placement="top">
+                                  <el-button
+                                    type="danger"
+                                    circle
+                                    :disabled="!readState.isPlaying && !isReadRunning"
+                                    @click="stopSegmentTTS"
+                                  >
+                                    <i class="fa-solid fa-stop"></i>
+                                  </el-button>
+                                </el-tooltip>
+                              </div>
+                            </div>
+
+                            <!-- 分段列表 -->
+                            <!-- 外层只控制列表显隐，不控制行 -->
+                            <div v-if="readState.ttsChunks.length"
+                                key="seg-list-box"
+                                class="segment-list"
+                                style="max-height:420px;overflow:auto">
+
+                              <!-- 直接对行做 v-for，避免 template 带来的 diff 问题 -->
+                              <div v-for="(chunk, idx) in readState.ttsChunks"
+                                  :key="idx"
+                                  class="segment-item"
+                                  :style="{ background: idx === readState.currentChunk ? '#ecf5ff' : '' }"
+                                  style="display:flex;align-items:center;margin-bottom:8px;padding:8px;border:1px solid #dcdfe6;border-radius:4px">
+
+                                <span style="min-width:30px;text-align:center">{{ idx + 1 }}</span>
+
+                                <el-tag size="small" style="margin-right:8px">{{ readState.chunks_voice[idx] }}</el-tag>
+
+                                <div style="flex:1;margin-right:8px">
+                                  <div v-if="activeSegmentIdx !== idx" class="segment-text">{{ chunk }}</div>
+                                  <el-input v-else v-model="segmentEditBuffer" type="textarea" :rows="2" size="small" />
+                                </div>
+
+                                <div>
+                                  <el-button v-if="activeSegmentIdx !== idx"
+                                            type="text" size="small"
+                                            :disabled="isReadRunning"
+                                            @click="playSingleSegment(idx)" >
+                                            <i class="fa-solid fa-play"></i>
+                                  </el-button>
+                                  <el-button type="text" size="small"
+                                            :disabled="isReadRunning"
+                                            @click="toggleEditSegment(idx)" >
+                                            <i :class="activeSegmentIdx === idx ? 'fa-solid fa-check' : 'fa-solid fa-pen'"></i>
+                                  </el-button>
+                                </div>
+                              </div>
+                            </div>
+
+
+
+                            <!-- 空态 -->
+                            <el-empty v-else :description="t('noSegmentList')" />
+                          </div>
+                        </el-form>
                       </el-tab-pane>
                     </el-tabs>
 
