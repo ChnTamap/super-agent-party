@@ -3575,3 +3575,8 @@ body {
 .classic-panel .el-textarea{
   flex:1;
 }
+
+
+.segment-list {
+  scroll-behavior: smooth;
+}

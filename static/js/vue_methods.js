@@ -7139,13 +7139,9 @@ async deleteGaussSceneOption(sceneId) {
     /* ===============  朗读主流程  =============== */
     // 修改 startRead 方法
     async startRead() {
-      if (!this.ttsSettings.enabled) {
-        this.ttsSettings.enabled = true;
-        this.changeTTSstatus();
-        showNotification(this.t('ttsAutoEnabled'))
-      }
       if (!this.readConfig.longText.trim()) return;
-
+      this.stopSegmentTTS();
+      this.readState.currentChunk = 0;
       this.isReadStarting = true;
       this.isReadRunning  = true;
       this.isReadStopping = false;
@@ -7705,7 +7701,7 @@ async deleteGaussSceneOption(sceneId) {
     /* 开始播放这一块 */
     this.readState.isPlaying = true;
     console.log(`Playing read audio chunk ${curIdx}`);
-
+    this.scrollToCurrentChunk(curIdx);
     try {
       this.currentAudio = new Audio(audioChunk.url);
 
@@ -8893,53 +8889,88 @@ async synthSegment(idx) {
     };
   }
 },
-/* 2. 播放时只把 base64 发给 VRM */
-doPlayAudio(url, idx, continuous = false) {
+scrollToCurrentChunk(idx) {
+  // 使用 nextTick 确保 DOM 更新完成
+  this.$nextTick(() => {
+    const segmentList = document.querySelector('.segment-list');
+    const segmentItem = document.querySelector(`.segment-item:nth-child(${idx + 1})`);
+    if (segmentList && segmentItem) {
+      segmentItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  });
+},
+
+async doPlayAudio(url, idx, continuous = false) {
   if (this._curAudio) this._curAudio.pause();
   try {
     const audio = new Audio(url);
     this._curAudio = audio;
-    // 不要在这里改 currentChunk！放到 ended 里统一处理
+
+    // 滚动到当前行
+    this.scrollToCurrentChunk(idx);
 
     const chunk = this.readState.audioChunks[idx];
     if (chunk.base64 == null) throw new Error('No base64');
-    /* 关键修复：字段名保持一致 */
     this.sendTTSStatusToVRM('startSpeaking', {
-      audioDataUrl: chunk.base64,   // 桌宠需要的字段
-      chunkIndex  : idx,
-      totalChunks : this.readState.ttsChunks.length,
-      text        : chunk.text,
-      expressions : chunk.expressions || [],
-      voice       : this.readState.chunks_voice[idx] || 'default',
+      audioDataUrl: chunk.base64,
+      chunkIndex: idx,
+      totalChunks: this.readState.ttsChunks.length,
+      text: chunk.text,
+      expressions: chunk.expressions || [],
+      voice: this.readState.chunks_voice[idx] || 'default',
     });
 
-    audio.addEventListener('ended', () => {
-      this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: idx });
-      if (continuous && this.readState.isPlaying) {
-        /* 先移位，再播 */
+    // 监听错误事件
+    audio.addEventListener('error', (e) => {
+      console.error('Audio load error', e);
+      this.readState.currentChunk++;
+      if (this.readState.currentChunk < this.readState.ttsChunks.length) {
+        this.playNextInQueue(true);
+      } else {
+        this.stopSegmentTTS();
+      }
+    });
+
+    await new Promise(resolve => {
+      this._curAudio.addEventListener('ended', () => {
+        this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: idx });
+        if (continuous && this.readState.isPlaying) {
+          this.readState.currentChunk++;
+          if (this.readState.currentChunk < this.readState.ttsChunks.length) {
+            this.playNextInQueue(true);
+          } else {
+            this.stopSegmentTTS();
+          }
+        } else {
+          this.stopSegmentTTS(isEnd = false);
+        }
+        resolve();
+      });
+      console.log('play audio', `${idx + 1}`);
+      audio.play().catch(e => {
+        console.error('Audio play error', e);
         this.readState.currentChunk++;
         if (this.readState.currentChunk < this.readState.ttsChunks.length) {
           this.playNextInQueue(true);
         } else {
-          this.stopSegmentTTS();          // 全部完成
+          this.stopSegmentTTS();
         }
-      } else {
-        this.stopSegmentTTS();            // 单句模式
-      }
+        resolve(); // 确保 Promise 被 resolve
+      });
     });
-    console.log('play audio',`${idx + 1}`);
-    audio.play().catch(console.error);
   } catch (e) {
     console.error('Read playback error', e);
     this.readState.currentChunk++;
     if (this.readState.currentChunk < this.readState.ttsChunks.length) {
       this.playNextInQueue(true);
     } else {
-      this.stopSegmentTTS();          // 全部完成
+      this.stopSegmentTTS();
     }
-  } 
+  }
 },
-
 
 // 连续播放专用：自动合成&播放下一帧
 async playNextInQueue(continuous) {
