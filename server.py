@@ -659,6 +659,10 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
 async def tools_change_messages(request: ChatRequest, settings: dict):
     global HA_client,ChromeMCP_client
     newttsList = []
+    if request.messages and request.messages[0]['role'] == 'system' and request.messages[0]['content'] != '':
+        basic_message = "你必须使用用户使用的语言与之交流，例如：当用户使用中文时，你也必须尽可能地使用中文！当用户使用英文时，你也必须尽可能地使用英文！以此类推！"
+        if request.messages and request.messages[0]['role'] == 'system':
+            request.messages[0]['content'] += basic_message
     if settings["HASettings"]["enabled"]:
         HA_devices = await HA_client.call_tool("GetLiveContext", {})
         HA_message = f"\n\n以下是home assistant连接的设备信息：{HA_devices}\n\n"
