@@ -7472,7 +7472,6 @@ async deleteGaussSceneOption(sceneId) {
         
         this.isConvertStopping = false;
       }
-      this.processingProgressText = this.t('processStopped');
     },
   /* ===============  复用 / 微调 TTS 流程  =============== */
   async startReadTTSProcess() {
@@ -8842,84 +8841,103 @@ toggleEditSegment(idx) {
 
 /* 1. 合成时顺便转 base64 */
 async synthSegment(idx) {
-  const text  = this.readState.ttsChunks[idx];
-  const voice = this.readState.chunks_voice[idx] || 'default';
-
-  const res = await fetch('/tts', {
-    method : 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body   : JSON.stringify({ ttsSettings: this.ttsSettings, text, index: idx, voice }),
-  });
-  if (!res.ok) throw new Error('TTS failed');
-
-  /* —— 与对话版完全一致的文本清洗 —— */
-  let chunk_text = text;
-  const exps = [];
-  if (text.indexOf('<') !== -1) {
-    for (const exp of this.expressionMap) {
-      const regex = new RegExp(exp, 'g');
-      if (text.includes(exp)) {
-        exps.push(exp);
-        chunk_text = chunk_text.replace(regex, '').trim();
+  try {
+    const text  = this.readState.ttsChunks[idx];
+    const voice = this.readState.chunks_voice[idx] || 'default';
+    /* —— 与对话版完全一致的文本清洗 —— */
+    let chunk_text = text;
+    const exps = [];
+    if (text.indexOf('<') !== -1) {
+      for (const exp of this.expressionMap) {
+        const regex = new RegExp(exp, 'g');
+        if (text.includes(exp)) {
+          exps.push(exp);
+          chunk_text = chunk_text.replace(regex, '').trim();
+        }
       }
     }
+    const res = await fetch('/tts', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ ttsSettings: this.ttsSettings, text, index: idx, voice }),
+    });
+    if (!res.ok) throw new Error('TTS failed');
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+
+    /* 关键：同步转 base64 */
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    /* 缓存两样东西 */
+    this.readState.audioChunks[idx] = {
+      url,                       // 本地播放用
+      expressions: exps,
+      base64: `data:${blob.type};base64,${base64}`, // VRM 播放用
+      text: chunk_text,
+      idx
+    };
+  } catch (e) {
+    console.error(`TTS chunk ${idx} error`, e);
+    this.readState.audioChunks[idx] = { 
+      url: null, 
+      base64: null,
+      expressions: [],
+      text: "",
+      idx 
+    };
   }
-
-  const blob = await res.blob();
-  const url  = URL.createObjectURL(blob);
-
-  /* 关键：同步转 base64 */
-  const base64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-
-  /* 缓存两样东西 */
-  this.readState.audioChunks[idx] = {
-    url,                       // 本地播放用
-    expressions: exps,
-    base64: `data:${blob.type};base64,${base64}`, // VRM 播放用
-    text: chunk_text,
-    idx
-  };
 },
 /* 2. 播放时只把 base64 发给 VRM */
 doPlayAudio(url, idx, continuous = false) {
   if (this._curAudio) this._curAudio.pause();
+  try {
+    const audio = new Audio(url);
+    this._curAudio = audio;
+    // 不要在这里改 currentChunk！放到 ended 里统一处理
 
-  const audio = new Audio(url);
-  this._curAudio = audio;
-  // 不要在这里改 currentChunk！放到 ended 里统一处理
+    const chunk = this.readState.audioChunks[idx];
+    if (chunk.base64 == null) throw new Error('No base64');
+    /* 关键修复：字段名保持一致 */
+    this.sendTTSStatusToVRM('startSpeaking', {
+      audioDataUrl: chunk.base64,   // 桌宠需要的字段
+      chunkIndex  : idx,
+      totalChunks : this.readState.ttsChunks.length,
+      text        : chunk.text,
+      expressions : chunk.expressions || [],
+      voice       : this.readState.chunks_voice[idx] || 'default',
+    });
 
-  const chunk = this.readState.audioChunks[idx];
-  /* 关键修复：字段名保持一致 */
-  this.sendTTSStatusToVRM('startSpeaking', {
-    audioDataUrl: chunk.base64,   // 桌宠需要的字段
-    chunkIndex  : idx,
-    totalChunks : this.readState.ttsChunks.length,
-    text        : chunk.text,
-    expressions : chunk.expressions || [],
-    voice       : this.readState.chunks_voice[idx] || 'default',
-  });
-
-  audio.addEventListener('ended', () => {
-    this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: idx });
-    if (continuous && this.readState.isPlaying) {
-      /* 先移位，再播 */
-      this.readState.currentChunk++;
-      if (this.readState.currentChunk < this.readState.ttsChunks.length) {
-        this.playNextInQueue(true);
+    audio.addEventListener('ended', () => {
+      this.sendTTSStatusToVRM('chunkEnded', { chunkIndex: idx });
+      if (continuous && this.readState.isPlaying) {
+        /* 先移位，再播 */
+        this.readState.currentChunk++;
+        if (this.readState.currentChunk < this.readState.ttsChunks.length) {
+          this.playNextInQueue(true);
+        } else {
+          this.stopSegmentTTS();          // 全部完成
+        }
       } else {
-        this.stopSegmentTTS();          // 全部完成
+        this.stopSegmentTTS();            // 单句模式
       }
+    });
+    console.log('play audio',`${idx + 1}`);
+    audio.play().catch(console.error);
+  } catch (e) {
+    console.error('Read playback error', e);
+    this.readState.currentChunk++;
+    if (this.readState.currentChunk < this.readState.ttsChunks.length) {
+      this.playNextInQueue(true);
     } else {
-      this.stopSegmentTTS();            // 单句模式
+      this.stopSegmentTTS();          // 全部完成
     }
-  });
-
-  audio.play().catch(console.error);
+  } 
 },
 
 
