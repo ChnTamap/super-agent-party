@@ -470,6 +470,7 @@ let vue_data = {
       { code: 'ru-RU', name: 'Русский' },
     ],
     userInputBuffer: '',
+    sidePanelOpen: false,
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',

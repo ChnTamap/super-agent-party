@@ -3590,3 +3590,72 @@ body {
 .segment-list {
   scroll-behavior: smooth;
 }
+
+.chat-wrapper {
+  display: flex;
+  height: 100%;
+  position: relative;
+  gap: 10px;               /* 10 px 中间缝 */
+  transition: all .3s ease;
+}
+
+/* 左侧对话区：收起 100%，展开 50%-5px */
+.chat-area {
+  width: 100%;
+  transition: width .3s ease;
+}
+.chat-wrapper:not(.collapsed) .chat-area {
+  width: calc(50% - 5px);
+}
+
+/* 右侧面板：展开时 50%-5px，收起时隐藏 */
+.side-panel {
+  width: calc(50% - 5px);
+  flex-shrink: 0;
+  background: var(--el-bg-color-page);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-wrapper.collapsed .side-panel {
+  display: none;
+}
+
+/* 滑入动画：从右往左 */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform .3s ease, opacity .3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 按钮：永远水平居中在 10 px 缝隙 */
+.side-toggle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 36px;
+  background: var(--el-tag-bg-color);
+  color: var(--el-text-color-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+/* 收起时按钮贴到最右边（缝隙消失） */
+.chat-wrapper.collapsed .side-toggle {
+  left: auto;
+  right: 0;
+  transform: translateY(-50%);
+  border-radius: 4px 0 0 4px;
+}

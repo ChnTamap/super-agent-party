@@ -8203,6 +8203,7 @@ async deleteGaussSceneOption(sceneId) {
     } else{
       window.electronAPI.toggleWindowSize(300, 630);
     }
+    this.sidePanelOpen = false;
     this.isAssistantMode = !this.isAssistantMode;
   },
     fixedWindow() {
@@ -8241,6 +8242,7 @@ async deleteGaussSceneOption(sceneId) {
     } else{
       window.electronAPI.toggleWindowSize(220, 75);
     }
+    this.sidePanelOpen = false;
     this.isCapsuleMode = !this.isCapsuleMode;
   },
   addPrompt() {
