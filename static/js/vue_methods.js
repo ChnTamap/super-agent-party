@@ -1517,7 +1517,6 @@ let vue_methods = {
           first_sentence_latency: 0,
           TTSelapsedTime: 0,
         });
-        this.sidePanelText="";
         if (this.allBriefly){
           this.messages[this.messages.length - 1].briefly = true;
         }
@@ -1622,7 +1621,6 @@ let vue_methods = {
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
                   lastMessage.pure_content += parsed.choices[0].delta.content;
-                  this.sidePanelText += parsed.choices[0].delta.content;
                   this.scrollToBottom();
                 }
                 if (parsed.usage && parsed.usage?.total_tokens) {
@@ -2005,7 +2003,6 @@ let vue_methods = {
     },
     async clearMessages() {
       this.stopGenerate();
-      this.sidePanelText = '';
       this.messages = [{ role: 'system', content: this.system_prompt }];
       this.conversationId = null;
       this.fileLinks = [];

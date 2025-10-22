@@ -472,7 +472,6 @@ let vue_data = {
     userInputBuffer: '',
     sidePanelOpen: false,
     sidePanelHTML: '',
-    sidePanelText:'',
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',

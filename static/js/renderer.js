@@ -249,6 +249,27 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    sidePanelText() {
+      if (this.messages.length === 0) {
+        return '';
+      }
+      
+      // 过滤出所有助手消息并按时间倒序排列
+      const assistantMessages = this.messages
+        .filter(msg => msg.role === 'assistant')
+        .reverse();
+      
+      // 找到第一个非空消息
+      for (const msg of assistantMessages) {
+        if (msg.pure_content && msg.pure_content.trim() !== '') {
+          return msg.pure_content;
+        }
+      }
+      
+      // 如果没有找到符合条件的消息
+      return '';
+    },
+
     /* 计算属性：默认模板 */
     defaultSidePanelHTML() {
       // 如果用户已给出自定义模板，就直接用
