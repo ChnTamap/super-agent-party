@@ -249,6 +249,18 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    /* 计算属性：默认模板 */
+    defaultSidePanelHTML() {
+      // 如果用户已给出自定义模板，就直接用
+      if (this.sidePanelHTML) return this.sidePanelHTML;
+
+      return `
+        <div class="side-panel-default">
+          <div class="side-panel-content markdown-body" v-data-mjx-disabled="true">
+            ${this.formatMessage(this.sidePanelText)}
+          </div>
+        </div>`;
+    },
     noInputFlag() {
       return !this.TTSrunning &&
              !this.ASRrunning &&

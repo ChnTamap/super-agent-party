@@ -861,8 +861,11 @@ if ('serviceWorker' in navigator) {
             <!-- 新区域 -->
             <transition name="slide-left" v-if="!isCapsuleMode&&!isAssistantMode&&!isMobile">
               <div v-if="sidePanelOpen" class="side-panel">
-                <!-- 这里随便放东西，目前空着 -->
-                <el-empty :description="t('NotExtension')" />
+                <!-- 滚动层：负责 overflow -->
+                <div class="side-panel-scroll" ref="messagesPanel">
+                  <div v-if="sidePanelText" v-html="defaultSidePanelHTML" class="side-panel-content"></div>
+                  <el-empty v-else :description="t('NotExtension')" />
+                </div>
               </div>
             </transition>
             <!-- 展开/收起按钮：绝对定位在左侧边缘中间 -->

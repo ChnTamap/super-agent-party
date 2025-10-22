@@ -3618,9 +3618,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100%;            /* 关键：撑满父级剩余高度 */
+  flex-direction: column;          /* 原来有就保留，没有可自己调 */
+  overflow-x: hidden;
 }
 .chat-wrapper.collapsed .side-panel {
   display: none;
+}
+
+.side-panel-scroll {
+  width: 100%;
+  flex: 1;                 /* 占满剩余高度 */
+  overflow-y: auto;        /* 真正出现滚动条的地方 */
+  box-sizing: border-box;
+  padding: 16px;           /* 原来在 .side-panel 上的 padding 移到这里 */
 }
 
 /* 滑入动画：从右往左 */

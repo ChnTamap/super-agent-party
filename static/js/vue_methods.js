@@ -934,19 +934,29 @@ let vue_methods = {
       })
     },  
     // 滚动到最新消息
+    /* 判断元素是否接近底部 */
+    isElemNearBottom(el, threshold = 300) {
+      if (!el) return true;               // 元素不存在就默认“需要滚底”
+      return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    },
+
+    /* 聊天区原逻辑，不变 */
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.messagesContainer;
-        if (container) {
-          // 定义一个阈值，用来判断是否接近底部
-          const threshold = 300; // 阈值可以根据实际情况调整
-          const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
-    
-          if (isAtBottom) {
-            // 如果接近底部，则滚动到底部
-            container.scrollTop = container.scrollHeight;
-          }
-          // 如果不是接近底部，则不执行任何操作
+        if (this.isElemNearBottom(container)) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+      this.scrollPanelToBottom();
+    },
+
+    /* 侧边栏滚动：完全一样的思路 */
+    scrollPanelToBottom() {
+      this.$nextTick(() => {
+        const panel = this.$refs.messagesPanel;
+        if (this.isElemNearBottom(panel)) {
+          panel.scrollTop = panel.scrollHeight;
         }
       });
     },
@@ -1507,6 +1517,7 @@ let vue_methods = {
           first_sentence_latency: 0,
           TTSelapsedTime: 0,
         });
+        this.sidePanelText="";
         if (this.allBriefly){
           this.messages[this.messages.length - 1].briefly = true;
         }
@@ -1611,6 +1622,7 @@ let vue_methods = {
                   }
                   lastMessage.content += parsed.choices[0].delta.content;
                   lastMessage.pure_content += parsed.choices[0].delta.content;
+                  this.sidePanelText += parsed.choices[0].delta.content;
                   this.scrollToBottom();
                 }
                 if (parsed.usage && parsed.usage?.total_tokens) {
@@ -1993,6 +2005,7 @@ let vue_methods = {
     },
     async clearMessages() {
       this.stopGenerate();
+      this.sidePanelText = '';
       this.messages = [{ role: 'system', content: this.system_prompt }];
       this.conversationId = null;
       this.fileLinks = [];
