@@ -6372,6 +6372,10 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         active_connections.remove(websocket)
 
+from py.extensions import router as extensions_router
+
+app.include_router(extensions_router)
+
 mcp = FastApiMCP(
     app,
     name="Agent party MCP - chat with multiple agents",

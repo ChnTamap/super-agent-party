@@ -472,6 +472,11 @@ let vue_data = {
     userInputBuffer: '',
     sidePanelOpen: false,
     sidePanelHTML: '',
+    sidePanelURL: '',
+    extensions: [],              // 所有发现的扩展
+    currentExtension: null,      // 当前加载的扩展
+    sidePanelURL: '',            // 侧边栏中显示的扩展URL
+    showExtensionsDialog: false, // 控制扩展选择对话框的显示
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',

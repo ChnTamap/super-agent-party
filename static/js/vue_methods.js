@@ -9047,4 +9047,57 @@ clearSegments() {
   this.readState.audioChunks  = [];
   this.readState.currentChunk = -1;
 },
+  // 扫描扩展但不自动加载
+  async scanExtensions() {
+    try {
+      // 使用API获取扩展列表
+      const response = await fetch('/api/extensions/list');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '获取扩展列表失败');
+      }
+      
+      const data = await response.json();
+      this.extensions = data.extensions || [];
+      
+      // 不再自动加载第一个扩展
+      // 默认显示 sidePanelText 内容
+      this.currentExtension = null;
+      this.sidePanelURL = '';
+    } catch (error) {
+      console.error('扫描扩展出错:', error);
+      showNotification('扫描扩展出错: ' + error.message, 'error');
+    }
+  },
+  
+  // 加载指定扩展
+  loadExtension(extension) {
+    if (extension) {
+      this.currentExtension = extension;
+      this.sidePanelURL = `/ext/${extension.id}/index.html`;
+      showNotification(`已加载扩展: ${extension.name}`, 'success');
+    } else {
+      // 返回默认内容
+      this.currentExtension = null;
+      this.sidePanelURL = '';
+      showNotification('已恢复默认视图', 'success');
+    }
+  },
+  
+  // 切换到默认视图
+  resetToDefaultView() {
+    this.loadExtension(null);
+    this.showExtensionsDialog = false;
+  },
+  // 打开扩展选择对话框
+  openExtensionsDialog() {
+    this.showExtensionsDialog = true;
+  },
+  
+  // 切换扩展
+  switchExtension(extension) {
+    this.loadExtension(extension);
+    this.showExtensionsDialog = false;
+  },
+
 }

@@ -96,10 +96,19 @@ if ('serviceWorker' in navigator) {
     <!-- 顶部栏 -->
     <el-header v-if="isElectron || isMobile" class="top-bar" height="30px">
       <div class="window-controls">
-        <div v-show="!isAssistantMode&&settings?.model!==''" class="model-info" @click="showModelDialog = true" >
-          <el-alert type="primary" :closable="false" class="model-info">
-            <span>{{settings.model}}</span>  
-          </el-alert>
+        <div v-show="!isAssistantMode&&!isMobile&&settings?.model!==''" class="model-info" @click="showModelDialog = true" >
+          <el-tooltip :content="t('clickToSwitchModel')">
+            <el-alert type="primary" :closable="false" style="max-height: 32px;">
+              <span>{{t("model") +": "+settings.model}}</span>  
+            </el-alert>
+          </el-tooltip>
+        </div>
+        <div v-show="!isAssistantMode&&!isMobile" class="model-info" @click="openExtensionsDialog" >
+          <el-tooltip :content="t('clickToSwitchExtensions')">
+            <el-alert type="primary" :closable="false" style="max-height: 32px;">
+              <span>{{t("Extension") +": "+currentViewName}}</span>  
+            </el-alert>
+          </el-tooltip>
         </div>
         <el-button 
           v-if="updateAvailable&&!isAssistantMode&&!isMobile"
@@ -860,11 +869,13 @@ if ('serviceWorker' in navigator) {
             </div>
             <!-- 新区域 -->
             <transition name="slide-left" v-if="!isCapsuleMode&&!isAssistantMode&&!isMobile">
+              <!-- 在侧边栏顶部添加扩展切换按钮 -->
               <div v-if="sidePanelOpen" class="side-panel">
-                <!-- 滚动层：负责 overflow -->
+                <!-- 侧边栏内容 -->
                 <div class="side-panel-scroll" ref="messagesPanel">
-                  <div v-if="sidePanelText" v-html="defaultSidePanelHTML" class="side-panel-content"></div>
-                  <el-empty v-else :description="t('NotExtension')" />
+                  <iframe v-if="sidePanelURL" :src="sidePanelURL" frameborder="0" allowfullscreen style="width: 100%; height: 100%;"></iframe>
+                  <div v-else-if="sidePanelText" v-html="defaultSidePanelHTML" class="side-panel-content"></div>
+                  <el-empty v-else :description="t('noContent')" />
                 </div>
               </div>
             </transition>
@@ -878,6 +889,52 @@ if ('serviceWorker' in navigator) {
               <i :class="sidePanelOpen ?  'fa-solid fa-chevron-right': 'fa-solid fa-chevron-left'"></i>
             </div>
           </div>
+          <!-- 扩展选择对话框 -->
+          <el-dialog
+            :title="t('switchExtension')"
+            v-model="showExtensionsDialog"
+            width="600px"
+            :close-on-click-modal="false">
+            <div class="extensions-list">
+              <!-- 默认视图选项 -->
+              <el-card 
+                class="extension-card default-view-card"
+                :class="{ active: currentExtension === null }"
+                @click="resetToDefaultView()">
+                <div class="extension-info">
+                  <h3>{{ t('defaultView') }}</h3>
+                  <p>{{ t('defaultViewDescription') }}</p>
+                </div>
+              </el-card>
+              
+              <!-- 分隔线 -->
+              <div class="extensions-divider" v-if="extensions.length > 0">
+                <span>{{ t('availableExtensions') }}</span>
+              </div>
+              <!-- 扩展列表 -->
+              <el-empty v-if="extensions.length === 0" :description="t('noExtensionsFound')" ></el-empty>
+              <el-card 
+                v-for="ext in extensions" 
+                :key="ext.id" 
+                class="extension-card"
+                :class="{ active: currentExtension && currentExtension.id === ext.id }"
+                @click="switchExtension(ext)">
+                <div class="extension-info">
+                  <h3>{{ ext.name }}</h3>
+                  <p>{{ ext.description }}</p>
+                  <div class="extension-meta">
+                    <span>v{{ ext.version }}</span>
+                    <span>{{ ext.author }}</span>
+                  </div>
+                </div>
+              </el-card>
+            </div>
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button @click="showExtensionsDialog = false">{{ t('cancel') }}</el-button>
+              </div>
+            </template>
+          </el-dialog>
           <el-dialog
             v-model="showEditDialog"
             :title="editType === 'system' ? t('editSystemPrompt') : t('editMessage')"

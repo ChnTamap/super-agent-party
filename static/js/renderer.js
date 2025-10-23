@@ -143,6 +143,7 @@ const app = Vue.createApp({
     });
   }, 1000); 
   if (this.activeMenu === 'home') this.startDriverGuide();
+    this.scanExtensions(); // 扫描扩展
   },
   beforeUnmount() {
     if (isElectron) {
@@ -269,7 +270,9 @@ const app = Vue.createApp({
       // 如果没有找到符合条件的消息
       return '';
     },
-
+  currentViewName() {
+    return this.currentExtension ? this.currentExtension.name : this.t('defaultView');
+  },
     /* 计算属性：默认模板 */
     defaultSidePanelHTML() {
       // 如果用户已给出自定义模板，就直接用
