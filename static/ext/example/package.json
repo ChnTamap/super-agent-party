@@ -1,7 +1,7 @@
 {
   "name": "example",
   "version": "1.0.0",
-  "description": "这是一个聊天前端示例",
-  "author": "插件作者名字",
-  "systemPrompt": "开启扩展后的系统提示词"
+  "description": "This is a chat frontend example",
+  "author": "super agent party",
+  "systemPrompt": ""
 }

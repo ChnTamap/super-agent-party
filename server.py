@@ -6388,7 +6388,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     
             # 新增：请求获取最新消息
             elif data.get("type") == "get_messages":
-                print("get_messages")
                 for connection in active_connections:
                     await connection.send_json({
                         "type": "request_messages",

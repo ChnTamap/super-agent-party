@@ -1160,7 +1160,6 @@ let vue_methods = {
         }
         // 新增：响应请求消息列表
         else if (data.type === 'request_messages') {
-          console.log('收到请求消息列表');
           // 发送当前消息列表给请求方
           this.sendMessagesToExtension();
         }
@@ -3018,7 +3017,6 @@ let vue_methods = {
             return "127.0.0.1";
         }
     },
-
     async generateQRCode() {
       // 确保 partyURL 存在且 DOM 已渲染
       if (!this.partyURL) return;
@@ -9133,5 +9131,12 @@ clearSegments() {
     this.loadExtension(extension);
     this.showExtensionsDialog = false;
   },
-
+  openExtension(extension) {
+    let url = `${this.partyURL}/ext/${extension.id}/index.html`;
+    if (isElectron) {
+      window.electronAPI.openExternal(url)   // 主进程会新建可关闭的独立窗口
+    } else {
+      window.open(url, '_blank')
+    }
+  },
 }

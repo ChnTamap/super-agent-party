@@ -3736,3 +3736,14 @@ body {
   padding: 0;
   margin: 0;
 }
+
+.extension-card {
+  position: relative;   /* 关键：让内部绝对定位相对于卡片 */
+}
+
+.btn-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;           /* 保证在卡片内容之上 */
+}
