@@ -6,14 +6,14 @@
 <title>AI Chat</title>
 <link rel="stylesheet" href="../../fontawesome/css/all.min.css">
 <!-- Markdown + 代码高亮 -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.css"/>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1/prism.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.css "/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css "/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/prism.min.js "></script>
 <!-- 按需加载常用语言（自己再补） -->
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-css.min.js "></script>
 <style>
 :root{
   /* ---- 深色高对比 ---- */
@@ -207,6 +207,27 @@ header .logo i{color:var(--accent);}
 }
 /* Firefox */
 #messages{ scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* ---------- 清空按钮 ---------- */
+#clearBtn{
+  width:44px;
+  height:44px;
+  border-radius:var(--radius);
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-light);
+  cursor:pointer;
+  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .2s;
+}
+#clearBtn:hover{
+  background:rgba(255,255,255,.05);
+  color:var(--accent);
+  border-color:var(--accent);
+}
 </style>
 </head>
 <body>
@@ -224,6 +245,8 @@ header .logo i{color:var(--accent);}
 
   <footer id="inputBar">
     <div id="inputWrap">
+      <!-- 新增清空按钮 -->
+      <button id="clearBtn" title="清空消息"><i class="fa-solid fa-trash"></i></button>
       <textarea id="userInput" placeholder="Send a message…"></textarea>
       <button id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
@@ -235,6 +258,7 @@ const $ = s => document.querySelector(s);
 const msgs = $('#messages');
 const input = $('#userInput');
 const btn   = $('#sendBtn');
+const clearBtn = $('#clearBtn');   // 新增
 let ws;
 
 function initWS(){
@@ -281,9 +305,13 @@ function send(){
   ws.send(JSON.stringify({type:'trigger_send_message'}));
   input.value=''; input.style.height='auto';
 }
+function clear(){
+  ws.send(JSON.stringify({type:'trigger_clear_message'}));
+}
 input.addEventListener('input',()=>{ autoHeight(); ws.send(JSON.stringify({type:'set_user_input',data:{text:input.value}})); });
 input.addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
 btn.addEventListener('click',send);
+clearBtn.addEventListener('click',clear);   // 新增
 function autoHeight(){ input.style.height='auto'; input.style.height=input.scrollHeight+'px'; }
 initWS();
 </script>

@@ -6386,6 +6386,15 @@ async def websocket_endpoint(websocket: WebSocket):
                         "data": {}
                     })
                     
+            # 新增：清空消息
+            elif data.get("type") == "trigger_clear_message":
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "trigger_clear_message",
+                        "data": {}
+                    })
+
             # 新增：请求获取最新消息
             elif data.get("type") == "get_messages":
                 for connection in active_connections:

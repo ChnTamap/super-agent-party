@@ -1158,6 +1158,10 @@ let vue_methods = {
         else if (data.type === 'trigger_send_message') {
           this.sendMessage();
         }
+        // 新增：清空消息列表
+        else if (data.type === "trigger_clear_message" ){
+          this.clearMessages();
+        }
         // 新增：响应请求消息列表
         else if (data.type === 'request_messages') {
           // 发送当前消息列表给请求方
