@@ -188,3 +188,6 @@ botpy.log*
 build.bat
 test*
 wxauto*
+
+/ext/
+!/ext/example/
