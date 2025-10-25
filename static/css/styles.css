@@ -3631,7 +3631,8 @@ body {
   flex: 1;                 /* 占满剩余高度 */
   overflow-y: auto;        /* 真正出现滚动条的地方 */
   box-sizing: border-box;
-  padding: 16px;           /* 原来在 .side-panel 上的 padding 移到这里 */
+  padding: 0;           /* 原来在 .side-panel 上的 padding 移到这里 */
+  margin: 0;
 }
 
 /* 滑入动画：从右往左 */
@@ -3724,4 +3725,14 @@ body {
 
 .extensions-divider {
   margin: 12px 0;
+}
+
+.side-panel-content {
+  padding: auto;
+  margin: 6px;
+}
+
+.side-panel-iframe {
+  padding: 0;
+  margin: 0;
 }

@@ -50,7 +50,8 @@ async def list_extensions():
                                 name=package_data.get("name", ext_id),
                                 description=package_data.get("description", "无描述"),
                                 version=package_data.get("version", "1.0.0"),
-                                author=package_data.get("author", "未知")
+                                author=package_data.get("author", "未知"),
+                                systemPrompt = package_data.get("systemPrompt", ""),
                             ))
                         except json.JSONDecodeError:
                             # package.json解析失败，使用默认值

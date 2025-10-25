@@ -1149,6 +1149,19 @@ let vue_methods = {
             showNotification(this.t('settings_save_failed'), 'error');
           }
         }
+        // 新增：处理用户输入更新
+        else if (data.type === 'update_user_input') {
+          this.userInput = data.data.text;
+        }
+        // 新增：处理触发发送消息
+        else if (data.type === 'trigger_send_message') {
+          this.sendMessage();
+        }
+        // 新增：响应请求消息列表
+        else if (data.type === 'request_messages') {
+          // 发送当前消息列表给请求方
+          this.sendMessagesToExtension();
+        }
       };
 
       // WebSocket 关闭事件
@@ -1202,6 +1215,22 @@ let vue_methods = {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     },  
+    // 新增：发送当前消息列表到所有连接的客户端
+    sendMessagesToExtension() {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({
+            type: 'broadcast_messages',
+            data: {
+              messages: this.messages,
+              conversationId: this.conversationId
+            }
+          }));
+        } catch (e) {
+          console.error('Failed to send messages to extension:', e);
+        }
+      }
+    },
     async syncSystemPromptToMessages(newPrompt) {
       // 情况 1: 新提示词为空
       if (!newPrompt) {
@@ -1640,6 +1669,7 @@ let vue_methods = {
                       this.asyncToolsID.push(parsed.choices[0].delta.async_tool_id);
                     }
                 }
+                this.sendMessagesToExtension(); // 发送消息到插件
               } catch (e) {
                 console.error(e);
                 showNotification(e, 'error');

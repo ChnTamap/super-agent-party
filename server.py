@@ -6367,6 +6367,41 @@ async def websocket_endpoint(websocket: WebSocket):
                     "type": "settings",
                     "data": current_settings
                 })
+            # 新增：处理扩展页面发送的用户输入
+            elif data.get("type") == "set_user_input":
+                user_input = data.get("data", {}).get("text", "")
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "update_user_input",
+                        "data": {"text": user_input}
+                    })
+            
+            # 新增：处理扩展页面请求发送消息
+            elif data.get("type") == "trigger_send_message":
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "trigger_send_message",
+                        "data": {}
+                    })
+                    
+            # 新增：请求获取最新消息
+            elif data.get("type") == "get_messages":
+                # 这里不做处理，因为消息会通过前端发送
+                await websocket.send_json({
+                    "type": "request_messages",
+                    "data": {}
+                })
+
+            elif data.get("type") == "broadcast_messages":
+                messages_data = data.get("data", {})
+                # 广播给除发送者外的所有连接
+                for connection in [conn for conn in active_connections if conn != websocket]:
+                    await connection.send_json({
+                        "type": "messages_update",
+                        "data": messages_data
+                    })
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
