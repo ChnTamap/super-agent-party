@@ -211,6 +211,10 @@ let vue_methods = {
       this.activeMenu = 'model-config';
       this.subMenu = 'tts';
     },
+    switchToExtensionPage() {
+      this.activeMenu = 'api-group';
+      this.subMenu = 'extension';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()
@@ -385,6 +389,7 @@ let vue_methods = {
       }
       this.inAutoMode = false; // 重置自动模式状态
       this.scrollToBottom();
+      this.sendMessagesToExtension(); // 发送消息到插件
       await this.autoSaveSettings();
     },
     switchToagents() {
@@ -934,19 +939,29 @@ let vue_methods = {
       })
     },  
     // 滚动到最新消息
+    /* 判断元素是否接近底部 */
+    isElemNearBottom(el, threshold = 300) {
+      if (!el) return true;               // 元素不存在就默认“需要滚底”
+      return el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+    },
+
+    /* 聊天区原逻辑，不变 */
     scrollToBottom() {
       this.$nextTick(() => {
         const container = this.$refs.messagesContainer;
-        if (container) {
-          // 定义一个阈值，用来判断是否接近底部
-          const threshold = 300; // 阈值可以根据实际情况调整
-          const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
-    
-          if (isAtBottom) {
-            // 如果接近底部，则滚动到底部
-            container.scrollTop = container.scrollHeight;
-          }
-          // 如果不是接近底部，则不执行任何操作
+        if (this.isElemNearBottom(container)) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+      this.scrollPanelToBottom();
+    },
+
+    /* 侧边栏滚动：完全一样的思路 */
+    scrollPanelToBottom() {
+      this.$nextTick(() => {
+        const panel = this.$refs.messagesPanel;
+        if (this.isElemNearBottom(panel)) {
+          panel.scrollTop = panel.scrollHeight;
         }
       });
     },
@@ -1139,6 +1154,23 @@ let vue_methods = {
             showNotification(this.t('settings_save_failed'), 'error');
           }
         }
+        // 新增：处理用户输入更新
+        else if (data.type === 'update_user_input') {
+          this.userInput = data.data.text;
+        }
+        // 新增：处理触发发送消息
+        else if (data.type === 'trigger_send_message') {
+          this.sendMessage();
+        }
+        // 新增：清空消息列表
+        else if (data.type === "trigger_clear_message" ){
+          this.clearMessages();
+        }
+        // 新增：响应请求消息列表
+        else if (data.type === 'request_messages') {
+          // 发送当前消息列表给请求方
+          this.sendMessagesToExtension();
+        }
       };
 
       // WebSocket 关闭事件
@@ -1192,6 +1224,22 @@ let vue_methods = {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     },  
+    // 新增：发送当前消息列表到所有连接的客户端
+    sendMessagesToExtension() {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({
+            type: 'broadcast_messages',
+            data: {
+              messages: this.messages,
+              conversationId: this.conversationId
+            }
+          }));
+        } catch (e) {
+          console.error('Failed to send messages to extension:', e);
+        }
+      }
+    },
     async syncSystemPromptToMessages(newPrompt) {
       // 情况 1: 新提示词为空
       if (!newPrompt) {
@@ -1361,6 +1409,7 @@ let vue_methods = {
         fileLinks_content: fileLinks_content,
         imageLinks: imageLinks || []
       });
+      this.sendMessagesToExtension();
       this.files = [];
       this.images = [];
       let max_rounds = this.settings.max_rounds || 0;
@@ -1630,6 +1679,7 @@ let vue_methods = {
                       this.asyncToolsID.push(parsed.choices[0].delta.async_tool_id);
                     }
                 }
+                this.sendMessagesToExtension(); // 发送消息到插件
               } catch (e) {
                 console.error(e);
                 showNotification(e, 'error');
@@ -1994,6 +2044,10 @@ let vue_methods = {
     async clearMessages() {
       this.stopGenerate();
       this.messages = [{ role: 'system', content: this.system_prompt }];
+      // extension.systemPrompt填充到this.messages[0].content
+      if (this.currentExtension) {
+        this.messages[0].content = this.currentExtension.systemPrompt;
+      }
       this.conversationId = null;
       this.fileLinks = [];
       this.isThinkOpen = false; // 重置思考模式状态
@@ -2002,6 +2056,7 @@ let vue_methods = {
       this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
       this.autoSaveSettings();
+      this.sendMessagesToExtension(); // 发送消息到插件
     },
     async sendFiles() {
       this.showUploadDialog = true;
@@ -2974,7 +3029,6 @@ let vue_methods = {
             return "127.0.0.1";
         }
     },
-
     async generateQRCode() {
       // 确保 partyURL 存在且 DOM 已渲染
       if (!this.partyURL) return;
@@ -8203,6 +8257,7 @@ async deleteGaussSceneOption(sceneId) {
     } else{
       window.electronAPI.toggleWindowSize(300, 630);
     }
+    this.sidePanelOpen = false;
     this.isAssistantMode = !this.isAssistantMode;
   },
     fixedWindow() {
@@ -8241,6 +8296,7 @@ async deleteGaussSceneOption(sceneId) {
     } else{
       window.electronAPI.toggleWindowSize(220, 75);
     }
+    this.sidePanelOpen = false;
     this.isCapsuleMode = !this.isCapsuleMode;
   },
   addPrompt() {
@@ -9035,4 +9091,150 @@ clearSegments() {
   this.readState.audioChunks  = [];
   this.readState.currentChunk = -1;
 },
+  // 扫描扩展但不自动加载
+  async scanExtensions() {
+    try {
+      // 使用API获取扩展列表
+      const response = await fetch('/api/extensions/list');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || '获取扩展列表失败');
+      }
+      
+      const data = await response.json();
+      this.extensions = data.extensions || [];
+      
+      // 不再自动加载第一个扩展
+      // 默认显示 sidePanelText 内容
+      this.currentExtension = null;
+      this.sidePanelURL = '';
+    } catch (error) {
+      console.error('扫描扩展出错:', error);
+      showNotification('扫描扩展出错: ' + error.message, 'error');
+    }
+  },
+  
+  // 加载指定扩展
+  loadExtension(extension) {
+    if (extension) {
+      this.currentExtension = extension;
+      this.sidePanelURL = `/ext/${extension.id}/index.html`;
+      showNotification(`已加载扩展: ${extension.name}`, 'success');
+    } else {
+      // 返回默认内容
+      this.currentExtension = null;
+      this.sidePanelURL = '';
+      showNotification('已恢复默认视图', 'success');
+    }
+  },
+  
+  // 切换到默认视图
+  resetToDefaultView() {
+    this.loadExtension(null);
+    this.showExtensionsDialog = false;
+    this.sidePanelOpen = false; // 关闭扩展选择对话框
+    this.messages[0].content = '';
+  },
+  // 打开扩展选择对话框
+  openExtensionsDialog() {
+    this.showExtensionsDialog = true;
+  },
+  
+  // 切换扩展
+  switchExtension(extension) {
+    this.loadExtension(extension);
+    this.showExtensionsDialog = false;
+    // extension.systemPrompt填充到this.messages[0].content
+    if (this.currentExtension) {
+      this.messages[0].content = this.currentExtension.systemPrompt;
+      this.sidePanelOpen = true; // 打开扩展选择对话框
+    }else {
+      this.messages[0].content = ''; // 清空
+      this.sidePanelOpen = false; // 关闭扩展选择对话框
+    }
+  },
+  openExtension(extension) {
+    let url = `${this.partyURL}/ext/${extension.id}/index.html`;
+    if (isElectron) {
+      window.electronAPI.openExternal(url)   // 主进程会新建可关闭的独立窗口
+    } else {
+      window.open(url, '_blank')
+    }
+  },
+    // 删除扩展
+    async removeExtension(ext) {
+      try {
+        const res = await fetch(`/api/extensions/${ext.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('删除失败');
+        showNotification(this.t('deleteSuccess'), 'success');
+        this.scanExtensions(); // 刷新列表
+      } catch (e) {
+
+         showNotification(e.message, 'error');
+      }
+    },
+
+    // 打开「添加扩展」对话框
+    openAddExtensionDialog() {
+      this.newExtensionUrl = '';
+      this.showExtensionForm = true;
+    },
+
+    // 真正「安装」按钮触发
+    async addExtension() {
+      const url = this.newExtensionUrl.trim();
+      if (!url) return showNotification('请输入 GitHub 地址', 'error');
+      this.installLoading = true;
+      try {
+        const res = await fetch('/api/extensions/install-from-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        if (res.status === 409) throw new Error(this.t('extensionExists'));
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || this.t('deleteFailed'));
+        }
+        showNotification(this.t('waitExtensionInstall'));
+        this.showExtensionForm = false;
+        // 3 秒后自动刷新
+        setTimeout(() => this.scanExtensions(), 3000);
+      } catch (e) {
+        showNotification(e.message, 'error');
+      } finally {
+        this.installLoading = false;
+      }
+    },
+    // 打开文件选择器
+    selectLocalZip() {
+      this.$refs.zipInput.click();
+    },
+
+    // 选中文件后自动上传
+    async onZipSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      this.installLoading = true;
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch('/api/extensions/upload-zip', {
+          method: 'POST',
+          body: form,
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || '上传失败');
+        }
+        showNotification('本地 ZIP 安装成功');
+        this.showExtensionForm = false;
+        this.scanExtensions(); // 刷新
+      } catch (err) {
+        showNotification(err.message,'error');
+      } finally {
+        this.installLoading = false;
+        e.target.value = ''; // 允许重复选同一文件
+      }
+    },
 }

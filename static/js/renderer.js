@@ -143,6 +143,7 @@ const app = Vue.createApp({
     });
   }, 1000); 
   if (this.activeMenu === 'home') this.startDriverGuide();
+    this.scanExtensions(); // 扫描扩展
   },
   beforeUnmount() {
     if (isElectron) {
@@ -249,6 +250,41 @@ const app = Vue.createApp({
     },
   },
   computed: {
+    sidePanelText() {
+      if (this.messages.length === 0) {
+        return '';
+      }
+      
+      // 过滤出所有助手消息并按时间倒序排列
+      const assistantMessages = this.messages
+        .filter(msg => msg.role === 'assistant')
+        .reverse();
+      
+      // 找到第一个非空消息
+      for (const msg of assistantMessages) {
+        if (msg.pure_content && msg.pure_content.trim() !== '') {
+          return msg.pure_content;
+        }
+      }
+      
+      // 如果没有找到符合条件的消息
+      return '';
+    },
+  currentViewName() {
+    return this.currentExtension ? this.currentExtension.name : this.t('defaultView');
+  },
+    /* 计算属性：默认模板 */
+    defaultSidePanelHTML() {
+      // 如果用户已给出自定义模板，就直接用
+      if (this.sidePanelHTML) return this.sidePanelHTML;
+
+      return `
+        <div class="side-panel-default">
+          <div class="side-panel-content markdown-body" v-data-mjx-disabled="true">
+            ${this.formatMessage(this.sidePanelText)}
+          </div>
+        </div>`;
+    },
     noInputFlag() {
       return !this.TTSrunning &&
              !this.ASRrunning &&

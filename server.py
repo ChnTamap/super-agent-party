@@ -659,6 +659,10 @@ async def images_add_in_messages(request_messages: List[Dict], images: List[Dict
 async def tools_change_messages(request: ChatRequest, settings: dict):
     global HA_client,ChromeMCP_client
     newttsList = []
+    if request.messages and request.messages[0]['role'] == 'system' and request.messages[0]['content'] != '':
+        basic_message = "你必须使用用户使用的语言与之交流，例如：当用户使用中文时，你也必须尽可能地使用中文！当用户使用英文时，你也必须尽可能地使用英文！以此类推！"
+        if request.messages and request.messages[0]['role'] == 'system':
+            request.messages[0]['content'] += basic_message
     if settings["HASettings"]["enabled"]:
         HA_devices = await HA_client.call_tool("GetLiveContext", {})
         HA_message = f"\n\n以下是home assistant连接的设备信息：{HA_devices}\n\n"
@@ -6363,10 +6367,58 @@ async def websocket_endpoint(websocket: WebSocket):
                     "type": "settings",
                     "data": current_settings
                 })
+            # 新增：处理扩展页面发送的用户输入
+            elif data.get("type") == "set_user_input":
+                user_input = data.get("data", {}).get("text", "")
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "update_user_input",
+                        "data": {"text": user_input}
+                    })
+            
+            # 新增：处理扩展页面请求发送消息
+            elif data.get("type") == "trigger_send_message":
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "trigger_send_message",
+                        "data": {}
+                    })
+                    
+            # 新增：清空消息
+            elif data.get("type") == "trigger_clear_message":
+                # 广播给所有连接的客户端
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "trigger_clear_message",
+                        "data": {}
+                    })
+
+            # 新增：请求获取最新消息
+            elif data.get("type") == "get_messages":
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "request_messages",
+                        "data": {}
+                    })
+
+            elif data.get("type") == "broadcast_messages":
+                messages_data = data.get("data", {})
+                # 广播给除发送者外的所有连接
+                for connection in [conn for conn in active_connections if conn != websocket]:
+                    await connection.send_json({
+                        "type": "messages_update",
+                        "data": messages_data
+                    })
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
         active_connections.remove(websocket)
+
+from py.extensions import router as extensions_router
+
+app.include_router(extensions_router)
 
 mcp = FastApiMCP(
     app,

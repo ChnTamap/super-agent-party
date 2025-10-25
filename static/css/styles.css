@@ -1157,7 +1157,17 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   gap: 10px;
+  margin: 0;
+  padding: 0;
 }
 
 .messages-container {
@@ -3579,4 +3589,163 @@ body {
 
 .segment-list {
   scroll-behavior: smooth;
+}
+
+.chat-wrapper {
+  display: flex;
+  height: 100%;
+  position: relative;
+  gap: 10px;               /* 10 px 中间缝 */
+  transition: all .3s ease;
+}
+
+/* 左侧对话区：收起 100%，展开 50%-5px */
+.chat-area {
+  width: 100%;
+  transition: width .3s ease;
+}
+.chat-wrapper:not(.collapsed) .chat-area {
+  width: calc(50% - 5px);
+}
+
+/* 右侧面板：展开时 50%-5px，收起时隐藏 */
+.side-panel {
+  width: calc(50% - 5px);
+  flex-shrink: 0;
+  background: var(--el-bg-color-page);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;            /* 关键：撑满父级剩余高度 */
+  flex-direction: column;          /* 原来有就保留，没有可自己调 */
+  overflow-x: hidden;
+}
+.chat-wrapper.collapsed .side-panel {
+  display: none;
+}
+
+.side-panel-scroll {
+  width: 100%;
+  flex: 1;                 /* 占满剩余高度 */
+  box-sizing: border-box;
+  padding: 0;           /* 原来在 .side-panel 上的 padding 移到这里 */
+  margin: 0;
+}
+
+/* 滑入动画：从右往左 */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform .3s ease, opacity .3s ease;
+}
+.slide-right-enter-from,
+.slide-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* 按钮：永远水平居中在 10 px 缝隙 */
+.side-toggle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 36px;
+  background: var(--el-tag-bg-color);
+  color: var(--el-text-color-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+/* 收起时按钮贴到最右边（缝隙消失） */
+.chat-wrapper.collapsed .side-toggle {
+  left: auto;
+  right: 0;
+  transform: translateY(-50%);
+  border-radius: 4px 0 0 4px;
+}
+
+/* 扩展相关样式 */
+.side-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+.extension-switch-btn {
+  margin-left: 10px;
+}
+
+.extensions-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.extension-card {
+  margin: 10px 0;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.extension-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.extension-card.active {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 1px var(--el-color-primary);
+}
+
+.extension-info h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.extension-info p {
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+}
+
+.extension-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.extensions-divider {
+  margin: 12px 0;
+}
+
+.side-panel-content {
+  padding: auto;
+  margin: 6px;
+}
+
+.side-panel-iframe {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+.extension-card {
+  position: relative;   /* 关键：让内部绝对定位相对于卡片 */
+}
+
+.btn-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;           /* 保证在卡片内容之上 */
 }
