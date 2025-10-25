@@ -9167,6 +9167,24 @@ if ('serviceWorker' in navigator) {
                     ></input>
                   </div>
 
+                  <el-alert
+                    type="info"
+                    :closable="false"
+                    class="mb-2"
+                  >
+                    {{ t('getPluginInstructions') }}
+                    <el-link
+                      type="primary"
+                      :underline="false"
+                      href="https://super-agent-party.github.io/plugins.html" 
+                      target="_blank"
+                    >
+                      <el-icon class="mr-1">
+                        <i class="fa-solid fa-key"></i>
+                      </el-icon>{{ t('getPlugin') }}
+                    </el-link>
+                  </el-alert>
+
                   <template #footer>
                     <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>
                     <el-button
