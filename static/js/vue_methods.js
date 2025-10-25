@@ -211,6 +211,10 @@ let vue_methods = {
       this.activeMenu = 'model-config';
       this.subMenu = 'tts';
     },
+    switchToExtensionPage() {
+      this.activeMenu = 'api-group';
+      this.subMenu = 'extension';
+    },
     cancelLLMTool() {
       this.showLLMForm = false
       this.resetForm()
