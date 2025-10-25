@@ -985,7 +985,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 tools.append(qwen_code_tool)
         if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'afterThinking':
             tools.append(time_tool)
-        if settings["tools"]["accuweather"]['enabled']:
+        if settings["tools"]["weather"]['enabled']:
             tools.append(weather_tool)
             tools.append(location_tool)
             tools.append(timer_weather_tool)
@@ -2682,7 +2682,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             tools.append(qwen_code_tool)
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'afterThinking':
         tools.append(time_tool)
-    if settings["tools"]["accuweather"]['enabled']:
+    if settings["tools"]["weather"]['enabled']:
         tools.append(weather_tool)
         tools.append(location_tool)
         tools.append(timer_weather_tool)

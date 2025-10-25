@@ -174,9 +174,8 @@ let vue_data = {
         enabled: false,
         triggerMode: 'beforeThinking',
       },
-      accuweather: {
-        enabled: false,
-        apiKey: '',
+      weather: {
+        enabled: false
       },
       wikipedia: {
         enabled: false,
