@@ -883,7 +883,7 @@ if ('serviceWorker' in navigator) {
               <!-- 使用 v-show 代替 v-if -->
               <div v-show="sidePanelOpen" class="side-panel">
                 <!-- 侧边栏内容 -->
-                <div class="side-panel-scroll" ref="messagesPanel">
+                <div class="side-panel-scroll" ref="messagesPanel" :style="{ overflow: sidePanelURL ? 'hidden' : 'auto' }">
                   <iframe class="side-panel-iframe" v-if="sidePanelURL" :src="sidePanelURL" frameborder="0" allowfullscreen style="width: 100%; height: 100%;"></iframe>
                   <div v-else-if="sidePanelText" v-html="defaultSidePanelHTML" class="side-panel-content"></div>
                   <el-empty v-else :description="t('NotExtension')" />

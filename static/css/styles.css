@@ -3629,7 +3629,6 @@ body {
 .side-panel-scroll {
   width: 100%;
   flex: 1;                 /* 占满剩余高度 */
-  overflow-y: auto;        /* 真正出现滚动条的地方 */
   box-sizing: border-box;
   padding: 0;           /* 原来在 .side-panel 上的 padding 移到这里 */
   margin: 0;
@@ -3735,6 +3734,9 @@ body {
 .side-panel-iframe {
   padding: 0;
   margin: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
 }
 
 .extension-card {
