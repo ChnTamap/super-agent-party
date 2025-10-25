@@ -385,6 +385,7 @@ let vue_methods = {
       }
       this.inAutoMode = false; // 重置自动模式状态
       this.scrollToBottom();
+      this.sendMessagesToExtension(); // 发送消息到插件
       await this.autoSaveSettings();
     },
     switchToagents() {
@@ -1159,6 +1160,7 @@ let vue_methods = {
         }
         // 新增：响应请求消息列表
         else if (data.type === 'request_messages') {
+          console.log('收到请求消息列表');
           // 发送当前消息列表给请求方
           this.sendMessagesToExtension();
         }
@@ -1400,6 +1402,7 @@ let vue_methods = {
         fileLinks_content: fileLinks_content,
         imageLinks: imageLinks || []
       });
+      this.sendMessagesToExtension();
       this.files = [];
       this.images = [];
       let max_rounds = this.settings.max_rounds || 0;
@@ -2042,6 +2045,7 @@ let vue_methods = {
       this.randomGreetings(); // 重新生成随机问候语
       this.scrollToBottom();    // 触发界面更新
       this.autoSaveSettings();
+      this.sendMessagesToExtension(); // 发送消息到插件
     },
     async sendFiles() {
       this.showUploadDialog = true;

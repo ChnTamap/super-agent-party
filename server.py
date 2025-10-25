@@ -6388,11 +6388,12 @@ async def websocket_endpoint(websocket: WebSocket):
                     
             # 新增：请求获取最新消息
             elif data.get("type") == "get_messages":
-                # 这里不做处理，因为消息会通过前端发送
-                await websocket.send_json({
-                    "type": "request_messages",
-                    "data": {}
-                })
+                print("get_messages")
+                for connection in active_connections:
+                    await connection.send_json({
+                        "type": "request_messages",
+                        "data": {}
+                    })
 
             elif data.get("type") == "broadcast_messages":
                 messages_data = data.get("data", {})

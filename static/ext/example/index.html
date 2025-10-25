@@ -4,7 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AI Chat</title>
-  <link rel="stylesheet" href="../../fontawesome/css/all.min.css">
+<link rel="stylesheet" href="../../fontawesome/css/all.min.css">
+<!-- Markdown + 代码高亮 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/prism.min.js"></script>
+<!-- 按需加载常用语言（自己再补） -->
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-css.min.js"></script>
 <style>
 :root{
   /* ---- 深色高对比 ---- */
@@ -94,10 +103,31 @@ header .logo i{color:var(--accent);}
 .msg.user .icon{background:#3c3d40;color:var(--text-light);}
 .msg.assistant .icon{background:var(--accent);color:#fff;}
 .msg .bubble{
-  padding:12px 16px;
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  word-break:break-word;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  word-break: break-word;
+  /* 新增 */
+  line-height: 1.65;
+}
+/* 对 assistant 气泡里的 Markdown 再做一次细节覆盖 */
+.msg.assistant .bubble.markdown-body{
+  background: var(--bg-assistant);
+  color: var(--text);
+  font-size: 15px;
+}
+/* 代码块夜间适配 */
+.markdown-body pre{
+  background: #282c34 !important;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.markdown-body code{
+  background: rgba(0,0,0,.25);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 14px;
 }
 .msg.user .bubble{background:#007aff;color:#fff;}
 .msg.assistant .bubble{background:var(--bg-assistant);}
@@ -161,6 +191,22 @@ header .logo i{color:var(--accent);}
   color:var(--text-light);
   margin-top:6px;
 }
+/* ---------- 聊天区域自定义滚动条 ---------- */
+#messages::-webkit-scrollbar{
+  width: 6px;                /* 细一点 */
+}
+#messages::-webkit-scrollbar-track{
+  background: transparent;   /* 轨道透明 */
+}
+#messages::-webkit-scrollbar-thumb{
+  background: var(--border); /* 跟分割线同色 */
+  border-radius: 3px;
+}
+#messages::-webkit-scrollbar-thumb:hover{
+  background: var(--text-light); /* 悬停高亮 */
+}
+/* Firefox */
+#messages{ scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 </style>
 </head>
 <body>
@@ -204,15 +250,29 @@ function initWS(){
   };
 }
 function render(list){
-  if(!list || !list.length){ msgs.innerHTML = `<div id="empty"><i class="fa-regular fa-comments"></i><span>No messages yet</span></div>`; return;}
-  msgs.innerHTML = list.map(m=>`
-    <div class="msg ${m.role}">
-      <div class="msg-inner">
-        <div class="icon">${m.role==='user'?'<i class="fa-solid fa-user"></i>':m.role==='assistant'?'<i class="fa-solid fa-robot"></i>':''}</div>
-        <div class="bubble">${m.role==='assistant' && m.briefly ? (m.pure_content||m.content) : m.content}</div>
-      </div>
-    </div>`).join('');
+  if(!list || !list.length){
+    msgs.innerHTML = `<div id="empty"><i class="fa-regular fa-comments"></i><span>No messages yet</span></div>`;
+    return;
+  }
+  msgs.innerHTML = list.map(m=>{
+    if(m.role==='system') return '';                 // ① 不渲染 system
+    const isCode = m.role==='assistant';
+    let html = isCode
+        ? marked.parse(m.content || '')              // ② Markdown -> HTML
+        : m.content;
+    return `
+      <div class="msg ${m.role}">
+        <div class="msg-inner">
+          <div class="icon">
+            ${m.role==='user'?'<i class="fa-solid fa-user"></i>':'<i class="fa-solid fa-robot"></i>'}
+          </div>
+          <div class="bubble ${isCode?'markdown-body':''}">${html}</div>
+        </div>
+      </div>`;
+  }).join('');
   msgs.scrollTop = msgs.scrollHeight;
+  /* ③ 高亮代码块 */
+  Prism.highlightAllUnder(msgs);
 }
 function send(){
   const t = input.value.trim();

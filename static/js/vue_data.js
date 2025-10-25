@@ -472,7 +472,6 @@ let vue_data = {
     userInputBuffer: '',
     sidePanelOpen: false,
     sidePanelHTML: '',
-    sidePanelURL: '',
     extensions: [],              // 所有发现的扩展
     currentExtension: null,      // 当前加载的扩展
     sidePanelURL: '',            // 侧边栏中显示的扩展URL
