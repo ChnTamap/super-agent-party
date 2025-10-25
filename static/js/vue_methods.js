@@ -9128,6 +9128,7 @@ clearSegments() {
   resetToDefaultView() {
     this.loadExtension(null);
     this.showExtensionsDialog = false;
+    this.sidePanelOpen = false; // 关闭扩展选择对话框
   },
   // 打开扩展选择对话框
   openExtensionsDialog() {
@@ -9141,8 +9142,10 @@ clearSegments() {
     // extension.systemPrompt填充到this.messages[0].content
     if (this.currentExtension) {
       this.messages[0].content = this.currentExtension.systemPrompt;
+      this.sidePanelOpen = true; // 打开扩展选择对话框
     }else {
       this.messages[0].content = ''; // 清空
+      this.sidePanelOpen = false; // 关闭扩展选择对话框
     }
   },
   openExtension(extension) {
