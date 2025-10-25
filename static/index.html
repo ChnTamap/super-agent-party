@@ -514,6 +514,17 @@ if ('serviceWorker' in navigator) {
                   </el-button>
                 </el-tooltip>
 
+                <el-tooltip :content="t('Extension')" placement="top">
+                  <el-button
+                    v-if="!isCapsuleMode&&!isAssistantMode"
+                    @click="openExtensionsDialog"
+                    class="icon-btn history-btn"
+                    :type="!sidePanelURL ? 'default' : 'primary'"
+                    circle>
+                    <i class="fa-solid fa-plug"></i>
+                  </el-button>
+                </el-tooltip>
+
                 <el-tooltip :content="allBriefly ? t('allNoBriefly'):t('allBriefly')" placement="top">
                   <el-button
                     @click="handleAllBriefly"
