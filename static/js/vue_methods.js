@@ -9157,4 +9157,80 @@ clearSegments() {
       window.open(url, '_blank')
     }
   },
+    // 删除扩展
+    async removeExtension(ext) {
+      try {
+        const res = await fetch(`/api/extensions/${ext.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('删除失败');
+        showNotification(this.t('deleteSuccess'), 'success');
+        this.scanExtensions(); // 刷新列表
+      } catch (e) {
+
+         showNotification(e.message, 'error');
+      }
+    },
+
+    // 打开「添加扩展」对话框
+    openAddExtensionDialog() {
+      this.newExtensionUrl = '';
+      this.showExtensionForm = true;
+    },
+
+    // 真正「安装」按钮触发
+    async addExtension() {
+      const url = this.newExtensionUrl.trim();
+      if (!url) return showNotification('请输入 GitHub 地址', 'error');
+      this.installLoading = true;
+      try {
+        const res = await fetch('/api/extensions/install-from-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        if (res.status === 409) throw new Error(this.t('extensionExists'));
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || this.t('deleteFailed'));
+        }
+        showNotification(this.t('waitExtensionInstall'));
+        this.showExtensionForm = false;
+        // 3 秒后自动刷新
+        setTimeout(() => this.scanExtensions(), 3000);
+      } catch (e) {
+        showNotification(e.message, 'error');
+      } finally {
+        this.installLoading = false;
+      }
+    },
+    // 打开文件选择器
+    selectLocalZip() {
+      this.$refs.zipInput.click();
+    },
+
+    // 选中文件后自动上传
+    async onZipSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      this.installLoading = true;
+      const form = new FormData();
+      form.append('file', file);
+      try {
+        const res = await fetch('/api/extensions/upload-zip', {
+          method: 'POST',
+          body: form,
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.detail || '上传失败');
+        }
+        showNotification('本地 ZIP 安装成功');
+        this.showExtensionForm = false;
+        this.scanExtensions(); // 刷新
+      } catch (err) {
+        showNotification(err.message,'error');
+      } finally {
+        this.installLoading = false;
+        e.target.value = ''; // 允许重复选同一文件
+      }
+    },
 }

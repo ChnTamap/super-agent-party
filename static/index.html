@@ -9131,12 +9131,44 @@ if ('serviceWorker' in navigator) {
                   </div>
                 </div>
                 <!-- 添加扩展对话框 -->
-                <el-dialog v-model="showExtensionForm" :title="t('addNewExtension')" width="600px">
+                <el-dialog
+                  v-model="showExtensionForm"
+                  :title="t('addNewExtension')"
+                  width="600px"
+                >
+                  <!-- GitHub 地址输入 -->
+                  <el-input
+                    v-model="newExtensionUrl"
+                    placeholder="https://github.com/owner/repo"
+                  ></el-input>
+
+                  <!-- Electron 额外功能 -->
+                  <div v-if="isElectron" style="margin-top: 12px;">
+                    <el-divider>{{t('or')}}</el-divider>
+                    <el-button 
+                      @click="selectLocalZip" 
+                      :loading="installLoading"  
+                      type="primary" 
+                      plain 
+                      class="add-server-btn">
+                      {{t('localZipInstallation')}}
+                    </el-button>
+                    <input
+                      ref="zipInput"
+                      type="file"
+                      accept=".zip"
+                      style="display: none"
+                      @change="onZipSelected"
+                    ></input>
+                  </div>
+
                   <template #footer>
                     <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>
-                    <el-button 
-                      type="primary" 
+                    <el-button
+                      type="primary"
+                      :loading="installLoading"
                       @click="addExtension"
+                      :disabled="!newExtensionUrl.trim()"
                     >
                       {{ t('add') }}
                     </el-button>

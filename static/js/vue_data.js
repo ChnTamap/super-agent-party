@@ -477,6 +477,8 @@ let vue_data = {
     sidePanelURL: '',            // 侧边栏中显示的扩展URL
     showExtensionsDialog: false, // 控制扩展选择对话框的显示
     showExtensionForm: false, // 控制扩展表单的显示
+    newExtensionUrl: '',   // 绑定输入框
+    installLoading: false,
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',
