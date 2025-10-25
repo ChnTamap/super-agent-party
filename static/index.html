@@ -106,7 +106,7 @@ if ('serviceWorker' in navigator) {
         <div v-show="!isAssistantMode&&!isMobile" class="model-info" @click="openExtensionsDialog" >
           <el-tooltip :content="t('clickToSwitchExtensions')">
             <el-alert type="primary" :closable="false" style="max-height: 32px;">
-              <span>{{t("Extension") +": "+currentViewName}}</span>  
+              <span>{{t("extension") +": "+currentViewName}}</span>  
             </el-alert>
           </el-tooltip>
         </div>
@@ -514,14 +514,14 @@ if ('serviceWorker' in navigator) {
                   </el-button>
                 </el-tooltip>
 
-                <el-tooltip :content="t('Extension')" placement="top">
+                <el-tooltip :content="t('extension')" placement="top">
                   <el-button
                     v-if="!isCapsuleMode&&!isAssistantMode"
                     @click="openExtensionsDialog"
                     class="icon-btn history-btn"
                     :type="!sidePanelURL ? 'default' : 'primary'"
                     circle>
-                    <i class="fa-solid fa-plug"></i>
+                    <i class="fa-solid fa-puzzle-piece"></i>
                   </el-button>
                 </el-tooltip>
 
@@ -9078,6 +9078,67 @@ if ('serviceWorker' in navigator) {
                       @click="saveAgent"
                       :disabled="!newAgent.name || !newAgent.system_prompt">
                       {{ t('createAgent') }}
+                    </el-button>
+                  </template>
+                </el-dialog>
+              </div>
+              <!-- 扩展页面 -->
+              <div v-show="subMenu === 'extension'" class="page extension-container">
+                <!-- 磁贴网格 -->
+                <div class="provider-grid">
+                  <!-- 已有智能体 -->
+                  <div class="provider-card" v-for="extension in extensions" :key="extension.id">
+                    <div class="card-header">
+                      <el-tooltip :content="t('useExtension')" placement="top">
+                        <el-button 
+                          type="primary" 
+                          @click="switchExtension(extension);this.activeMenu = 'home';"
+                          circle
+                        >
+                          <i class="fa-solid fa-play"></i>
+                        </el-button>
+                      </el-tooltip>
+                      <div class="card-actions">
+                        <el-button @click="openExtension(extension)" type="default" circle size="small">
+                          <i class="fa-solid fa-external-link"></i>
+                        </el-button>
+                        <!-- 更新删除按钮样式 -->
+                        <el-button @click="removeExtension(extension)" type="danger" circle size="small">
+                          <i class="fa-solid fa-trash"></i>
+                        </el-button>
+                      </div>
+                    </div>
+                    <div class="kb-content">
+                      <div class="kb-header"> 
+                        <h3>{{ extension.name }}</h3>
+                        <el-tag 
+                          type="info" 
+                          size="small" 
+                        >
+                          v{{ extension.version }}
+                        </el-tag>                      
+                      </div>
+                      <p class="kb-description">{{ extension.author }}</p>
+                      <div class="kb-meta">
+                        <p>{{ extension.description }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 添加新扩展 -->
+                  <div class="provider-card add-tile" @click="showExtensionForm = true;newAgent.system_prompt = this.system_prompt">
+                    <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
+                    <div style="color: #606266; margin-top: 10px;">{{ t('addNewExtension') }}</div>
+                  </div>
+                </div>
+                <!-- 添加扩展对话框 -->
+                <el-dialog v-model="showExtensionForm" :title="t('addNewExtension')" width="600px">
+                  <template #footer>
+                    <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>
+                    <el-button 
+                      type="primary" 
+                      @click="addExtension"
+                    >
+                      {{ t('add') }}
                     </el-button>
                   </template>
                 </el-dialog>
