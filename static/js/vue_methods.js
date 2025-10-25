@@ -9129,6 +9129,7 @@ clearSegments() {
     this.loadExtension(null);
     this.showExtensionsDialog = false;
     this.sidePanelOpen = false; // 关闭扩展选择对话框
+    this.messages[0].content = '';
   },
   // 打开扩展选择对话框
   openExtensionsDialog() {
