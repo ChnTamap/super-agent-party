@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "This is a chat frontend example",
   "author": "super agent party",
-  "systemPrompt": ""
+  "systemPrompt": "你是一个智能助手"
 }

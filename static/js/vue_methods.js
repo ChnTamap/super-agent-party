@@ -2036,6 +2036,10 @@ let vue_methods = {
     async clearMessages() {
       this.stopGenerate();
       this.messages = [{ role: 'system', content: this.system_prompt }];
+      // extension.systemPrompt填充到this.messages[0].content
+      if (this.currentExtension) {
+        this.messages[0].content = this.currentExtension.systemPrompt;
+      }
       this.conversationId = null;
       this.fileLinks = [];
       this.isThinkOpen = false; // 重置思考模式状态
@@ -9130,6 +9134,12 @@ clearSegments() {
   switchExtension(extension) {
     this.loadExtension(extension);
     this.showExtensionsDialog = false;
+    // extension.systemPrompt填充到this.messages[0].content
+    if (this.currentExtension) {
+      this.messages[0].content = this.currentExtension.systemPrompt;
+    }else {
+      this.messages[0].content = ''; // 清空
+    }
   },
   openExtension(extension) {
     let url = `${this.partyURL}/ext/${extension.id}/index.html`;

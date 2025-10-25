@@ -13,6 +13,7 @@ class Extension(BaseModel):
     description: str = "无描述"
     version: str = "1.0.0"
     author: str = "未知"
+    systemPrompt: str = ""
 
 class ExtensionsResponse(BaseModel):
     extensions: List[Extension]

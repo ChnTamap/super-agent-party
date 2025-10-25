@@ -886,7 +886,7 @@ if ('serviceWorker' in navigator) {
                 <div class="side-panel-scroll" ref="messagesPanel">
                   <iframe class="side-panel-iframe" v-if="sidePanelURL" :src="sidePanelURL" frameborder="0" allowfullscreen style="width: 100%; height: 100%;"></iframe>
                   <div v-else-if="sidePanelText" v-html="defaultSidePanelHTML" class="side-panel-content"></div>
-                  <el-empty v-else :description="t('noContent')" />
+                  <el-empty v-else :description="t('NotExtension')" />
                 </div>
               </div>
             </transition>
@@ -936,7 +936,7 @@ if ('serviceWorker' in navigator) {
                     <el-button
                       type="primary"
                       circle
-                      @click.stop="openExtension(ext)">
+                      @click.stop="openExtension(ext);switchExtension(ext)">
                       <i class="fa-solid fa-external-link"></i>
                     </el-button>
                   </div>
