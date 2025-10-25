@@ -282,8 +282,8 @@ function render(list){
     if(m.role==='system') return '';                 // ① 不渲染 system
     const isCode = m.role==='assistant';
     let html = isCode
-        ? marked.parse(m.content || '')              // ② Markdown -> HTML
-        : m.content;
+        ? marked.parse(m.pure_content ||'')              // ② Markdown -> HTML
+        : m.pure_content || m.content || '';
     return `
       <div class="msg ${m.role}">
         <div class="msg-inner">
