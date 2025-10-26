@@ -189,5 +189,5 @@ build.bat
 test*
 wxauto*
 
-static/ext
+static/ext/*
 !static/ext/example/
