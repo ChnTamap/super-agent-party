@@ -1606,6 +1606,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                     if reasoning_content:
                                         delta['reasoning_content'] = reasoning_content
                                         full_reasoning += reasoning_content
+                                # 移除content字段，确保yield的内容中不包含content
+                                if 'content' in delta:
+                                    del delta['content']
                             yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                     # 在推理结束后添加完整推理内容到消息
@@ -2225,6 +2228,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                         if reasoning_content:
                                             delta['reasoning_content'] = reasoning_content
                                             full_reasoning += reasoning_content
+                                    # 移除content字段，确保yield的内容中不包含content
+                                    if 'content' in delta:
+                                        del delta['content']
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
