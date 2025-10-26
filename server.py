@@ -169,6 +169,12 @@ def content_replace(message, role, content):
     if target_message:
         target_message['content'] = content
 
+def content_new(message, role, content):
+    """
+    用content替换指定role消息的内容
+    """
+    message.append({'role': role, 'content': content})
+
 configure_host_port(args.host, args.port)
 
 @asynccontextmanager
@@ -1621,7 +1627,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                     # 在推理结束后添加完整推理内容到消息
-                    content_append(request.messages, 'assistant', full_reasoning) # 可参考的推理过程
+                    content_append(request.messages, 'assistant', f"<think>\n{full_reasoning}\n</think>")  # 可参考的推理过程
                 # 状态跟踪变量
                 in_reasoning = False
                 reasoning_buffer = []
@@ -1750,6 +1756,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     }
                     yield f"data: {json.dumps(final_chunk)}\n\n"
                     full_content += final_chunk["choices"][0]["delta"].get("content", "")
+                # 将响应添加到消息列表
+                content_append(request.messages, 'assistant', full_content)
+                # 工具和深度搜索
                 if tool_calls:
                     print("tool_calls",tool_calls)
                     pass
@@ -2131,7 +2140,19 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 "name": response_content.name,
                                 "content": str("".join(results)),
                             }
-                        )    
+                        )
+                    reasoner_messages.append(
+                        {
+                            "role": "assistant",
+                            "content": str(response_content),
+                        }
+                    )
+                    reasoner_messages.append(
+                        {
+                            "role": "user",
+                            "content": f"{response_content.name}工具结果："+str(results),
+                        }
+                    )
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
@@ -2239,7 +2260,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
-                        content_append(request.messages, 'assistant', full_reasoning) # 可参考的推理过程
+                        content_append(request.messages, 'assistant', f"<think>\n{full_reasoning}\n</think>") # 可参考的推理过程
                     msg = await images_add_in_messages(request.messages, images,settings)
                     if tools:
                         response = await client.chat.completions.create(
@@ -2356,6 +2377,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         }
                         yield f"data: {json.dumps(final_chunk)}\n\n"
                         full_content += final_chunk["choices"][0]["delta"].get("content", "")
+                    # 将响应添加到消息列表
+                    content_append(request.messages, 'assistant', full_content)
+                    # 工具和深度搜索
                     if tool_calls:
                         pass
                     elif settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
@@ -3237,7 +3261,6 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 }
             )
             if settings['reasoner']['enabled'] or enable_thinking:
-
                 if tools:
                     content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
                 for modelProvider in settings['modelProviders']: 
