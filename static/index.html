@@ -9152,12 +9152,19 @@ if ('serviceWorker' in navigator) {
                   <!-- 远程插件列表 - 卡片形式 -->
                   <div class="plugin-header">
                     <h3>{{t('availableExtensions')}}</h3>
-                    <el-button 
-                      @click="handleRefreshClick" 
-                      type="primary"
-                      :loading="refreshing">
-                      {{refreshButtonText}}
-                    </el-button>
+                    <div class="plugin-button-group">
+                      <el-button 
+                        @click="openRepository('https://github.com/super-agent-party/super-agent-party.github.io')" 
+                        type="primary">
+                        {{t('addYourExtensions')}}
+                      </el-button>
+                      <el-button 
+                        @click="handleRefreshClick" 
+                        type="primary"
+                        :loading="refreshing">
+                        {{refreshButtonText}}
+                      </el-button>
+                    </div>
                   </div>
                   
                   <div v-loading="installLoading" class="plugins-container">
