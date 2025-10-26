@@ -9111,7 +9111,7 @@ if ('serviceWorker' in navigator) {
                     </div>
                   </div>
                   <!-- 添加新扩展 -->
-                  <div class="provider-card add-tile" @click="showExtensionForm = true;newAgent.system_prompt = this.system_prompt">
+                  <div class="provider-card add-tile" @click="openAddExtensionDialog">
                     <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
                     <div style="color: #606266; margin-top: 10px;">{{ t('addNewExtension') }}</div>
                   </div>
@@ -9120,7 +9120,7 @@ if ('serviceWorker' in navigator) {
                 <el-dialog
                   v-model="showExtensionForm"
                   :title="t('addNewExtension')"
-                  width="600px"
+                  width="80%"
                 >
                   <!-- GitHub 地址输入 -->
                   <el-input
@@ -9147,24 +9147,40 @@ if ('serviceWorker' in navigator) {
                       @change="onZipSelected"
                     ></input>
                   </div>
-
-                  <el-alert
-                    type="info"
-                    :closable="false"
-                    class="mb-2"
-                  >
-                    {{ t('getPluginInstructions') }}
-                    <el-link
+                  <el-divider>{{t('or')}}</el-divider>
+                  
+                  <!-- 远程插件列表 - 卡片形式 -->
+                  <div class="plugin-header">
+                    <h3>{{t('availableExtensions')}}</h3>
+                    <el-button 
+                      @click="handleRefreshClick" 
                       type="primary"
-                      :underline="false"
-                      href="https://super-agent-party.github.io/plugins.html" 
-                      target="_blank"
-                    >
-                      <el-icon class="mr-1">
-                        <i class="fa-solid fa-key"></i>
-                      </el-icon>{{ t('getPlugin') }}
-                    </el-link>
-                  </el-alert>
+                      :loading="refreshing">
+                      {{refreshButtonText}}
+                    </el-button>
+                  </div>
+                  
+                  <div v-loading="installLoading" class="plugins-container">
+                    <div v-if="remotePlugins.length === 0" class="empty-plugins">
+                      <el-empty :description="t('noExtensionsFound')"></el-empty>
+                    </div>
+                    <div v-else class="plugins-grid">
+                      <div v-for="plugin in remotePlugins" :key="plugin.name" class="plugin-card">
+                        <div class="plugin-content">
+                          <h4 class="plugin-name">{{ plugin.name }}</h4>
+                          <p class="plugin-description">{{ plugin.description }}</p>
+                        </div>
+                        <div class="plugin-action">
+                          <el-button
+                            :type="plugin.installed ? 'danger' : 'primary'"
+                            @click="togglePlugin(plugin)"
+                          >
+                            {{ plugin.installed ? t('uninstall'): t('install') }}
+                          </el-button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <template #footer>
                     <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>

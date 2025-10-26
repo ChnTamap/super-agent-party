@@ -477,7 +477,11 @@ let vue_data = {
     showExtensionsDialog: false, // 控制扩展选择对话框的显示
     showExtensionForm: false, // 控制扩展表单的显示
     newExtensionUrl: '',   // 绑定输入框
+    remotePlugins: [], // 远程插件列表
+    installedPlugins: [], // 本地已安装
     installLoading: false,
+    refreshing: false,
+    refreshButtonText: "",
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',

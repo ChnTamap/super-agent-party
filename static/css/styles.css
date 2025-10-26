@@ -3749,3 +3749,83 @@ body {
   right: 12px;
   z-index: 1;           /* 保证在卡片内容之上 */
 }
+
+.plugin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.plugin-header h3 {
+  margin: 0;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.plugins-container {
+  margin-top: 16px;
+  min-height: 200px;
+}
+
+.empty-plugins {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.plugins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.plugin-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--el-bg-color);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all var(--transition-duration) var(--transition-function);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  height: 100%;
+  min-height: 140px;
+}
+
+.plugin-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.plugin-content {
+  flex: 1;
+}
+
+.plugin-name {
+  margin: 12px 0 12px 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  font-weight: bold;
+}
+
+.plugin-description {
+  margin: 0 0 0 8px;
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.plugin-action {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}

@@ -189,5 +189,5 @@ build.bat
 test*
 wxauto*
 
-static/ext
-!static/ext/example/
+static/ext/*
+!static/ext/heshengtao_sap-example/
