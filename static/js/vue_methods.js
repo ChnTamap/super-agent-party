@@ -1145,6 +1145,7 @@ let vue_methods = {
           this.loadDefaultMotions();
           this.loadGaussScenes();
           this.checkMobile();
+          this.fetchRemotePlugins();
           if (this.asrSettings.enabled) {
             this.startASR();
           }
