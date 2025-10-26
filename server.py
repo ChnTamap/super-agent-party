@@ -96,6 +96,79 @@ ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']
 ALLOWED_VIDEO_EXTENSIONS = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', '3gp', 'm4v']
 
 
+def _get_target_message(message, role):
+    """
+    根据角色获取目标消息
+    
+    参数:
+        message (list): 消息列表引用
+        role (str): 要操作的角色，可选值: 'user', 'assistant', 'system'
+    
+    返回:
+        dict: 目标消息字典
+    """
+    # 验证输入参数
+    if not isinstance(message, list):
+        raise TypeError("message必须是列表类型")
+    
+    if role not in ['user', 'assistant', 'system']:
+        raise ValueError("role必须是'user'或'assistant'或'system'")
+    
+    target_message = None
+    
+    # 根据role决定要操作的对象
+    if role == 'user':
+        # 查找最后一个role为'user'的消息
+        for msg in reversed(message):
+            if isinstance(msg, dict) and msg['role'] == 'user':
+                target_message = msg
+                break
+    elif role == 'assistant':
+        # 检查最后一个消息
+        if message and message[-1]['role'] == 'assistant':
+            target_message = message[-1]
+        else:
+            # 如果最后一个消息不是assistant，创建一个新的
+            new_assistant_msg = {'role': 'assistant', 'content': ''}
+            message.append(new_assistant_msg)
+            target_message = new_assistant_msg
+    elif role == 'system':
+        # 查找第一个role为'system'的消息
+        if message and message[0]['role'] == 'system':
+            target_message = message[0]
+        else:
+            # 如果没有找到system消息，创建一个新的
+            target_message = {'role': 'system', 'content': ''}
+            message.insert(0, target_message)
+    
+    return target_message
+
+def content_append(message, role, content):
+    """
+    将content添加到指定role消息的末尾
+    """
+    target_message = _get_target_message(message, role)
+    if target_message:
+        current_content = target_message.get('content', '')
+        target_message['content'] = current_content + content
+
+def content_prepend(message, role, content):
+    """
+    将content添加到指定role消息的前面
+    """
+    target_message = _get_target_message(message, role)
+    if target_message:
+        current_content = target_message.get('content', '')
+        target_message['content'] = content + current_content
+
+def content_replace(message, role, content):
+    """
+    用content替换指定role消息的内容
+    """
+    target_message = _get_target_message(message, role)
+    if target_message:
+        target_message['content'] = content
+
 configure_host_port(args.host, args.port)
 
 @asynccontextmanager
@@ -666,23 +739,14 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
     if settings["HASettings"]["enabled"]:
         HA_devices = await HA_client.call_tool("GetLiveContext", {})
         HA_message = f"\n\n以下是home assistant连接的设备信息：{HA_devices}\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += HA_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': HA_message})
+        content_append(request.messages, 'system', HA_message)
     if settings['chromeMCPSettings']['enabled']:
         chrome_status = await ChromeMCP_client.call_tool("get_windows_and_tabs", {})
         chromeMCP_message = f"\n\n以下是浏览器的当前信息：{chrome_status}\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += chromeMCP_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': chromeMCP_message})
+        content_append(request.messages, 'system', chromeMCP_message)
     if request.messages[-1]['role'] == 'system' and settings['tools']['autoBehavior']['enabled']:
         language_message = f"\n\n当你看到被插入到对话之间的系统消息，这是自主行为系统向你发送的消息，例如用户主动或者要求你设置了一些定时任务或者延时任务，当你看到自主行为系统向你发送的消息时，说明这些任务到了需要被执行的节点，例如：用户要你三点或五分钟后提醒开会的事情，然后当你看到一个被插入的“提醒用户开会”的系统消息，你需要立刻提醒用户开会，以此类推\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += language_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': language_message})
+        content_append(request.messages, 'system', language_message)
     if settings['ttsSettings']['newtts'] and settings['ttsSettings']['enabled']:
         # 遍历settings['ttsSettings']['newtts']，获取所有包含enabled: true的key
         for key in settings['ttsSettings']['newtts']:
@@ -692,55 +756,34 @@ async def tools_change_messages(request: ChatRequest, settings: dict):
             newttsList = json.dumps(newttsList,ensure_ascii=False)
             print(f"可用音色：{newttsList}")
             newtts_messages = f"你可以使用以下音色：\n{newttsList}\n，当你生成回答时，将不同的旁白或角色的文字用<音色名></音色名>括起来，以表示这些话是使用这个音色，以控制不同TTS转换成对应音色。对于没有对应音色的部分，可以不括。即使音色名称不为英文，还是可以照样使用<音色名>使用该音色的文本</音色名>来启用对应音色。注意！如果是你扮演的角色的名字在音色列表里，你必须用这个音色标签将你扮演的角色说话的部分括起来！只要是非人物说话的部分，都视为旁白！角色音色应该标记在人物说话的前后！例如：<Narrator>现在是下午三点，她说道：</Narrator><角色名>”天气真好哇！“</角色名><Narrator>说完她伸了个懒腰。</Narrator>\n\n"
-            if request.messages and request.messages[0]['role'] == 'system':
-                request.messages[0]['content'] = newtts_messages + request.messages[0]['content']
-            else:
-                request.messages.insert(0, {'role': 'system', 'content': newtts_messages})
+            content_prepend(request.messages, 'system', newtts_messages)
     if settings['vision']['desktopVision']:
         desktop_message = "\n\n用户与你对话时，会自动发给你当前的桌面截图。\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += desktop_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': desktop_message})
+        content_append(request.messages, 'system', desktop_message)
     if settings['tools']['time']['enabled'] and settings['tools']['time']['triggerMode'] == 'beforeThinking':
         time_message = f"消息发送时间：{local_timezone}  {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}\n\n"
-        request.messages[-1]['content'] = time_message + request.messages[-1]['content']
+        content_prepend(request.messages, 'user', time_message)
     if settings['tools']['inference']['enabled']:
         inference_message = "回答用户前请先思考推理，再回答问题，你的思考推理的过程必须放在<think>与</think>之间。\n\n"
-        request.messages[-1]['content'] = f"{inference_message}\n\n用户：" + request.messages[-1]['content']
+        content_prepend(request.messages, 'user', f"{inference_message}\n\n用户：")
     if settings['tools']['formula']['enabled']:
         latex_message = "\n\n当你想使用latex公式时，你必须是用 ['$', '$'] 作为行内公式定界符，以及 ['$$', '$$'] 作为行间公式定界符。\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += latex_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': latex_message})
+        content_append(request.messages, 'system', latex_message)
     if settings['tools']['language']['enabled']:
         language_message = f"请使用{settings['tools']['language']['language']}语言推理分析思考，不要使用其他语言推理分析，语气风格为{settings['tools']['language']['tone']}\n\n"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += language_message
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': language_message})
+        content_append(request.messages, 'system', language_message)
     if settings["stickerPacks"]:
         for stickerPack in settings["stickerPacks"]:
             if stickerPack["enabled"]:
                 sticker_message = f"\n\n图片库名称：{stickerPack['name']}，包含的图片：{json.dumps(stickerPack['stickers'])}\n\n"
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += sticker_message
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': sticker_message})
-        request.messages[0]['content'] += "\n\n当你需要使用图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！"
+                content_append(request.messages, 'system', sticker_message)
+        content_append(request.messages, 'system', "\n\n当你需要使用图片时，请将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！")
     if settings['text2imgSettings']['enabled']:
         text2img_messages = "\n\n当你使用画图工具后，必须将图片的URL放在markdown的图片标签中，例如：\n\n![图片名](图片URL)\n\n，图片markdown必须另起并且独占一行！请主动发给用户，工具返回的结果，用户看不到！"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += text2img_messages
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': text2img_messages})
+        content_append(request.messages, 'system', text2img_messages)
     if settings['VRMConfig']['enabledExpressions']:
         Expression_messages = "\n\n你可以使用以下表情：<happy> <angry> <sad> <neutral> <surprised> <relaxed>\n\n你可以在句子开头插入表情符号以驱动人物的当前表情，注意！你需要将表情符号放到句子的开头，才能在说这句话的时候同步做表情，例如：<angry>我真的生气了。<surprised>哇！<happy>我好开心。\n\n一定要把表情符号跟要做表情的句子放在同一行，如果表情符号和要做表情的句子中间有换行符，表情也将不会生效，例如：\n\n<happy>\n我好开心。\n\n此时，表情符号将不会生效。"
-        if request.messages and request.messages[0]['role'] == 'system':
-            request.messages[0]['content'] += Expression_messages
-        else:
-            request.messages.insert(0, {'role': 'system', 'content': Expression_messages})
+        content_append(request.messages, 'system', Expression_messages)
     print(f"系统提示：{request.messages[0]['content']}")
     return request
 
@@ -1078,19 +1121,13 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
             fileLinks_message = f"\n\n相关文件内容：{files_content}"
             
             # 修复字符串拼接错误
-            if request.messages and request.messages[0]['role'] == 'system':
-                request.messages[0]['content'] += fileLinks_message
-            else:
-                request.messages.insert(0, {'role': 'system', 'content': fileLinks_message})
+            content_append(request.messages, 'system', fileLinks_message)
             source_prompt += fileLinks_message
         user_prompt = request.messages[-1]['content']
         if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"})
+                content_append(request.messages, 'system', "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n")
             lore_content = ""
             assistant_reply = ""
             # 找出request.messages中上次的assistant回复
@@ -1114,10 +1151,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换lore_content中的{{char}}为cur_memory["name"]
                 lore_content = lore_content.replace("{{char}}", cur_memory["name"])
                 print("添加世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"})
+                content_append(request.messages, 'system', "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
             if cur_memory["description"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["description"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -1125,10 +1159,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换cur_memory["description"]中的{{char}}为cur_memory["name"]
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
                 print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+                content_append(request.messages, 'system', "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["personality"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -1136,10 +1167,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换cur_memory["personality"]中的{{char}}为cur_memory["name"]
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
                 print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"}) 
+                content_append(request.messages, 'system', "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n") 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["mesExample"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -1147,10 +1175,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换cur_memory["mesExample"]中的{{char}}为cur_memory["name"]
                 cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{char}}", cur_memory["name"])
                 print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"})
+                content_append(request.messages, 'system', "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
             if cur_memory["systemPrompt"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["systemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -1158,10 +1183,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
                 cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
                 print("添加系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
+                content_append(request.messages, 'system', "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
             if settings["memorySettings"]["genericSystemPrompt"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换settings["memorySettings"]["genericSystemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -1169,10 +1191,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
                 settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
                 print("添加系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"})
+                content_append(request.messages, 'system', "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
                 try:
@@ -1181,11 +1200,8 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 except Exception as e:
                     print("m0.search error:",e)
                     relevant_memories = ""
-                if request.messages and request.messages[0]['role'] == 'system':
-                    print("添加相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")
-                    request.messages[0]['content'] += "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n"})                    
+                print("添加相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")
+                content_append(request.messages, 'system', "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")                    
         request = await tools_change_messages(request, settings)
         chat_vendor = 'OpenAI'
         for modelProvider in settings['modelProviders']: 
@@ -1363,7 +1379,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         if all_kb_content:
                             all_kb_content = json.dumps(all_kb_content, ensure_ascii=False, indent=4)
                             kb_message = f"\n\n可参考的知识库内容：{all_kb_content}"
-                            request.messages[-1]['content'] += f"{kb_message}\n\n用户：{user_prompt}"
+                            content_append(request.messages, 'user',  f"{kb_message}\n\n用户：{user_prompt}")
                                                     # 获取时间戳和uuid
                             timestamp = time.time()
                             uid = str(uuid.uuid4())
@@ -1386,10 +1402,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 if settings["KBSettings"]["when"] == "after_thinking" or settings["KBSettings"]["when"] == "both":
                     if kb_list:
                         kb_list_message = f"\n\n可调用的知识库列表：{json.dumps(kb_list, ensure_ascii=False)}"
-                        if request.messages and request.messages[0]['role'] == 'system':
-                            request.messages[0]['content'] += kb_list_message
-                        else:
-                            request.messages.insert(0, {'role': 'system', 'content': kb_list_message})
+                        content_append(request.messages, 'system', kb_list_message)
                 else:
                     kb_list = []
                 if settings['webSearch']['enabled'] or enable_web_search:
@@ -1428,7 +1441,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         elif settings['webSearch']['engine'] == 'bochaai':
                             results = await bochaai_search_async(user_prompt)
                         if results:
-                            request.messages[-1]['content'] += f"\n\n联网搜索结果：{results}\n\n请根据联网搜索结果组织你的回答，并确保你的回答是准确的。"
+                            content_append(request.messages, 'user',  f"\n\n联网搜索结果：{results}\n\n请根据联网搜索结果组织你的回答，并确保你的回答是准确的。")
                             # 获取时间戳和uuid
                             timestamp = time.time()
                             uid = str(uuid.uuid4())
@@ -1476,7 +1489,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     tools.append(kb_tool)
                 if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                     deepsearch_messages = copy.deepcopy(request.messages)
-                    deepsearch_messages[-1]['content'] += "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。"
+                    content_append(deepsearch_messages, 'user',  "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。")
                     response = await client.chat.completions.create(
                         model=model,
                         messages=deepsearch_messages,
@@ -1492,17 +1505,17 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         }]
                     }
                     yield f"data: {json.dumps(deepsearch_chunk)}\n\n"
-                    request.messages[-1]['content'] += f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。"
+                    content_append(request.messages, 'user',  f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。")
                 # 如果启用推理模型
                 if settings['reasoner']['enabled'] or enable_thinking:
                     reasoner_messages = copy.deepcopy(request.messages)
                     if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-                        reasoner_messages[-1]['content'] += f"\n\n可参考的步骤：{user_prompt}\n\n"
+                        content_append(reasoner_messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
                         drs_msg = get_drs_stage(DRS_STAGE)
                         if drs_msg:
-                            reasoner_messages[-1]['content'] += f"\n\n{drs_msg}\n\n"
+                            content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
                     if tools:
-                        reasoner_messages[-1]['content'] += f"可用工具：{json.dumps(tools)}"
+                        content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
                     for modelProvider in settings['modelProviders']: 
                         if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                             vendor = modelProvider['vendor']
@@ -1608,16 +1621,16 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                     # 在推理结束后添加完整推理内容到消息
-                    request.messages[-1]['content'] += f"\n\n可参考的推理过程：{full_reasoning}"
+                    content_append(request.messages, 'user',  f"\n\n可参考的推理过程：{full_reasoning}")
                 # 状态跟踪变量
                 in_reasoning = False
                 reasoning_buffer = []
                 content_buffer = []
                 if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-                    request.messages[-1]['content'] += f"\n\n可参考的步骤：{user_prompt}\n\n"
+                    content_append(request.messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
                     drs_msg = get_drs_stage(DRS_STAGE)
                     if drs_msg:
-                        request.messages[-1]['content'] += f"\n\n{drs_msg}\n\n"
+                        content_append(request.messages, 'user',  f"\n\n{drs_msg}\n\n")
                 msg = await images_add_in_messages(request.messages, images,settings)
                 if tools:
                     response = await client.chat.completions.create(
@@ -2052,7 +2065,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             }
                         )
                         if (settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both') and settings['tools']['asyncTools']['enabled'] is False:
-                            request.messages[-1]['content'] += f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。"
+                            content_append(request.messages, 'user',  f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。")
                         if settings['tools']['asyncTools']['enabled']:
                             pass
                         else:
@@ -2122,7 +2135,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
-                            reasoner_messages[-1]['content'] += f"可用工具：{json.dumps(tools)}"
+                            content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
                         for modelProvider in settings['modelProviders']: 
                             if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                                 vendor = modelProvider['vendor']
@@ -2226,7 +2239,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
-                        request.messages[-1]['content'] += f"\n\n可参考的推理过程：{full_reasoning}"
+                        content_append(request.messages, 'user',  f"\n\n可参考的推理过程：{full_reasoning}")
                     msg = await images_add_in_messages(request.messages, images,settings)
                     if tools:
                         response = await client.chat.completions.create(
@@ -2786,19 +2799,13 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             system_message = f"\n\n相关文件内容：{files_content}"
             
             # 修复字符串拼接错误
-            if request.messages and request.messages[0]['role'] == 'system':
-                request.messages[0]['content'] += system_message
-            else:
-                request.messages.insert(0, {'role': 'system', 'content': system_message})
+            content_append(request.messages, 'system', system_message)
         kb_list = []
         user_prompt = request.messages[-1]['content']
         if settings["memorySettings"]["is_memory"] and settings["memorySettings"]["selectedMemory"] and settings["memorySettings"]["selectedMemory"] != "":
             if settings["memorySettings"]["userName"]:
                 print("添加用户名：\n\n" + settings["memorySettings"]["userName"] + "\n\n用户名结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n"})
+                content_append(request.messages, 'system', "与你交流的用户名为：\n\n" + settings["memorySettings"]["userName"] + "\n\n")
             lore_content = ""
             assistant_reply = ""
             # 找出request.messages中上次的assistant回复
@@ -2822,10 +2829,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换lore_content中的{{char}}为cur_memory["name"]
                 lore_content = lore_content.replace("{{char}}", cur_memory["name"])
                 print("添加世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n"})
+                content_append(request.messages, 'system', "世界观设定：\n\n" + lore_content + "\n\n世界观设定结束\n\n")
             if cur_memory["description"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["description"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -2833,10 +2837,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换cur_memory["description"]中的{{char}}为cur_memory["name"]
                 cur_memory["description"] = cur_memory["description"].replace("{{char}}", cur_memory["name"])
                 print("添加角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "角色设定：\n\n" + cur_memory["basic_character"] + "\n\n角色设定结束\n\n"})
+                content_append(request.messages, 'system', "角色设定：\n\n" + cur_memory["description"] + "\n\n角色设定结束\n\n")
             if cur_memory["personality"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["personality"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -2844,10 +2845,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换cur_memory["personality"]中的{{char}}为cur_memory["name"]
                 cur_memory["personality"] = cur_memory["personality"].replace("{{char}}", cur_memory["name"])
                 print("添加性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n"}) 
+                content_append(request.messages, 'system', "性格设定：\n\n" + cur_memory["personality"] + "\n\n性格设定结束\n\n") 
             if cur_memory['mesExample']:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["mesExample"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -2855,10 +2853,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换cur_memory["mesExample"]中的{{char}}为cur_memory["name"]
                 cur_memory["mesExample"] = cur_memory["mesExample"].replace("{{char}}", cur_memory["name"])
                 print("添加对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n"})
+                content_append(request.messages, 'system', "对话示例：\n\n" + cur_memory['mesExample'] + "\n\n对话示例结束\n\n")
             if cur_memory["systemPrompt"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换cur_memory["systemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -2866,10 +2861,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
                 cur_memory["systemPrompt"] = cur_memory["systemPrompt"].replace("{{char}}", cur_memory["name"])
                 print("添加系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n"})
+                content_append(request.messages, 'system', "系统提示：\n\n" + cur_memory["systemPrompt"] + "\n\n系统提示结束\n\n")
             if settings["memorySettings"]["genericSystemPrompt"]:
                 if settings["memorySettings"]["userName"]:
                     # 替换settings["memorySettings"]["genericSystemPrompt"]中的{{user}}为settings["memorySettings"]["userName"]
@@ -2877,10 +2869,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 # 替换cur_memory["systemPrompt"]中的{{char}}为cur_memory["name"]
                 settings["memorySettings"]["genericSystemPrompt"] = settings["memorySettings"]["genericSystemPrompt"].replace("{{char}}", cur_memory["name"])
                 print("添加系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n"})
+                content_append(request.messages, 'system', "系统提示：\n\n" + settings["memorySettings"]["genericSystemPrompt"] + "\n\n系统提示结束\n\n")
                     
             if m0:
                 memoryLimit = settings["memorySettings"]["memoryLimit"]
@@ -2890,11 +2879,8 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 except Exception as e:
                     print("m0.search error:",e)
                     relevant_memories = ""
-                if request.messages and request.messages[0]['role'] == 'system':
-                    print("添加相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")
-                    request.messages[0]['content'] += "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n"
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n"})     
+                print("添加相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")
+                content_append(request.messages, 'system', "之前的相关记忆：\n\n" + relevant_memories + "\n\n相关结束\n\n")     
         if settings["knowledgeBases"]:
             for kb in settings["knowledgeBases"]:
                 if kb["enabled"] and kb["processingStatus"] == "completed":
@@ -2910,14 +2896,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         all_kb_content = await rerank_knowledge_base(user_prompt,all_kb_content)
                 if all_kb_content:
                     kb_message = f"\n\n可参考的知识库内容：{all_kb_content}"
-                    request.messages[-1]['content'] += f"{kb_message}\n\n用户：{user_prompt}"
+                    content_append(request.messages, 'user',  f"{kb_message}\n\n用户：{user_prompt}")
         if settings["KBSettings"]["when"] == "after_thinking" or settings["KBSettings"]["when"] == "both":
             if kb_list:
                 kb_list_message = f"\n\n可调用的知识库列表：{json.dumps(kb_list, ensure_ascii=False)}"
-                if request.messages and request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] += kb_list_message
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': kb_list_message})
+                content_append(request.messages, 'system', kb_list_message)
         else:
             kb_list = []
         request = await tools_change_messages(request, settings)
@@ -2961,7 +2944,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 elif settings['webSearch']['engine'] == 'bochaai':
                     results = await bochaai_search_async(user_prompt)
                 if results:
-                    request.messages[-1]['content'] += f"\n\n联网搜索结果：{results}"
+                    content_append(request.messages, 'user',  f"\n\n联网搜索结果：{results}")
             if settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both':
                 if settings['webSearch']['engine'] == 'duckduckgo':
                     tools.append(duckduckgo_tool)
@@ -2990,7 +2973,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             tools.append(kb_tool)
         if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
             deepsearch_messages = copy.deepcopy(request.messages)
-            deepsearch_messages[-1]['content'] += "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。"
+            content_append(deepsearch_messages, 'user',  "\n\n将用户提出的问题或给出的当前任务拆分成多个步骤，每一个步骤用一句简短的话概括即可，无需回答或执行这些内容，直接返回总结即可，但不能省略问题或任务的细节。如果用户输入的只是闲聊或者不包含任务和问题，直接把用户输入重复输出一遍即可。如果是非常简单的问题，也可以只给出一个步骤即可。一般情况下都是需要拆分成多个步骤的。")
             response = await client.chat.completions.create(
                 model=model,
                 messages=deepsearch_messages,
@@ -2999,16 +2982,16 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 extra_body = extra_params, # 其他参数
             )
             user_prompt = response.choices[0].message.content
-            request.messages[-1]['content'] += f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。"
+            content_append(request.messages, 'user',  f"\n\n如果用户没有提出问题或者任务，直接闲聊即可，如果用户提出了问题或者任务，任务描述不清晰或者你需要进一步了解用户的真实需求，你可以暂时不完成任务，而是分析需要让用户进一步明确哪些需求。")
         if settings['reasoner']['enabled'] or enable_thinking:
             reasoner_messages = copy.deepcopy(request.messages)
             if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
                 drs_msg = get_drs_stage(DRS_STAGE)
                 if drs_msg:
-                    reasoner_messages[-1]['content'] += f"\n\n{drs_msg}\n\n"
-                reasoner_messages[-1]['content'] += f"\n\n可参考的步骤：{user_prompt}\n\n"
+                    content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
+                content_append(reasoner_messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
             if tools:
-                reasoner_messages[-1]['content'] += f"可用工具：{json.dumps(tools)}"
+                content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
             for modelProvider in settings['modelProviders']: 
                 if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                     vendor = modelProvider['vendor']
@@ -3024,11 +3007,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 )
                 reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
                 if reasoning_buffer:
-                    request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_buffer
+                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
                 else:
                     reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning']
                     if reasoning_buffer:
-                        request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_buffer
+                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
                     else:
                         # 将推理结果中的思考内容提取出来
                         reasoning_content = reasoner_response.model_dump()['choices'][0]['message']['content']
@@ -3039,7 +3022,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                             reasoning_content = reasoning_content[start_index:end_index]
                         else:
                             reasoning_content = ""
-                        request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_content
+                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_content)
             else:
                 reasoner_response = await reasoner_client.chat.completions.create(
                     model=settings['reasoner']['model'],
@@ -3051,19 +3034,19 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 )
                 reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
                 if reasoning_buffer:
-                    request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_buffer
+                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
                 else:
                     reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning']
                     if reasoning_buffer:
-                        request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_buffer
+                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
                     else:
                         reasoning_buffer = ""
-                        request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_buffer
+                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
         if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
-            request.messages[-1]['content'] += f"\n\n可参考的步骤：{user_prompt}\n\n"
+            content_append(request.messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
             drs_msg = get_drs_stage(DRS_STAGE)
             if drs_msg:
-                request.messages[-1]['content'] += f"\n\n{drs_msg}\n\n"
+                content_append(request.messages, 'user',  f"\n\n{drs_msg}\n\n")
         msg = await images_add_in_messages(request.messages, images,settings)
         if tools:
             response = await client.chat.completions.create(
@@ -3240,7 +3223,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     }
                 )
             if settings['webSearch']['when'] == 'after_thinking' or settings['webSearch']['when'] == 'both':
-                request.messages[-1]['content'] += f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。"
+                content_append(request.messages, 'user',  f"\n对于联网搜索的结果，如果联网搜索的信息不足以回答问题时，你可以进一步使用联网搜索查询还未给出的必要信息。如果已经足够回答问题，请直接回答问题。")
             reasoner_messages.append(
                 {
                     "role": "assistant",
@@ -3256,7 +3239,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             if settings['reasoner']['enabled'] or enable_thinking:
 
                 if tools:
-                    reasoner_messages[-1]['content'] += f"可用工具：{json.dumps(tools)}"
+                    content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
                 for modelProvider in settings['modelProviders']: 
                     if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                         vendor = modelProvider['vendor']
@@ -3279,7 +3262,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         reasoning_content = reasoning_content[start_index:end_index]
                     else:
                         reasoning_content = ""
-                    request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoning_content
+                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_content)
                 else:
                     reasoner_response = await reasoner_client.chat.completions.create(
                         model=settings['reasoner']['model'],
@@ -3288,7 +3271,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         max_tokens=1, # 根据实际情况调整
                         temperature=settings['reasoner']['temperature']
                     )
-                    request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
+                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoner_response.model_dump()['choices'][0]['message']['reasoning_content'])
             msg = await images_add_in_messages(request.messages, images,settings)
             if tools:
                 response = await client.chat.completions.create(
@@ -3640,10 +3623,7 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
             )
         # 将"system_prompt"插入到request.messages[0].content中
         if current_settings['system_prompt']:
-            if request.messages[0]['role'] == 'system':
-                request.messages[0]['content'] = current_settings['system_prompt'] + "\n\n" + request.messages[0]['content']
-            else:
-                request.messages.insert(0, {'role': 'system', 'content': current_settings['system_prompt']})
+            content_prepend(request.messages, 'system', current_settings['system_prompt'] + "\n\n")
         if current_settings != settings:
             settings = current_settings
         try:
@@ -3677,10 +3657,7 @@ async def chat_endpoint(request: ChatRequest,fastapi_request: Request):
                 agent_settings = json.load(f)
             # 将"system_prompt"插入到request.messages[0].content中
             if agentSettings['system_prompt']:
-                if request.messages[0]['role'] == 'system':
-                    request.messages[0]['content'] = agentSettings['system_prompt'] + "\n\n" + request.messages[0]['content']
-                else:
-                    request.messages.insert(0, {'role': 'system', 'content': agentSettings['system_prompt']})
+                content_prepend(request.messages, 'user', agentSettings['system_prompt'] + "\n\n")
         vendor = 'OpenAI'
         for modelProvider in agent_settings['modelProviders']: 
             if modelProvider['id'] == agent_settings['selectedProvider']:
