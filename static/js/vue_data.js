@@ -480,6 +480,8 @@ let vue_data = {
     remotePlugins: [], // 远程插件列表
     installedPlugins: [], // 本地已安装
     installLoading: false,
+    refreshing: false,
+    refreshButtonText: "",
     ttsSettings: {
       enabled: false,
       engine: 'edgetts',

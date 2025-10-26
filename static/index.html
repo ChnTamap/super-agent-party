@@ -9148,29 +9148,39 @@ if ('serviceWorker' in navigator) {
                     ></input>
                   </div>
                   <el-divider>{{t('or')}}</el-divider>
-                  <!-- 远程插件列表 -->
-                  <el-button 
-                    @click="fetchRemotePlugins" 
-                    type="primary" 
-                    plain 
-                    class="add-server-btn">
-                    {{t('refreshList')}}
-                  </el-button>
-                  <el-table :data="remotePlugins" style="width: 100%" v-loading="installLoading">
-                    <el-table-column prop="name" label="插件名称" width="300"></el-table-column>
-                    <el-table-column prop="description" label="描述" ></el-table-column>
-                    <el-table-column label="操作" width="120">
-                      <template #default="scope">
-                        <el-button
-                          size="small"
-                          :type="scope.row.installed ? 'danger' : 'primary'"
-                          @click="togglePlugin(scope.row)"
-                        >
-                          {{ scope.row.installed ? '卸载' : '安装' }}
-                        </el-button>
-                      </template>
-                    </el-table-column>
-                  </el-table>
+                  
+                  <!-- 远程插件列表 - 卡片形式 -->
+                  <div class="plugin-header">
+                    <h3>{{t('availableExtensions')}}</h3>
+                    <el-button 
+                      @click="handleRefreshClick" 
+                      type="primary"
+                      :loading="refreshing">
+                      {{refreshButtonText}}
+                    </el-button>
+                  </div>
+                  
+                  <div v-loading="installLoading" class="plugins-container">
+                    <div v-if="remotePlugins.length === 0" class="empty-plugins">
+                      <el-empty :description="t('noExtensionsFound')"></el-empty>
+                    </div>
+                    <div v-else class="plugins-grid">
+                      <div v-for="plugin in remotePlugins" :key="plugin.name" class="plugin-card">
+                        <div class="plugin-content">
+                          <h4 class="plugin-name">{{ plugin.name }}</h4>
+                          <p class="plugin-description">{{ plugin.description }}</p>
+                        </div>
+                        <div class="plugin-action">
+                          <el-button
+                            :type="plugin.installed ? 'danger' : 'primary'"
+                            @click="togglePlugin(plugin)"
+                          >
+                            {{ plugin.installed ? t('uninstall'): t('install') }}
+                          </el-button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <template #footer>
                     <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>

@@ -1132,6 +1132,7 @@ let vue_methods = {
           this.edgettsLanguage = this.ttsSettings.edgettsLanguage;
           this.edgettsGender = this.ttsSettings.edgettsGender;
           this.handleSystemLanguageChange(this.systemSettings.language);
+          this.refreshButtonText = this.t('refreshList');
           if (this.HASettings.enabled) {
             this.changeHAEnabled();
           };
@@ -9283,5 +9284,29 @@ clearSegments() {
         this.installLoading = false;
       }
     }
+  },
+  handleRefreshClick() {
+    this.refreshing = true;
+    
+    // 调用原有的刷新方法
+    this.fetchRemotePlugins().then(() => {
+      // 请求完成后
+      this.refreshing = false;
+      this.refreshButtonText = this.t('refreshedSuccess') || '已刷新';
+      
+      // 2秒后恢复按钮文字
+      setTimeout(() => {
+        this.refreshButtonText = this.t('refreshList');
+      }, 2000);
+    }).catch(error => {
+      // 处理错误情况
+      this.refreshing = false;
+      this.refreshButtonText = this.t('refreshFailed') || '刷新失败';
+      
+      // 2秒后恢复按钮文字
+      setTimeout(() => {
+        this.refreshButtonText = this.t('refreshList');
+      }, 2000);
+    });
   },
 }
