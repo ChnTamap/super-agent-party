@@ -2145,18 +2145,18 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 "content": str("".join(results)),
                             }
                         )
-                    reasoner_messages.append(
-                        {
-                            "role": "assistant",
-                            "content": str(response_content),
-                        }
-                    )
-                    reasoner_messages.append(
-                        {
-                            "role": "user",
-                            "content": f"{response_content.name}工具结果："+str(results),
-                        }
-                    )
+                        reasoner_messages.append(
+                            {
+                                "role": "assistant",
+                                "content": str(response_content),
+                            }
+                        )
+                        reasoner_messages.append(
+                            {
+                                "role": "user",
+                                "content": f"{response_content.name}工具结果："+str(results),
+                            }
+                        )
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
@@ -2573,11 +2573,13 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                 return
             except Exception as e:
                 logger.error(f"Error occurred: {e}")
+                import traceback
+                traceback.print_exc()
                 # 捕获异常并返回错误信息
                 error_chunk = {
                     "choices": [{
                         "delta": {
-                            "tool_content": f'\n\n<div class="highlight-block-error">\n❎︎ {str(e)}</div>\n\n',
+                            "tool_content": f'\n\n<div class="highlight-block-error">\n❎ {str(e)}</div>\n\n',
                         }
                     }]
                 }
