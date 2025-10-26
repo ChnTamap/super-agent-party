@@ -1585,7 +1585,8 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             messages=msg,
                             stream=True,
                             reasoning_effort=settings['reasoner']['reasoning_effort'],
-                            max_tokens=1, # 根据实际情况调整
+                            max_tokens=settings['reasoner']['max_tokens'], # 根据实际情况调整
+                            stop=settings['reasoner']['stop_words'],
                             temperature=settings['reasoner']['temperature']
                         )
                         full_reasoning = ""
@@ -1605,6 +1606,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                     if reasoning_content:
                                         delta['reasoning_content'] = reasoning_content
                                         full_reasoning += reasoning_content
+                                # 移除content字段，确保yield的内容中不包含content
+                                if 'content' in delta:
+                                    del delta['content']
                             yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                     # 在推理结束后添加完整推理内容到消息
@@ -2203,7 +2207,8 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 model=settings['reasoner']['model'],
                                 messages=msg,
                                 stream=True,
-                                max_tokens=1, # 根据实际情况调整
+                                max_tokens=settings['reasoner']['max_tokens'], # 根据实际情况调整
+                                stop=settings['reasoner']['stop_words'],
                                 temperature=settings['reasoner']['temperature']
                             )
                             full_reasoning = ""
@@ -2223,6 +2228,9 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                         if reasoning_content:
                                             delta['reasoning_content'] = reasoning_content
                                             full_reasoning += reasoning_content
+                                    # 移除content字段，确保yield的内容中不包含content
+                                    if 'content' in delta:
+                                        del delta['content']
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
@@ -3045,7 +3053,8 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     model=settings['reasoner']['model'],
                     messages=msg,
                     stream=False,
-                    max_tokens=1, # 根据实际情况调整
+                    max_tokens=settings['reasoner']['max_tokens'], # 根据实际情况调整
+                    stop=settings['reasoner']['stop_words'],
                     reasoning_effort=settings['reasoner']['reasoning_effort'],
                     temperature=settings['reasoner']['temperature']
                 )
@@ -3285,7 +3294,8 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         model=settings['reasoner']['model'],
                         messages=msg,
                         stream=False,
-                        max_tokens=1, # 根据实际情况调整
+                        max_tokens=settings['reasoner']['max_tokens'], # 根据实际情况调整
+                        stop=settings['reasoner']['stop_words'],
                         temperature=settings['reasoner']['temperature']
                     )
                     request.messages[-1]['content'] = request.messages[-1]['content'] + "\n\n可参考的推理过程：" + reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
