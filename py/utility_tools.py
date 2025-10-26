@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 import json
 from zoneinfo import ZoneInfo  # Python 内置模块
+import aiohttp
 import requests
 from tzlocal import get_localzone
 from py.accweatherAPI import AccuWeatherAPI
@@ -41,67 +42,123 @@ time_tool = {
     },
 }
 
-async def get_weather_async(city: str, forecast: bool = False, days: int = 1):
+async def _get_lat_lon(city: str) -> Dict[str, float]:
+    """返回 {"latitude": xx, "longitude": yy, "timezone": "Asia/Shanghai"}"""
+    url = "https://geocoding-api.open-meteo.com/v1/search"
+    params = {"name": city, "count": 1, "language": "zh"}
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params) as resp:
+            if resp.status != 200:
+                raise RuntimeError("地理编码请求失败")
+            data = await resp.json()
+    if not data.get("results"):
+        raise RuntimeError(f"未找到城市: {city}")
+    r = data["results"][0]
+    return {
+        "latitude": r["latitude"],
+        "longitude": r["longitude"],
+        "timezone": r.get("timezone", "Asia/Shanghai"),
+    }
+
+
+async def _call_open_meteo(lat: float, lon: float, timezone: str, forecast: bool, days: int):
+    """forecast=True 时返回 7-day 预报，否则返回当前实时"""
+    if forecast:
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "daily": "temperature_2m_max,temperature_2m_min,weathercode",
+            "timezone": timezone,
+            "forecast_days": days,
+        }
+    else:
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": lat,
+            "longitude": lon,
+            "current_weather": "true",
+            "timezone": timezone,
+        }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, params=params) as resp:
+            if resp.status != 200:
+                raise RuntimeError("天气接口请求失败")
+            return await resp.json()
+
+
+_WCODE_MAP = {
+    0: "晴",
+    1: "多云",
+    2: "少云",
+    3: "晴间多云",
+    45: "雾",
+    48: "雾凇",
+    51: "毛毛雨",
+    53: "小雨",
+    55: "中雨",
+    61: "小雨",
+    63: "中雨",
+    65: "大雨",
+    71: "小雪",
+    73: "中雪",
+    75: "大雪",
+    95: "雷暴",
+    96: "雷暴伴冰雹",
+    99: "强雷暴伴冰雹",
+}
+
+
+def _desc(code: int) -> str:
+    return _WCODE_MAP.get(code, "未知")
+
+
+async def get_weather_async(city: str, forecast: bool = False, days: int = 1) -> str:
     """
-    查询城市天气（实时或预报）
-    
-    :param city: 城市名称
-    :param forecast: 是否为预报（False为实时天气）
-    :param days: 预报天数（1或5）
-    :return: 格式化后的天气信息字符串
+    查询城市天气（实时或预报）—— 改用 Open-Meteo
     """
     try:
-        # 每次调用都重新加载API key
-        settings = await load_settings()
-        api_key = settings["tools"]["accuweather"]["apiKey"]
-        weather_api = AccuWeatherAPI(api_key)
-        
-        # 获取天气数据
-        weather_data = weather_api.get_weather(city, forecast=forecast, days=days)
-        
-        if weather_data["status"] != "success":
-            return f"获取天气失败: {weather_data['message']}"
-        
-        data = weather_data["data"]
-        
-        # 格式化输出
+        # 4.1 经纬度
+        geo = await _get_lat_lon(city)
+
+        # 4.2 天气数据
+        data = await _call_open_meteo(
+            geo["latitude"], geo["longitude"], geo["timezone"], forecast, days
+        )
+
+        # 4.3 格式化输出，尽量沿用你原来的字符串模板
         if forecast:
-            # 预报天气
-            headline = data.get("Headline", {})
-            daily_forecasts = data.get("DailyForecasts", [])
-            
+            daily = data["daily"]
             result = [
                 f"{city}的{days}天天气预报:",
-                f"概况: {headline.get('Text', '无')}",
-                f"严重程度: {headline.get('Severity', '无')}",
-                "每日预报:"
+                "概况: 基于Open-Meteo全球模式",
+                "严重程度: 无",
+                "每日预报:",
             ]
-            
-            for day in daily_forecasts[:days]:
-                date = day.get("Date", "")
-                temp = day.get("Temperature", {})
-                day_temp = temp.get("Maximum", {}).get("Value", "未知")
-                night_temp = temp.get("Minimum", {}).get("Value", "未知")
-                day_phrase = day.get("Day", {}).get("IconPhrase", "未知")
-                night_phrase = day.get("Night", {}).get("IconPhrase", "未知")
-                
+            for i in range(days):
+                date = daily["time"][i]
+                tmax = daily["temperature_2m_max"][i]
+                tmin = daily["temperature_2m_min"][i]
+                code = daily["weathercode"][i]
                 result.append(
-                    f"- {date}: 白天{day_temp}°C/{day_phrase}, 夜间{night_temp}°C/{night_phrase}"
+                    f"- {date}: 白天{tmax}°C/{_desc(code)}, 夜间{tmin}°C/{_desc(code)}"
                 )
-            
             return "\n".join(result)
+
         else:
-            # 实时天气
+            cw = data["current_weather"]
             return (
                 f"{city}实时天气:\n"
-                f"温度: {data.get('Temperature', {}).get('Metric', {}).get('Value', '未知')}°C\n"
-                f"天气状况: {data.get('WeatherText', '未知')}\n"
-                f"相对湿度: {data.get('RelativeHumidity', '未知')}%\n"
-                f"风速: {data.get('Wind', {}).get('Speed', {}).get('Metric', {}).get('Value', '未知')} km/h"
+                f"温度: {cw['temperature']}°C\n"
+                f"天气状况: {_desc(cw['weathercode'])}\n"
+                f"相对湿度: 暂无\n"
+                f"风速: {cw['windspeed']} km/h"
             )
+
     except Exception as e:
         return f"查询天气时出错: {str(e)}"
-
+    
 weather_tool = {
     "type": "function",
     "function": {
@@ -121,9 +178,10 @@ weather_tool = {
                 },
                 "days": {
                     "type": "integer",
-                    "description": "预报天数（1或5），注意预报天数为1时，返回的是今天的预测天气，如果要查看明天的天气，请将days设置为5，返回的第一条数据为今天的预测天气，第二条数据为明天的预测天气，以此类推。",
+                    "description": "预报天数为1到7天",
                     "default": 1,
-                    "enum": [1, 5]
+                    "minimum": 1,
+                    "maximum": 7
                 },
             },
             "required": ["city"],
