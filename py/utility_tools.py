@@ -189,36 +189,37 @@ weather_tool = {
     },
 }
 
-async def get_location_coordinates_async(city: str):
+async def get_location_coordinates_async(city: str) -> str:
     """
-    查询城市的经纬度信息
-    
-    :param city: 城市名称
-    :return: 格式化后的位置信息字符串
+    查询城市的经纬度信息（改用 Open-Meteo GeoCoding）
+    返回格式与原来完全一致，方便无痛替换。
     """
     try:
-        # 每次调用都重新加载API key
-        settings = await load_settings()
-        api_key = settings["tools"]["accuweather"]["apiKey"]
-        weather_api = AccuWeatherAPI(api_key)
-        
-        # 获取位置信息
-        location_info = weather_api.get_location_info(city)
-        
-        if not location_info:
+        # 1. 请求 Open-Meteo 地理编码
+        url = "https://geocoding-api.open-meteo.com/v1/search"
+        params = {"name": city, "count": 1, "language": "zh"}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                if resp.status != 200:
+                    return f"查询位置信息时出错: HTTP {resp.status}"
+                data = await resp.json()
+
+        if not data.get("results"):
             return f"无法找到城市{city}的位置信息"
-        
-        # 取第一个结果
-        loc = location_info[0]
+
+        r = data["results"][0]
+
+        # 2. 拼装成跟原来一致的字符串
         return (
             f"{city}的位置信息:\n"
-            f"名称: {loc.get('name', '未知')} ({loc.get('english_name', '未知')})\n"
-            f"国家: {loc.get('country', '未知')}\n"
-            f"行政区: {loc.get('administrative_area', '未知')}\n"
-            f"经纬度: {loc.get('geo_position', {}).get('latitude', '未知')}, "
-            f"{loc.get('geo_position', {}).get('longitude', '未知')}\n"
-            f"时区: {loc.get('time_zone', '未知')}"
+            f"名称: {r.get('name', '未知')} ({r.get('name', '未知')})\n"
+            f"国家: {r.get('country', '未知')}\n"
+            f"行政区: {r.get('admin1', '未知')}\n"
+            f"经纬度: {r.get('latitude', '未知')}, {r.get('longitude', '未知')}\n"
+            f"时区: {r.get('timezone', '未知')}"
         )
+
     except Exception as e:
         return f"查询位置信息时出错: {str(e)}"
 
