@@ -312,6 +312,63 @@ if ('serviceWorker' in navigator) {
           </div>
         </div>
       </el-dialog>  
+      <!-- 扩展选择对话框 -->
+      <el-dialog
+        :title="t('switchExtension')"
+        v-model="showExtensionsDialog"
+        width="600px"
+        :close-on-click-modal="false">
+        <div class="extensions-list">
+          <!-- 默认视图选项 -->
+          <el-card 
+            class="extension-card default-view-card"
+            :class="{ active: currentExtension === null }"
+            @click="resetToDefaultView()">
+            <div class="extension-info">
+              <h3>{{ t('defaultView') }}</h3>
+              <p>{{ t('defaultViewDescription') }}</p>
+            </div>
+          </el-card>
+          
+          <!-- 分隔线 -->
+          <div class="extensions-divider" v-if="extensions.length > 0">
+            <span>{{ t('availableExtensions') }}</span>
+          </div>
+          <!-- 扩展列表 -->
+          <el-empty v-if="extensions.length === 0" :description="t('noExtensionsFound')" ></el-empty>
+            <el-card
+              v-for="ext in extensions"
+              :key="ext.id"
+              class="extension-card"
+              :class="{ active: currentExtension && currentExtension.id === ext.id }"
+              @click="switchExtension(ext)">
+              
+              <!-- 右上角图标 -->
+              <div class="btn-top-right">
+                <el-button
+                  type="primary"
+                  circle
+                  @click.stop="openExtension(ext);switchExtension(ext)">
+                  <i class="fa-solid fa-external-link"></i>
+                </el-button>
+              </div>
+
+              <div class="extension-info">
+                <h3>{{ ext.name }}</h3>
+                <p>{{ ext.description }}</p>
+                <div class="extension-meta">
+                  <span>v{{ ext.version }}</span>
+                  <span>{{ ext.author }}</span>
+                </div>
+              </div>
+            </el-card>
+        </div>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="showExtensionsDialog = false">{{ t('cancel') }}</el-button>
+          </div>
+        </template>
+      </el-dialog>
       <!-- 内容区 -->
       <el-main class="content">
         <!-- 聊天界面保持不变 -->
@@ -905,63 +962,6 @@ if ('serviceWorker' in navigator) {
               <i :class="sidePanelOpen ?  'fa-solid fa-chevron-right': 'fa-solid fa-chevron-left'"></i>
             </div>
           </div>
-          <!-- 扩展选择对话框 -->
-          <el-dialog
-            :title="t('switchExtension')"
-            v-model="showExtensionsDialog"
-            width="600px"
-            :close-on-click-modal="false">
-            <div class="extensions-list">
-              <!-- 默认视图选项 -->
-              <el-card 
-                class="extension-card default-view-card"
-                :class="{ active: currentExtension === null }"
-                @click="resetToDefaultView()">
-                <div class="extension-info">
-                  <h3>{{ t('defaultView') }}</h3>
-                  <p>{{ t('defaultViewDescription') }}</p>
-                </div>
-              </el-card>
-              
-              <!-- 分隔线 -->
-              <div class="extensions-divider" v-if="extensions.length > 0">
-                <span>{{ t('availableExtensions') }}</span>
-              </div>
-              <!-- 扩展列表 -->
-              <el-empty v-if="extensions.length === 0" :description="t('noExtensionsFound')" ></el-empty>
-                <el-card
-                  v-for="ext in extensions"
-                  :key="ext.id"
-                  class="extension-card"
-                  :class="{ active: currentExtension && currentExtension.id === ext.id }"
-                  @click="switchExtension(ext)">
-                  
-                  <!-- 右上角图标 -->
-                  <div class="btn-top-right">
-                    <el-button
-                      type="primary"
-                      circle
-                      @click.stop="openExtension(ext);switchExtension(ext)">
-                      <i class="fa-solid fa-external-link"></i>
-                    </el-button>
-                  </div>
-
-                  <div class="extension-info">
-                    <h3>{{ ext.name }}</h3>
-                    <p>{{ ext.description }}</p>
-                    <div class="extension-meta">
-                      <span>v{{ ext.version }}</span>
-                      <span>{{ ext.author }}</span>
-                    </div>
-                  </div>
-                </el-card>
-            </div>
-            <template #footer>
-              <div class="dialog-footer">
-                <el-button @click="showExtensionsDialog = false">{{ t('cancel') }}</el-button>
-              </div>
-            </template>
-          </el-dialog>
           <el-dialog
             v-model="showEditDialog"
             :title="editType === 'system' ? t('editSystemPrompt') : t('editMessage')"
@@ -9171,6 +9171,15 @@ if ('serviceWorker' in navigator) {
                           <p class="plugin-description">{{ plugin.description }}</p>
                         </div>
                         <div class="plugin-action">
+                          <el-button
+                            v-if="plugin.repository"
+                            type="primary"
+                            @click="openRepository(plugin.repository)"
+                            class="repo-button"
+                          >
+                            <i class="fa-brands fa-github"></i>
+                            {{ t('viewRepository') }}
+                          </el-button>
                           <el-button
                             :type="plugin.installed ? 'danger' : 'primary'"
                             @click="togglePlugin(plugin)"

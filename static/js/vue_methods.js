@@ -9309,4 +9309,11 @@ clearSegments() {
       }, 2000);
     });
   },
+  openRepository(url) {
+    if (isElectron) {
+      window.electronAPI.openExternal(url)   // 主进程会新建可关闭的独立窗口
+    } else {
+      window.open(url, '_blank')
+    }
+  },
 }
