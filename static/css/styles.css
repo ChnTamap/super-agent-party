@@ -3763,6 +3763,11 @@ body {
   color: var(--text-color);
 }
 
+.plugin-button-group {
+  display: flex;
+  gap: 10px; /* 按钮之间的间距 */
+}
+
 .plugins-container {
   margin-top: 16px;
   min-height: 200px;
