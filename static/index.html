@@ -9111,7 +9111,7 @@ if ('serviceWorker' in navigator) {
                     </div>
                   </div>
                   <!-- 添加新扩展 -->
-                  <div class="provider-card add-tile" @click="showExtensionForm = true;newAgent.system_prompt = this.system_prompt">
+                  <div class="provider-card add-tile" @click="openAddExtensionDialog">
                     <el-icon :size="40" color="#909399"><i class="fa-solid fa-plus"></i></el-icon>
                     <div style="color: #606266; margin-top: 10px;">{{ t('addNewExtension') }}</div>
                   </div>
@@ -9120,7 +9120,7 @@ if ('serviceWorker' in navigator) {
                 <el-dialog
                   v-model="showExtensionForm"
                   :title="t('addNewExtension')"
-                  width="600px"
+                  width="80%"
                 >
                   <!-- GitHub 地址输入 -->
                   <el-input
@@ -9147,24 +9147,23 @@ if ('serviceWorker' in navigator) {
                       @change="onZipSelected"
                     ></input>
                   </div>
-
-                  <el-alert
-                    type="info"
-                    :closable="false"
-                    class="mb-2"
-                  >
-                    {{ t('getPluginInstructions') }}
-                    <el-link
-                      type="primary"
-                      :underline="false"
-                      href="https://super-agent-party.github.io/plugins.html" 
-                      target="_blank"
-                    >
-                      <el-icon class="mr-1">
-                        <i class="fa-solid fa-key"></i>
-                      </el-icon>{{ t('getPlugin') }}
-                    </el-link>
-                  </el-alert>
+                  <el-divider>{{t('or')}}</el-divider>
+                  <!-- 远程插件列表 -->
+                  <el-table :data="remotePlugins" style="width: 100%" v-loading="installLoading">
+                    <el-table-column prop="name" label="插件名称" ></el-table-column>
+                    <el-table-column prop="description" label="描述" ></el-table-column>
+                    <el-table-column label="操作" width="120">
+                      <template #default="scope">
+                        <el-button
+                          size="small"
+                          :type="scope.row.installed ? 'danger' : 'primary'"
+                          @click="togglePlugin(scope.row)"
+                        >
+                          {{ scope.row.installed ? '卸载' : '安装' }}
+                        </el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
 
                   <template #footer>
                     <el-button @click="showExtensionForm = false">{{ t('cancel') }}</el-button>

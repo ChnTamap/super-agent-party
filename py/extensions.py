@@ -209,3 +209,55 @@ async def upload_zip(file: UploadFile = File(...)):
             shutil.move(str(item), str(target))
 
     return {"ext_id": ext_id, "status": "ok"}
+
+class RemotePluginItem(BaseModel):
+    name: str
+    description: str
+    author: str
+    version: str
+    category: str = "Unknown"
+    repository: str          # 唯一标识
+    installed: bool = False  # 后端自动填充
+
+class RemotePluginList(BaseModel):
+    plugins: List[RemotePluginItem]
+
+@router.get("/remote-list", response_model=RemotePluginList)
+async def remote_plugin_list():
+    try:
+        # 1. 拉取原始 JSON
+        gh_url = ("https://raw.githubusercontent.com/"
+                  "super-agent-party/super-agent-party.github.io/"
+                  "main/plugins.json")
+        async with httpx.AsyncClient(timeout=10) as cli:
+            resp = await cli.get(gh_url)
+            resp.raise_for_status()
+            remote = resp.json()          # 现在是真正的 List[dict]
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"无法获取远程插件列表: {e}")
+
+    # 2. 本地已安装
+    try:
+        local_res = await list_extensions()
+        installed_repos = {
+            ext.repository.strip().rstrip("/").lower()
+            for ext in local_res.extensions
+            if ext.repository
+        }
+    except Exception:
+        installed_repos = set()
+
+    # 3. 合并状态
+    def _with_status(p: dict):
+        repo = p.get("repository", "").strip().rstrip("/").lower()
+        return RemotePluginItem(
+            name=p.get("name", "未命名"),
+            description=p.get("description", ""),
+            author=p.get("author", "未知"),
+            version=p.get("version", "1.0.0"),
+            category=p.get("category", "Unknown"),
+            repository=p.get("repository", ""),
+            installed=repo in installed_repos,
+        )
+
+    return RemotePluginList(plugins=[_with_status(p) for p in remote])

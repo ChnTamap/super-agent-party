@@ -9178,6 +9178,7 @@ clearSegments() {
     openAddExtensionDialog() {
       this.newExtensionUrl = '';
       this.showExtensionForm = true;
+      this.fetchRemotePlugins();
     },
 
     // 真正「安装」按钮触发
@@ -9237,4 +9238,48 @@ clearSegments() {
         e.target.value = ''; // 允许重复选同一文件
       }
     },
+
+    async fetchRemotePlugins() {
+      try {
+        const res = await fetch('/api/extensions/remote-list');
+        const { plugins } = await res.json();   // 取出 plugins 数组
+
+        const localRes = await fetch('/api/extensions/list');
+        const { extensions } = await localRes.json();
+
+        this.remotePlugins = plugins.map(r => ({
+          ...r,
+          installed: extensions.some(l => l.repository.trim() === r.repository.trim()),
+          id: r.repository,
+        }));
+      } catch (e) {
+        showNotification('获取插件列表失败: ' + e.message, 'error');
+      }
+    },
+  async togglePlugin(plugin) {
+    if (plugin.installed) {
+      // 卸载
+      await this.removeExtension({ id: plugin.repository });
+      plugin.installed = false;
+    } else {
+      // 安装
+      this.installLoading = true;
+      try {
+        const res = await fetch('/api/extensions/install-from-github', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: plugin.repository }),
+        });
+        if (res.status === 409) throw new Error('插件已存在');
+        if (!res.ok) throw new Error('安装失败');
+        showNotification('安装成功', 'success');
+        plugin.installed = true;
+        this.scanExtensions(); // 刷新本地列表
+      } catch (e) {
+        showNotification(e.message, 'error');
+      } finally {
+        this.installLoading = false;
+      }
+    }
+  },
 }
