@@ -72,6 +72,8 @@
       "api_key": "",
       "selectedProvider": null,
       "temperature": 0.7,
+      "max_tokens": 4096,
+      "stop_words": [" ", ",", ".", "，", "。"],
       "reasoning_effort": null
     },
     "vision": {

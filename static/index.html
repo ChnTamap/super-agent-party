@@ -3539,6 +3539,27 @@ if ('serviceWorker' in navigator) {
                           @input="autoSaveSettings"
                         />
                       </el-form-item>
+                      <el-form-item :label="t('outputLength')" class="form-item-align">
+                        <el-slider
+                          v-model="reasonerSettings.max_tokens"
+                          :min="0"
+                          :max="128000"
+                          :step="1024"
+                          @input="autoSaveSettings"
+                        />
+                      </el-form-item>
+                      <el-form-item :label="t('stopWords')">
+                        <el-select
+                          v-model="reasonerSettings.stop_words"
+                          multiple
+                          filterable
+                          allow-create
+                          :placeholder="t('stopWordsPlaceholder')"
+                          class="full-width-input"
+                          @change="autoSaveSettings"
+                        >
+                        </el-select>
+                      </el-form-item>
                       <el-form-item :label="t('reasoningEffort')" class="form-item-align">
                         <el-select
                           v-model="reasonerSettings.reasoning_effort"
