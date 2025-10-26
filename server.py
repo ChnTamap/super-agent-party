@@ -1515,7 +1515,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                         if drs_msg:
                             content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
                     if tools:
-                        content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
+                        content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
                     for modelProvider in settings['modelProviders']: 
                         if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                             vendor = modelProvider['vendor']
@@ -1621,7 +1621,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                             yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                     # 在推理结束后添加完整推理内容到消息
-                    content_append(request.messages, 'user',  f"\n\n可参考的推理过程：{full_reasoning}")
+                    content_append(request.messages, 'assistant', full_reasoning) # 可参考的推理过程
                 # 状态跟踪变量
                 in_reasoning = False
                 reasoning_buffer = []
@@ -2135,7 +2135,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                     # 如果启用推理模型
                     if settings['reasoner']['enabled'] or enable_thinking:
                         if tools:
-                            content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
+                            content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
                         for modelProvider in settings['modelProviders']: 
                             if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                                 vendor = modelProvider['vendor']
@@ -2239,7 +2239,7 @@ async def generate_stream_response(client,reasoner_client, request: ChatRequest,
                                 yield f"data: {json.dumps(chunk_dict)}\n\n"
 
                         # 在推理结束后添加完整推理内容到消息
-                        content_append(request.messages, 'user',  f"\n\n可参考的推理过程：{full_reasoning}")
+                        content_append(request.messages, 'assistant', full_reasoning) # 可参考的推理过程
                     msg = await images_add_in_messages(request.messages, images,settings)
                     if tools:
                         response = await client.chat.completions.create(
@@ -2991,7 +2991,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                     content_append(reasoner_messages, 'user',  f"\n\n{drs_msg}\n\n")
                 content_append(reasoner_messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
             if tools:
-                content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
+                content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
             for modelProvider in settings['modelProviders']: 
                 if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                     vendor = modelProvider['vendor']
@@ -3007,11 +3007,11 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 )
                 reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
                 if reasoning_buffer:
-                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
+                    content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
                 else:
                     reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning']
                     if reasoning_buffer:
-                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
+                        content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
                     else:
                         # 将推理结果中的思考内容提取出来
                         reasoning_content = reasoner_response.model_dump()['choices'][0]['message']['content']
@@ -3022,7 +3022,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                             reasoning_content = reasoning_content[start_index:end_index]
                         else:
                             reasoning_content = ""
-                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_content)
+                        content_prepend(request.messages, 'assistant', reasoning_content) # 可参考的推理过程
             else:
                 reasoner_response = await reasoner_client.chat.completions.create(
                     model=settings['reasoner']['model'],
@@ -3034,14 +3034,14 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                 )
                 reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']
                 if reasoning_buffer:
-                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
+                    content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
                 else:
                     reasoning_buffer = reasoner_response.model_dump()['choices'][0]['message']['reasoning']
                     if reasoning_buffer:
-                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
+                        content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
                     else:
                         reasoning_buffer = ""
-                        content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_buffer)
+                        content_prepend(request.messages, 'assistant', reasoning_buffer) # 可参考的推理过程
         if settings['tools']['deepsearch']['enabled'] or enable_deep_research: 
             content_append(request.messages, 'user',  f"\n\n可参考的步骤：{user_prompt}\n\n")
             drs_msg = get_drs_stage(DRS_STAGE)
@@ -3239,7 +3239,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
             if settings['reasoner']['enabled'] or enable_thinking:
 
                 if tools:
-                    content_append(reasoner_messages, 'user',  f"可用工具：{json.dumps(tools)}")
+                    content_append(reasoner_messages, 'system',  f"可用工具：{json.dumps(tools)}")
                 for modelProvider in settings['modelProviders']: 
                     if modelProvider['id'] == settings['reasoner']['selectedProvider']:
                         vendor = modelProvider['vendor']
@@ -3262,7 +3262,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         reasoning_content = reasoning_content[start_index:end_index]
                     else:
                         reasoning_content = ""
-                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoning_content)
+                    content_prepend(request.messages, 'assistant', reasoning_content) # 可参考的推理过程
                 else:
                     reasoner_response = await reasoner_client.chat.completions.create(
                         model=settings['reasoner']['model'],
@@ -3271,7 +3271,7 @@ async def generate_complete_response(client,reasoner_client, request: ChatReques
                         max_tokens=1, # 根据实际情况调整
                         temperature=settings['reasoner']['temperature']
                     )
-                    content_prepend(request.messages, 'user',  "\n\n可参考的推理过程：" + reasoner_response.model_dump()['choices'][0]['message']['reasoning_content'])
+                    content_prepend(request.messages, 'assistant', reasoner_response.model_dump()['choices'][0]['message']['reasoning_content']) # 可参考的推理过程
             msg = await images_add_in_messages(request.messages, images,settings)
             if tools:
                 response = await client.chat.completions.create(
