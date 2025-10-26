@@ -110,7 +110,7 @@ let vue_data = {
       selectedProvider: null,
       temperature: 0.7,  // 默认温度值
       max_tokens: 4096,  // 默认最大输出长度
-      stop_words: [' ', ',', '.', '，', '。'], // 停止词列表
+      stop_words: [',', '.', '，', '。'], // 停止词列表
       reasoning_effort: null,
     },
     target_lang: 'zh-CN',
