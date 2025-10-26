@@ -22,6 +22,8 @@ class Extension(BaseModel):
     version: str = "1.0.0"
     author: str = "未知"
     systemPrompt: str = ""
+    repository: str = ""
+    category: str = ""
 
 class ExtensionsResponse(BaseModel):
     extensions: List[Extension]
@@ -61,6 +63,8 @@ async def list_extensions():
                                 version=package_data.get("version", "1.0.0"),
                                 author=package_data.get("author", "未知"),
                                 systemPrompt = package_data.get("systemPrompt", ""),
+                                repository = package_data.get("repository", ""),
+                                category = package_data.get("category", "")
                             ))
                         except json.JSONDecodeError:
                             # package.json解析失败，使用默认值
@@ -211,6 +215,7 @@ async def upload_zip(file: UploadFile = File(...)):
     return {"ext_id": ext_id, "status": "ok"}
 
 class RemotePluginItem(BaseModel):
+    id : str 
     name: str
     description: str
     author: str
@@ -250,7 +255,11 @@ async def remote_plugin_list():
     # 3. 合并状态
     def _with_status(p: dict):
         repo = p.get("repository", "").strip().rstrip("/").lower()
+        parse = urlparse(p.get("repository", ""))
+        path_parts = parse.path.strip("/").split("/")
+        ext_id = f"{path_parts[0]}_{path_parts[1]}"
         return RemotePluginItem(
+            id = ext_id,
             name=p.get("name", "未命名"),
             description=p.get("description", ""),
             author=p.get("author", "未知"),

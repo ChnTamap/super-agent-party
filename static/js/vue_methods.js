@@ -9243,14 +9243,13 @@ clearSegments() {
       try {
         const res = await fetch('/api/extensions/remote-list');
         const { plugins } = await res.json();   // 取出 plugins 数组
-
+        console.log(plugins);
         const localRes = await fetch('/api/extensions/list');
         const { extensions } = await localRes.json();
-
+        console.log(extensions);
         this.remotePlugins = plugins.map(r => ({
           ...r,
           installed: extensions.some(l => l.repository.trim() === r.repository.trim()),
-          id: r.repository,
         }));
       } catch (e) {
         showNotification('获取插件列表失败: ' + e.message, 'error');
@@ -9259,7 +9258,7 @@ clearSegments() {
   async togglePlugin(plugin) {
     if (plugin.installed) {
       // 卸载
-      await this.removeExtension({ id: plugin.repository });
+      await this.removeExtension(plugin);
       plugin.installed = false;
     } else {
       // 安装
@@ -9274,6 +9273,8 @@ clearSegments() {
         if (!res.ok) throw new Error('安装失败');
         showNotification('安装成功', 'success');
         plugin.installed = true;
+        // 3 秒后自动刷新
+        setTimeout(() => this.scanExtensions(), 3000);
         this.scanExtensions(); // 刷新本地列表
       } catch (e) {
         showNotification(e.message, 'error');
