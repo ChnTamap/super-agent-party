@@ -189,5 +189,5 @@ build.bat
 test*
 wxauto*
 
-
-!static/ext/heshengtao_sap-web-preview/
+static/ext/*
+!static/ext/heshengtao_sap-example/
