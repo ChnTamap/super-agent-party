@@ -9242,6 +9242,7 @@ clearSegments() {
 
     async fetchRemotePlugins() {
       try {
+        await this.scanExtensions(); // 刷新
         const res = await fetch('/api/extensions/remote-list');
         const { plugins } = await res.json();   // 取出 plugins 数组
         console.log(plugins);
@@ -9276,7 +9277,6 @@ clearSegments() {
         plugin.installed = true;
         // 3 秒后自动刷新
         setTimeout(() => this.scanExtensions(), 3000);
-        this.scanExtensions(); // 刷新本地列表
       } catch (e) {
         showNotification(e.message, 'error');
       } finally {
