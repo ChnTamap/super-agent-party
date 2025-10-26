@@ -62,7 +62,16 @@ async def searxng_async(query):
 
             for result in soup.find_all('article', class_='result'):
                 title = result.find('h3').get_text() if result.find('h3') else 'No title'
-                link = result.find('a', class_='url_wrapper')['href'] if result.find('a', class_='url_wrapper') else 'No link'
+                
+                # 修复：使用正确的选择器
+                link_elem = result.find('a', class_='url_header')
+                if not link_elem:
+                    # 备用方案：从h3内的链接获取
+                    h3 = result.find('h3')
+                    link_elem = h3.find('a') if h3 else None
+                
+                link = link_elem['href'] if link_elem and link_elem.get('href') else 'No link'
+                
                 snippet = result.find('p', class_='content').get_text() if result.find('p', class_='content') else 'No snippet'
                 
                 results.append({
